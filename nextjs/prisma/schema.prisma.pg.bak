@@ -1,0 +1,60 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String   @id @default(uuid()) @db.Uuid
+  name            String
+  avatarUrl       String?
+  email           String?  @unique
+  passwordHash    String?
+  oauthProvider   String?  // "google" | "42"
+  oauthProviderId String?
+  totalMatches    Int      @default(0)
+  wins            Int      @default(0)
+  losses          Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  matchesAsBlack Match[] @relation("BlackPlayer")
+  matchesAsWhite Match[] @relation("WhitePlayer")
+  matchesWon     Match[] @relation("Winner")
+
+  sentFriendRequests     Friendship[] @relation("FriendRequester")
+  receivedFriendRequests Friendship[] @relation("FriendAddressee")
+}
+
+model Match {
+  id           String    @id @default(uuid()) @db.Uuid
+  blackUserId  String    @db.Uuid
+  whiteUserId  String    @db.Uuid
+  winnerUserId String?   @db.Uuid
+  startedAt    DateTime  @default(now())
+  endedAt      DateTime?
+  createdAt    DateTime  @default(now())
+
+  blackPlayer User  @relation("BlackPlayer", fields: [blackUserId], references: [id])
+  whitePlayer User  @relation("WhitePlayer", fields: [whiteUserId], references: [id])
+  winner      User? @relation("Winner", fields: [winnerUserId], references: [id])
+}
+
+model Friendship {
+  id              String @id @default(uuid()) @db.Uuid
+  requesterUserId String @db.Uuid
+  addresseeUserId String @db.Uuid
+  pairKey         String // "${minId}:${maxId}" for dedup
+  status          String @default("pending") // "pending" | "accepted"
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  requester User @relation("FriendRequester", fields: [requesterUserId], references: [id])
+  addressee User @relation("FriendAddressee", fields: [addresseeUserId], references: [id])
+
+  @@unique([requesterUserId, addresseeUserId])
+  @@unique([pairKey])
+}
