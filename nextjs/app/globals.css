@@ -603,3 +603,70 @@ body {
     padding: 16px 18px;
   }
 }
+
+/* Board cell selected state */
+.board-cell-selected {
+  background: #FFD700 !important;
+  box-shadow: inset 0 0 8px rgba(255, 193, 7, 0.6);
+}
+
+/* WS connection status */
+.ws-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.ws-status-connected {
+  background: #E8F5E9;
+  color: #2E7D32;
+  border: 1px solid #A5D6A7;
+}
+
+.ws-status-disconnected {
+  background: #FFEBEE;
+  color: #C62828;
+  border: 1px solid #EF9A9A;
+}
+
+.ws-status-connecting {
+  background: #FFF8E1;
+  color: #F57F17;
+  border: 1px solid #FFE082;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+/* Turn indicator */
+.turn-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.turn-badge {
+  padding: 6px 16px;
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.turn-sente {
+  background: var(--color-primary);
+  color: white;
+}
+
+.turn-gote {
+  background: var(--color-text);
+  color: white;
+}
+
+.turn-you {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
