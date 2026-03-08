@@ -4,20 +4,18 @@ import { promisify } from "util";
 import path from "path";
 
 const execFileAsync = promisify(execFile);
+import fs from "fs";
 
-// 55engineバイナリのパス（Docker内: /app/engine/55engine, 開発時: 相対パス）
 function getEnginePath(): string {
-	const prodPath = path.join(process.cwd(), "engine", "55engine");
-	const devPath = path.join(process.cwd(), "..", "55engine", "55engine.exe");
+    const devPath = path.join(process.cwd(), "..", "55engine", "engine");
+    
+    if (fs.existsSync(devPath)) {
+        return devPath;
+    } else if (fs.existsSync(devPathExe)) {
+        return devPathExe;
+    }
 
-	// Production (Docker)
-	try {
-		require("fs").accessSync(prodPath);
-		return prodPath;
-	} catch {
-		// Dev (Windows)
-		return devPath;
-	}
+    return devPath;
 }
 
 export async function POST(req: Request) {

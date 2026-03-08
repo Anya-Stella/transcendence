@@ -20,7 +20,8 @@ export function useShogiGame(
 	roomId: string | undefined,
 	mySide: "sente" | "gote",
 	wsStatus: "connected" | "disconnected" | "connecting"
-) {
+) 
+{
 	const router = useRouter();
 
 	// 子フック
