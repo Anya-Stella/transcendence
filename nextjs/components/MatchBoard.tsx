@@ -1,10 +1,9 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Socket } from "socket.io-client";
 import { useShogiGame } from "@/hooks/useShogiGame";
-import { PieceData, DEMOTE_MAP,} from "@/utils/shogiConstants";
+import { PieceData, HandPieces, DEMOTE_MAP } from "@/utils/shogiConstants";
 
 function PieceComponent({ piece, isPromoted }: { piece: PieceData; isPromoted?: boolean }) {
 	if (!piece) return null;
