@@ -86,11 +86,11 @@ export function useShogiGame(
 
 	// ========= アクション =========
 
-	const executeMove = useCallback(
+	// ローカルのみ適用（WebSocket送信なし）
+	const applyMove = useCallback(
 		(from: { row: number; col: number }, to: { row: number; col: number }, promote: boolean) => {
 			const { capturedKanji, capturingSide } = movePiece(from, to, promote);
 
-			// 取った駒を持ち駒に追加
 			if (capturedKanji && capturingSide) {
 				addCapturedPiece(capturedKanji, capturingSide);
 			}
@@ -98,35 +98,47 @@ export function useShogiGame(
 			setTurn((prev) => (prev === "sente" ? "gote" : "sente"));
 			setSelected(null);
 			setPromoteDialog(null);
-
-			// WebSocket送信
-			if (socket && roomId) {
-				socket.emit("move", { roomId, from, to, promote });
-			}
 		},
-		[movePiece, addCapturedPiece, socket, roomId]
+		[movePiece, addCapturedPiece]
 	);
 
-	const executeDrop = useCallback(
-		(kanji: string, to: { row: number; col: number }) => {
-			const side = turn;
-
+	const applyDrop = useCallback(
+		(kanji: string, to: { row: number; col: number }, side: "sente" | "gote") => {
 			dropPiece(kanji, to, side);
 			removeHandPiece(kanji, side);
 
 			setTurn((prev) => (prev === "sente" ? "gote" : "sente"));
 			setSelectedHandPiece(null);
 			setSelected(null);
+		},
+		[dropPiece, removeHandPiece]
+	);
 
-			// WebSocket送信
+	// ローカル適用 ＋ WebSocket送信
+	const executeMove = useCallback(
+		(from: { row: number; col: number }, to: { row: number; col: number }, promote: boolean) => {
+			applyMove(from, to, promote);
+
+			if (socket && roomId) {
+				socket.emit("move", { roomId, from, to, promote });
+			}
+		},
+		[applyMove, socket, roomId]
+	);
+
+	const executeDrop = useCallback(
+		(kanji: string, to: { row: number; col: number }) => {
+			const side = turn;
+			applyDrop(kanji, to, side);
+
 			if (socket && roomId) {
 				socket.emit("move", { roomId, drop: kanji, to });
 			}
 		},
-		[turn, dropPiece, removeHandPiece, socket, roomId]
+		[turn, applyDrop, socket, roomId]
 	);
 
-	// ========= 相手の手を受信 =========
+	// ========= 相手の手を受信（WebSocket送信しない） =========
 
 	useEffect(() => {
 		if (!socket) return;
@@ -138,9 +150,11 @@ export function useShogiGame(
 			drop?: string;
 		}) => {
 			if (data.drop) {
-				executeDrop(data.drop, data.to);
+				// 相手の手番を推定（自分の逆）
+				const oppSide = mySide === "sente" ? "gote" : "sente";
+				applyDrop(data.drop, data.to, oppSide);
 			} else if (data.from) {
-				executeMove(data.from, data.to, data.promote ?? false);
+				applyMove(data.from, data.to, data.promote ?? false);
 			}
 		};
 
@@ -148,7 +162,7 @@ export function useShogiGame(
 		return () => {
 			socket.off("moveMade", handleMoveMade);
 		};
-	}, [socket, executeMove, executeDrop]);
+	}, [socket, applyMove, applyDrop, mySide]);
 
 	// ========= クリックハンドラ =========
 
