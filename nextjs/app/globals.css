@@ -870,3 +870,25 @@ body {
   font-size: 0.95rem;
   min-width: 350px;
 }
+
+/* ===== AI Match ===== */
+.ai-thinking {
+  display: inline-block;
+  margin-left: 12px;
+  font-size: 0.9rem;
+  color: var(--color-primary);
+  animation: pulse-thinking 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse-thinking {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.game-over-label {
+  display: inline-block;
+  margin-left: 12px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #e74c3c;
+}

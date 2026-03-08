@@ -1,9 +1,15 @@
 FROM node:20-alpine AS base
 
-# Install dependencies for argon2
-RUN apk add --no-cache python3 make g++ libc6-compat
+# Install dependencies for argon2 and C++ engine
+RUN apk add --no-cache python3 make g++ libc6-compat libstdc++
 
 WORKDIR /app
+
+# ---- Engine Builder ----
+FROM base AS engine-builder
+WORKDIR /engine
+COPY ../55engine/ ./
+RUN make clean || true && make
 
 # ---- Dependencies ----
 FROM base AS deps
@@ -36,6 +42,10 @@ COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
 COPY --from=builder /app/entrypoint.sh ./entrypoint.sh
+
+# Copy 55engine binary
+COPY --from=engine-builder /engine/engine ./engine/55engine
+COPY --from=engine-builder /engine/legal_checker ./engine/legal_checker
 
 RUN chmod +x entrypoint.sh
 
