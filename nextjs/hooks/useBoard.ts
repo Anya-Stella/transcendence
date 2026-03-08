@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import {
 	PieceData,
 	PROMOTE_MAP,
@@ -11,9 +11,13 @@ function deepCopyBoard(board: PieceData[][]): PieceData[][] {
 
 export function useBoard(initialBoard: PieceData[][]) {
 	const [board, setBoard] = useState<PieceData[][]>(deepCopyBoard(initialBoard));
+	// 最新の盤面をrefでも保持（同期的な読み取り用）
+	const boardRef = useRef(board);
+	boardRef.current = board;
 
 	/**
-	 * 盤上の駒を移動する。取った駒の漢字を返す（なければnull）。
+	 * 盤上の駒を移動する。取った駒の情報を返す。
+	 * 盤面のcurrent stateを直接読んで判定するので確実。
 	 */
 	const movePiece = useCallback(
 		(
@@ -21,37 +25,39 @@ export function useBoard(initialBoard: PieceData[][]) {
 			to: { row: number; col: number },
 			promote: boolean
 		): { capturedKanji: string | null; capturingSide: "sente" | "gote" | null } => {
+			const current = boardRef.current;
+			const piece = current[from.row][from.col];
+			if (!piece) return { capturedKanji: null, capturingSide: null };
+
+			// 先に取った駒の情報を取得
 			let capturedKanji: string | null = null;
 			let capturingSide: "sente" | "gote" | null = null;
 
+			const captured = current[to.row][to.col];
+			if (captured && captured.side !== piece.side) {
+				let kanji = captured.kanji;
+				if (DEMOTE_MAP[kanji]) {
+					kanji = DEMOTE_MAP[kanji];
+				}
+				if (kanji !== "王" && kanji !== "玉") {
+					capturedKanji = kanji;
+					capturingSide = piece.side;
+				}
+			}
+
+			// 盤面を更新
 			setBoard((prev) => {
 				const next = deepCopyBoard(prev);
-				const piece = next[from.row][from.col];
-				if (!piece) return prev;
+				const movingPiece = next[from.row][from.col];
+				if (!movingPiece) return prev;
 
-				// 駒取り判定
-				const captured = next[to.row][to.col];
-				if (captured && captured.side !== piece.side) {
-					// 成駒は元に戻す
-					let kanji = captured.kanji;
-					if (DEMOTE_MAP[kanji]) {
-						kanji = DEMOTE_MAP[kanji];
-					}
-					if (kanji !== "王" && kanji !== "玉") {
-						capturedKanji = kanji;
-						capturingSide = piece.side;
-					}
-				}
-
-				// 駒移動
-				next[to.row][to.col] = { ...piece };
+				next[to.row][to.col] = { ...movingPiece };
 				next[from.row][from.col] = null;
 
-				// 成り処理
-				if (promote && PROMOTE_MAP[piece.kanji]) {
+				if (promote && PROMOTE_MAP[movingPiece.kanji]) {
 					next[to.row][to.col] = {
-						kanji: PROMOTE_MAP[piece.kanji],
-						side: piece.side,
+						kanji: PROMOTE_MAP[movingPiece.kanji],
+						side: movingPiece.side,
 					};
 				}
 
