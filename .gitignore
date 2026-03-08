@@ -4,3 +4,4 @@ node_modules/
 postgres-data/
 dist/
 *.log
+*.o
