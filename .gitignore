@@ -5,4 +5,3 @@ dist/
 *.log
 dev.db
 dev.db-journal
-# .env
