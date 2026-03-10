@@ -453,7 +453,7 @@ void Board::generatePseudoLegalMoves(std::vector<Move> &moves)
     }
     for (int pt = PAWN; pt <= ROOK; ++pt)
     {
-        if (pt != PRO_PAWN && pt != PRO_SILVER && pt != GOLD && pt != PRO_BISHOP && pt != PRO_ROOK && pt != KING)
+        if (pt != PRO_PAWN && pt != PRO_SILVER && pt != PRO_BISHOP && pt != PRO_ROOK && pt != KING)
         {
             if (hand[sideToMove][pt] > 0)
             {

@@ -347,7 +347,6 @@ export class Board {
       if (
         pt === PType.PRO_PAWN ||
         pt === PType.PRO_SILVER ||
-        pt === PType.GOLD ||
         pt === PType.PRO_BISHOP ||
         pt === PType.PRO_ROOK ||
         pt === PType.KING
