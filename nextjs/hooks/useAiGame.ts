@@ -19,26 +19,27 @@ export function useAiGame(
 	const router = useRouter();
 
 	const {
-		board,
-		senteHand,
-		goteHand,
-		selected,
-		setSelected,
-		selectedHandPiece,
-		setSelectedHandPiece,
-		turn,
-		promoteDialog,
-		setPromoteDialog,
-		isMyTurn,
-		applyMove,
-		applyDrop,
-		isLegalTarget,
-		isLegalDropTarget,
-		getLegalTargetInfo,
+		board, // 盤面
+		senteHand, // 先手の持ち駒
+		goteHand, // 後手の持ち駒
+		selected, // 選択中の駒
+		setSelected, // 選択中の駒を設定する
+		selectedHandPiece, // 選択中の持ち駒
+		setSelectedHandPiece, // 選択中の持ち駒を設定する
+		turn, // ターン
+		promoteDialog, // 成る・成らないのダイアログ
+		setPromoteDialog, // 成る・成らないのダイアログを設定する
+		isMyTurn, // 自分のターンかどうか
+		applyMove, // 移動を適用する
+		applyDrop, // 持ち駒の適用
+		isLegalTarget, // 移動先が合法かどうか
+		isLegalDropTarget, // 打ち先が合法かどうか
+		getLegalTargetInfo, // 移動先が合法かどうか
+		gameResult, // 対局結果
+		setGameResult, // 対局結果を設定する
 	} = useGameLogic(mySide);
 
 	const [aiThinking, setAiThinking] = useState(false);
-	const [gameOver, setGameOver] = useState<string | null>(null);
 
 	const aiSide = mySide === "sente" ? "gote" : "sente";
 
@@ -85,7 +86,11 @@ export function useAiGame(
 			const data = await res.json();
 
 			if (data.resign || !data.parsed) {
-				setGameOver("あなたの勝ちです！AIが投了しました。");
+				setGameResult({
+					isOver: true,
+					winner: mySide,
+					message: "あなたの勝ちです！AIが投了しました。",
+				});
 				return;
 			}
 
@@ -108,19 +113,19 @@ export function useAiGame(
 
 	// AIの手番になったら自動で思考開始
 	useEffect(() => {
-		if (turn === aiSide && !gameOver && !aiThinking) {
+		if (turn === aiSide && !gameResult.isOver && !aiThinking) {
 			const timer = setTimeout(() => {
 				requestAiMove();
 			}, 300);
 			return () => clearTimeout(timer);
 		}
-	}, [turn, aiSide, gameOver, aiThinking, requestAiMove]);
+	}, [turn, aiSide, gameResult.isOver, aiThinking, requestAiMove]);
 
 	// ========= クリックハンドラ =========
 
 	const handleCellClick = useCallback(
 		(row: number, col: number) => {
-			if (!isMyTurn || aiThinking || gameOver) return;
+			if (!isMyTurn || aiThinking || gameResult.isOver) return;
 			if (promoteDialog) return;
 
 			const cell = board[row][col];
@@ -167,7 +172,7 @@ export function useAiGame(
 		},
 		[
 			board, selected, selectedHandPiece, mySide, turn, isMyTurn,
-			aiThinking, gameOver, promoteDialog,
+			aiThinking, gameResult.isOver, promoteDialog,
 			isLegalDropTarget, getLegalTargetInfo, executeMove, applyDrop,
 			setSelected, setSelectedHandPiece, setPromoteDialog
 		]
@@ -175,14 +180,14 @@ export function useAiGame(
 
 	const handleHandPieceClick = useCallback(
 		(kanji: string) => {
-			if (!isMyTurn || aiThinking || gameOver) return;
+			if (!isMyTurn || aiThinking || gameResult.isOver) return;
 			if (promoteDialog) return;
 			if (turn !== mySide) return;
 
 			setSelected(null);
-			setSelectedHandPiece((prev) => (prev === kanji ? null : kanji));
+			setSelectedHandPiece(selectedHandPiece === kanji ? null : kanji);
 		},
-		[isMyTurn, aiThinking, gameOver, promoteDialog, turn, mySide, setSelected, setSelectedHandPiece]
+		[isMyTurn, aiThinking, gameResult.isOver, promoteDialog, turn, mySide, selectedHandPiece, setSelected, setSelectedHandPiece]
 	);
 
 	const handleEndMatch = useCallback(() => {
@@ -206,6 +211,6 @@ export function useAiGame(
 		handleHandPieceClick,
 		handleEndMatch,
 		aiThinking,
-		gameOver,
+		gameOver: gameResult.message,
 	};
 }

@@ -21,23 +21,23 @@ interface AiMatchBoardProps {
 
 function AiMatchBoard({ mySide = "sente", aiDepth = 4 }: AiMatchBoardProps) {
 	const {
-		board,
-		turn,
-		senteHand,
-		goteHand,
-		selected,
-		selectedHandPiece,
-		isMyTurn,
-		isLegalTarget,
-		isLegalDropTarget,
-		promoteDialog,
-		setPromoteDialog,
-		executeMove,
-		handleCellClick,
-		handleHandPieceClick,
-		handleEndMatch,
-		aiThinking,
-		gameOver,
+		board, // 盤面
+		turn, // ターン
+		senteHand, // 先手の持ち駒
+		goteHand, // 後手の持ち駒
+		selected, // 選択中の駒
+		selectedHandPiece, // 選択中の持ち駒
+		isMyTurn, // 自分のターンかどうか
+		isLegalTarget, // 移動先が合法かどうか
+		isLegalDropTarget, // 打ち先が合法かどうか
+		promoteDialog, // 成る・成らないのダイアログ
+		setPromoteDialog, // 成る・成らないのダイアログを設定する
+		executeMove, // 成る・成らないの実行
+		handleCellClick, // セルをクリックしたときの処理
+		handleHandPieceClick, // 持ち駒をクリックしたときの処理
+		handleEndMatch, // 対局を終えるときの処理
+		aiThinking, // AI思考中フラグ
+		gameOver, // 対局終了フラグ
 	} = useAiGame(mySide, aiDepth);
 
 	const handOrder = ["飛", "角", "金", "銀", "歩"];

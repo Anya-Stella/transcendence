@@ -703,4 +703,18 @@ export function isMoveFromToLegal(
   return board.isPseudoLegal(m) && !board.isKingAttackedAfter(m);
 }
 
+/**
+ * Check if the active player has any legal moves. If false, the player is checkmated.
+ */
+export function hasLegalMoves(
+  pieces: (PieceInfo | null)[][],
+  turn: "sente" | "gote",
+  senteHand: Record<string, number>,
+  goteHand: Record<string, number>
+): boolean {
+  const board = boardFromPieces(pieces, turn, senteHand, goteHand);
+  const mvs = board.generateLegalMoves();
+  return mvs.length > 0;
+}
+
 export { KANJI_TO_PTYPE, PTYPE_TO_KANJI_SENTE };

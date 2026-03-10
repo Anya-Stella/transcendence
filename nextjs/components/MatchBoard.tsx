@@ -24,21 +24,22 @@ interface MatchBoardProps {
 
 function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente" }: MatchBoardProps) {
 	const {
-        board,
-        turn,
-        senteHand,
-        goteHand,
-        selected,               // 追加：選択中の駒
-        selectedHandPiece,      // 追加：選択中の持ち駒
-        isMyTurn,               // 追加
-        isLegalTarget,          // 追加：移動先ハイライト用
-        isLegalDropTarget,      // 追加：打ち先ハイライト用
-        promoteDialog,
-        setPromoteDialog,       // 追加：ダイアログを閉じる用
-        executeMove,            // 追加：成る・成らないの実行用
-        handleCellClick,
-        handleHandPieceClick,
-        handleEndMatch
+        board, // 盤面
+        turn, // ターン
+        senteHand, // 先手の持ち駒
+        goteHand, // 後手の持ち駒
+        selected, // 選択中の駒
+        selectedHandPiece, // 選択中の持ち駒
+        isMyTurn, // 自分のターンかどうか
+        isLegalTarget, // 移動先が合法かどうか
+        isLegalDropTarget, // 打ち先が合法かどうか
+        promoteDialog, // 成る・成らないのダイアログ
+        setPromoteDialog, // 成る・成らないのダイアログを設定する
+        executeMove, // 成る・成らないの実行
+        handleCellClick, // セルをクリックしたときの処理
+        handleHandPieceClick, // 持ち駒をクリックしたときの処理
+        handleEndMatch, // 対局を終えるときの処理
+        gameOver // 対局終了フラグ
     } = useShogiGame(socket, roomId, mySide, wsStatus);
 
 	// WS status label
@@ -106,10 +107,13 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 						<span className={`turn-badge ${turn === "sente" ? "turn-sente" : "turn-gote"}`}>
 							{turn === "sente" ? "▲ 先手の番" : "△ 後手の番"}
 						</span>
-						{roomId && (
+						{roomId && !gameOver && (
 							<span className="turn-you">
 								{isMyTurn ? "（あなたの番です）" : "（相手の番です）"}
 							</span>
+						)}
+						{gameOver && (
+							<span className="game-over-label">🎉 {gameOver}</span>
 						)}
 					</div>
 

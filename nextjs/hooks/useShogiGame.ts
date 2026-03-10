@@ -28,6 +28,7 @@ export function useShogiGame(
 		getLegalTargetInfo,
 		applyMove,
 		applyDrop,
+		gameResult,
 	} = useGameLogic(mySide);
 
 	// ========= アクション (WebSocket付き) =========
@@ -87,6 +88,7 @@ export function useShogiGame(
 			if (roomId && wsStatus !== "connected") return;
 			if (roomId && !isMyTurn) return;
 			if (promoteDialog) return;
+			if (gameResult.isOver) return;
 
 			const cell = board[row][col];
 
@@ -135,7 +137,7 @@ export function useShogiGame(
 		},
 		[
 			board, selected, selectedHandPiece, mySide, turn, isMyTurn,
-			roomId, wsStatus, promoteDialog,
+			roomId, wsStatus, promoteDialog, gameResult.isOver,
 			isLegalDropTarget, getLegalTargetInfo, executeMove, executeDrop,
 			setSelected, setSelectedHandPiece, setPromoteDialog
 		]
@@ -147,11 +149,12 @@ export function useShogiGame(
 			if (roomId && !isMyTurn) return;
 			if (promoteDialog) return;
 			if (turn !== mySide) return;
+			if (gameResult.isOver) return;
 
 			setSelected(null);
-			setSelectedHandPiece((prev) => (prev === kanji ? null : kanji));
+			setSelectedHandPiece(selectedHandPiece === kanji ? null : kanji);
 		},
-		[roomId, wsStatus, isMyTurn, promoteDialog, turn, mySide, setSelected, setSelectedHandPiece]
+		[roomId, wsStatus, isMyTurn, promoteDialog, turn, mySide, gameResult.isOver, selectedHandPiece, setSelected, setSelectedHandPiece]
 	);
 
 	const handleEndMatch = useCallback(() => {
@@ -174,5 +177,6 @@ export function useShogiGame(
 		handleCellClick,
 		handleHandPieceClick,
 		handleEndMatch,
+		gameOver: gameResult.message,
 	};
 }
