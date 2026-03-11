@@ -8,34 +8,53 @@ export default function SpectateRoomPage() {
 	const roomId = params.roomId as string;
 
 	return (
-		<div>
-			<header className="header">
-				<Link
-					href="/home"
-					className="header-logo"
-					style={{ textDecoration: "none" }}
-				>
-					🐯 虎戦
+		<div className="wafuu-page">
+			{/* 背景 */}
+			<div
+				className="wafuu-bg"
+				style={{ backgroundImage: "url(/images/match-bg.png)" }}
+			/>
+
+			{/* ヘッダー */}
+			<header className="wafuu-header">
+				<Link href="/home" className="wafuu-header-logo">
+					将棋ゲーム
 				</Link>
+				<div className="wafuu-header-right">
+					<span className="wafuu-badge wafuu-badge-info">
+						観戦中
+					</span>
+				</div>
 			</header>
 
-			<div className="page page-top">
-				<div className="card card-wide">
-					<h3 className="card-title">👁️ 観戦中</h3>
-					<div style={{ textAlign: "center" }}>
-						<div className="room-id mb-16">{roomId}</div>
-						<p className="text-muted mb-24">
-							観戦機能は現在準備中です。<br />
-							今後のアップデートをお楽しみに！
-						</p>
-						<Link
-							href="/home"
-							className="btn btn-outline"
-							style={{ textAlign: "center" }}
-						>
-							← ホームに戻る
-						</Link>
+			{/* コンテンツ */}
+			<div className="wafuu-content">
+				<div className="wafuu-card" style={{ textAlign: "center" }}>
+					<div
+						style={{
+							fontSize: "2rem",
+							fontWeight: 800,
+							letterSpacing: "0.2em",
+							color: "#d4af37",
+							textShadow: "0 0 12px rgba(212, 175, 55, 0.3)",
+							margin: "8px 0 16px",
+						}}
+					>
+						{roomId}
 					</div>
+					<p
+						style={{
+							color: "rgba(245, 230, 200, 0.5)",
+							fontSize: "0.9rem",
+							margin: "0 0 24px",
+						}}
+					>
+						観戦機能は現在準備中です。<br />
+						今後のアップデートをお楽しみに！
+					</p>
+					<Link href="/home" className="wafuu-btn-outline">
+						← 戻る
+					</Link>
 				</div>
 			</div>
 		</div>

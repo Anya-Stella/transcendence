@@ -30,7 +30,7 @@ export default function RoomPage() {
 	const [mySocketId, setMySocketId] = useState<string | null>(null);
 	const [userId, setUserId] = useState<string | null>(null);
 
-	// Fetch current user
+	// ユーザー情報取得
 	useEffect(() => {
 		fetch("/api/me")
 			.then((res) => res.json())
@@ -40,7 +40,7 @@ export default function RoomPage() {
 			.catch(() => { });
 	}, []);
 
-	// Connect to WebSocket
+	// WebSocket接続
 	useEffect(() => {
 		const s = io("http://localhost:3001", {
 			transports: ["websocket"],
@@ -48,7 +48,6 @@ export default function RoomPage() {
 
 		s.on("connect", () => {
 			setMySocketId(s.id ?? null);
-			// Join room once connected
 			s.emit("joinRoom", { roomId, userId });
 		});
 
@@ -60,9 +59,7 @@ export default function RoomPage() {
 			router.push(`/match/${data.roomId}`);
 		});
 
-		s.on("playerLeft", () => {
-			// Room state will be updated by the roomState event
-		});
+		s.on("playerLeft", () => { });
 
 		setSocket(s);
 
@@ -99,128 +96,160 @@ export default function RoomPage() {
 	}, [socket, roomId]);
 
 	return (
-		<div>
-			<header className="header">
-				<Link
-					href="/home"
-					className="header-logo"
-					style={{ textDecoration: "none" }}
-				>
-					🐯 虎戦
+		<div className="wafuu-page">
+			{/* 背景（onlineと同じ広間） */}
+			<div
+				className="wafuu-bg"
+				style={{ backgroundImage: "url(/images/online-bg.png)" }}
+			/>
+
+			{/* ヘッダー */}
+			<header className="wafuu-header">
+				<Link href="/home" className="wafuu-header-logo">
+					将棋ゲーム
 				</Link>
-				<span className="text-muted text-sm">
-					{amIHost ? "👑 ホスト" : "参加者"}
-				</span>
+				<div className="wafuu-header-right">
+					<span className="wafuu-badge wafuu-badge-info">
+						{amIHost ? "👑 ホスト" : "参加者"}
+					</span>
+				</div>
 			</header>
 
-			<div className="page page-top">
-				<div className="card card-wide">
-					<h3 className="card-title">対局ルーム</h3>
-
-					<div className="room-info">
-						<div className="room-id">{roomId}</div>
-
-						<button className="copy-btn" onClick={handleCopy}>
-							📋 {copied ? "コピーしました！" : "ルームIDをコピー"}
-						</button>
-
-						<div className="room-status">
-							<span className="room-status-dot" />
-							{playerCount < 2
-								? "相手の参加を待っています..."
-								: "2人揃いました！"}
-						</div>
-
+			{/* コンテンツ */}
+			<div className="wafuu-content">
+				<div className="wafuu-card">
+					{/* ルームID */}
+					<div style={{ textAlign: "center", marginBottom: "20px" }}>
 						<div
 							style={{
-								display: "flex",
-								gap: "8px",
-								justifyContent: "center",
-								marginBottom: "12px",
+								fontSize: "2rem",
+								fontWeight: 800,
+								letterSpacing: "0.2em",
+								color: "#d4af37",
+								textShadow: "0 0 12px rgba(212, 175, 55, 0.3)",
+								margin: "8px 0",
 							}}
 						>
-							{roomState?.players.map((p, i) => (
-								<div
-									key={p.socketId}
-									style={{
-										width: "48px",
-										height: "48px",
-										borderRadius: "50%",
-										background:
-											i === 0
-												? "var(--color-primary)"
-												: "var(--color-secondary)",
-										display: "flex",
-										alignItems: "center",
-										justifyContent: "center",
-										color: "white",
-										fontWeight: 700,
-										fontSize: "1.1rem",
-										border:
-											p.socketId === mySocketId
-												? "3px solid var(--color-success)"
-												: "3px solid transparent",
-									}}
-								>
-									P{i + 1}
-								</div>
-							))}
-							{Array.from({
-								length: Math.max(0, 2 - (roomState?.players.length ?? 0)),
-							}).map((_, i) => (
-								<div
-									key={`empty-${i}`}
-									style={{
-										width: "48px",
-										height: "48px",
-										borderRadius: "50%",
-										background: "var(--color-border)",
-										display: "flex",
-										alignItems: "center",
-										justifyContent: "center",
-										color: "var(--color-text-muted)",
-										fontWeight: 700,
-										fontSize: "1.1rem",
-									}}
-								>
-									?
-								</div>
-							))}
+							{roomId}
 						</div>
+						<button
+							onClick={handleCopy}
+							style={{
+								padding: "6px 16px",
+								background: "rgba(212, 175, 55, 0.1)",
+								border: "1px solid rgba(212, 175, 55, 0.3)",
+								borderRadius: "8px",
+								color: "#f5e6c8",
+								fontSize: "0.8rem",
+								cursor: "pointer",
+								transition: "all 0.3s ease",
+							}}
+						>
+							📋 {copied ? "コピーしました！" : "ルームIDをコピー"}
+						</button>
 					</div>
 
+					{/* プレイヤー表示 */}
 					<div
 						style={{
 							display: "flex",
-							flexDirection: "column",
 							gap: "12px",
+							justifyContent: "center",
+							margin: "20px 0",
 						}}
 					>
+						{roomState?.players.map((p, i) => (
+							<div
+								key={p.socketId}
+								style={{
+									width: "52px",
+									height: "52px",
+									borderRadius: "50%",
+									background:
+										i === 0
+											? "linear-gradient(135deg, #b8860b, #d4af37)"
+											: "linear-gradient(135deg, #4a6741, #6b8f63)",
+									display: "flex",
+									alignItems: "center",
+									justifyContent: "center",
+									color: "#1a1208",
+									fontWeight: 700,
+									fontSize: "1.1rem",
+									border:
+										p.socketId === mySocketId
+											? "3px solid #4ade80"
+											: "3px solid transparent",
+								}}
+							>
+								P{i + 1}
+							</div>
+						))}
+						{Array.from({
+							length: Math.max(0, 2 - (roomState?.players.length ?? 0)),
+						}).map((_, i) => (
+							<div
+								key={`empty-${i}`}
+								style={{
+									width: "52px",
+									height: "52px",
+									borderRadius: "50%",
+									background: "rgba(245, 230, 200, 0.1)",
+									display: "flex",
+									alignItems: "center",
+									justifyContent: "center",
+									color: "rgba(245, 230, 200, 0.3)",
+									fontWeight: 700,
+									fontSize: "1.1rem",
+									border: "2px dashed rgba(245, 230, 200, 0.15)",
+								}}
+							>
+								?
+							</div>
+						))}
+					</div>
+
+					{/* ステータス */}
+					<div
+						style={{
+							textAlign: "center",
+							color: playerCount < 2
+								? "rgba(245, 230, 200, 0.5)"
+								: "#4ade80",
+							fontSize: "0.9rem",
+							marginBottom: "20px",
+						}}
+						className={playerCount < 2 ? "wafuu-pulse" : ""}
+					>
+						{playerCount < 2
+							? "相手の参加を待っています..."
+							: "✅ 2人揃いました！"}
+					</div>
+
+					{/* アクションボタン */}
+					<div className="wafuu-flex-col wafuu-gap-12">
 						{amIHost && (
 							<button
-								className="btn btn-primary btn-block btn-lg"
+								className="wafuu-btn-primary"
 								onClick={handleStart}
 								disabled={playerCount < 2}
 							>
-								🎮 対局を始める
+								対局を始める
 							</button>
 						)}
-						{!amIHost && playerCount < 2 && (
-							<p className="text-center text-muted">
+						{!amIHost && (
+							<p
+								className="wafuu-pulse"
+								style={{
+									textAlign: "center",
+									color: "rgba(245, 230, 200, 0.5)",
+									fontSize: "0.85rem",
+								}}
+							>
 								ホストが対局を開始するのを待っています...
 							</p>
 						)}
-						{!amIHost && playerCount >= 2 && (
-							<p className="text-center text-muted">
-								ホストが対局を開始するのを待っています...
-							</p>
-						)}
-						<Link
-							href="/home"
-							className="btn btn-outline btn-block"
-							style={{ textAlign: "center" }}
-						>
-							❌ キャンセルしてホームへ戻る
+						<Link href="/home" className="wafuu-btn-outline">
+							← 戻る
 						</Link>
 					</div>
 				</div>
