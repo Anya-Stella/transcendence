@@ -3,12 +3,20 @@ generator client {
 }
 
 datasource db {
+<<<<<<< HEAD
   provider = "postgresql"
+=======
+  provider = "sqlite"
+>>>>>>> origin/dev
   url      = env("DATABASE_URL")
 }
 
 model User {
+<<<<<<< HEAD
   id              String   @id @default(uuid()) @db.Uuid
+=======
+  id              String   @id @default(uuid())
+>>>>>>> origin/dev
   name            String
   avatarUrl       String?
   email           String?  @unique
@@ -30,10 +38,17 @@ model User {
 }
 
 model Match {
+<<<<<<< HEAD
   id           String    @id @default(uuid()) @db.Uuid
   blackUserId  String    @db.Uuid
   whiteUserId  String    @db.Uuid
   winnerUserId String?   @db.Uuid
+=======
+  id           String    @id @default(uuid())
+  blackUserId  String
+  whiteUserId  String
+  winnerUserId String?
+>>>>>>> origin/dev
   startedAt    DateTime  @default(now())
   endedAt      DateTime?
   createdAt    DateTime  @default(now())
@@ -44,9 +59,15 @@ model Match {
 }
 
 model Friendship {
+<<<<<<< HEAD
   id              String @id @default(uuid()) @db.Uuid
   requesterUserId String @db.Uuid
   addresseeUserId String @db.Uuid
+=======
+  id              String @id @default(uuid())
+  requesterUserId String
+  addresseeUserId String
+>>>>>>> origin/dev
   pairKey         String // "${minId}:${maxId}" for dedup
   status          String @default("pending") // "pending" | "accepted"
   createdAt       DateTime @default(now())
