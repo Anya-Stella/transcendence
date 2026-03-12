@@ -1,57 +1,15 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Socket } from "socket.io-client";
+import { useShogiGame } from "@/hooks/useShogiGame";
+import { PieceData, HandPieces, DEMOTE_MAP } from "@/utils/shogiConstants";
 
-// 5×5 Shogi initial position
-// Rows top to bottom: Gote's side → Sente's side
-type PieceData = {
-	kanji: string;
-	side: "sente" | "gote";
-} | null;
-
-const INITIAL_BOARD: PieceData[][] = [
-	// Row 0 (Gote's back rank)
-	[
-		{ kanji: "王", side: "gote" },
-		{ kanji: "金", side: "gote" },
-		{ kanji: "銀", side: "gote" },
-		{ kanji: "角", side: "gote" },
-		{ kanji: "飛", side: "gote" },
-	],
-	// Row 1 (Gote's pawn)
-	[
-		null,
-		null,
-		null,
-		null,
-		{ kanji: "歩", side: "gote" },
-	],
-	// Row 2 (empty)
-	[null, null, null, null, null],
-	// Row 3 (Sente's pawn)
-	[
-		{ kanji: "歩", side: "sente" },
-		null,
-		null,
-		null,
-		null,
-	],
-	// Row 4 (Sente's back rank)
-	[
-		{ kanji: "飛", side: "sente" },
-		{ kanji: "角", side: "sente" },
-		{ kanji: "銀", side: "sente" },
-		{ kanji: "金", side: "sente" },
-		{ kanji: "王", side: "sente" },
-	],
-];
-
-function PieceComponent({ piece }: { piece: PieceData }) {
+function PieceComponent({ piece, isPromoted }: { piece: PieceData; isPromoted?: boolean }) {
 	if (!piece) return null;
 
 	return (
-		<div className={`piece piece-${piece.side}`}>
+		<div className={`piece piece-${piece.side}${isPromoted ? " piece-promoted" : ""}`}>
 			<div className="piece-inner">{piece.kanji}</div>
 		</div>
 	);
@@ -59,13 +17,69 @@ function PieceComponent({ piece }: { piece: PieceData }) {
 
 interface MatchBoardProps {
 	roomId?: string;
+	socket?: Socket | null;
+	wsStatus?: "connected" | "disconnected" | "connecting";
+	mySide?: "sente" | "gote";
 }
 
-function MatchBoard({ roomId }: MatchBoardProps) {
-	const router = useRouter();
+function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente" }: MatchBoardProps) {
+	const {
+        board, // 盤面
+        turn, // ターン
+        senteHand, // 先手の持ち駒
+        goteHand, // 後手の持ち駒
+        selected, // 選択中の駒
+        selectedHandPiece, // 選択中の持ち駒
+        isMyTurn, // 自分のターンかどうか
+        isLegalTarget, // 移動先が合法かどうか
+        isLegalDropTarget, // 打ち先が合法かどうか
+        promoteDialog, // 成る・成らないのダイアログ
+        setPromoteDialog, // 成る・成らないのダイアログを設定する
+        executeMove, // 成る・成らないの実行
+        handleCellClick, // セルをクリックしたときの処理
+        handleHandPieceClick, // 持ち駒をクリックしたときの処理
+        handleEndMatch, // 対局を終えるときの処理
+        gameOver // 対局終了フラグ
+    } = useShogiGame(socket, roomId, mySide, wsStatus);
 
-	const handleEndMatch = () => {
-		router.push("/result" + (roomId ? `?roomId=${roomId}` : ""));
+	// WS status label
+	const statusLabel =
+		wsStatus === "connected"
+			? "✅ 接続中"
+			: wsStatus === "connecting"
+				? "🔄 接続中..."
+				: "❌ 切断";
+
+	const statusClass =
+		wsStatus === "connected"
+			? "ws-status ws-status-connected"
+			: wsStatus === "connecting"
+				? "ws-status ws-status-connecting"
+				: "ws-status ws-status-disconnected";
+
+	// Hand piece display order
+	const handOrder = ["飛", "角", "金", "銀", "歩"];
+
+	const renderHand = (hand: HandPieces, side: "sente" | "gote", isOwn: boolean) => {
+		const pieces = handOrder.filter((k) => (hand[k] ?? 0) > 0);
+		if (pieces.length === 0) {
+			return <span className="hand-empty">なし</span>;
+		}
+		return pieces.map((kanji) => (
+			<button
+				key={kanji}
+				className={`hand-piece ${side === "sente" ? "hand-piece-sente" : "hand-piece-gote"}${
+					isOwn && selectedHandPiece === kanji ? " hand-piece-selected" : ""
+				}`}
+				onClick={() => isOwn && handleHandPieceClick(kanji)}
+				disabled={!isOwn}
+			>
+				<span className="hand-piece-kanji">{kanji}</span>
+				{(hand[kanji] ?? 0) > 1 && (
+					<span className="hand-piece-count">{hand[kanji]}</span>
+				)}
+			</button>
+		));
 	};
 
 	return (
@@ -78,37 +92,75 @@ function MatchBoard({ roomId }: MatchBoardProps) {
 				>
 					🐯 虎戦
 				</Link>
-				{roomId && (
-					<span className="text-muted text-sm">ルーム: {roomId}</span>
-				)}
+				<div className="header-user">
+					{roomId && (
+						<span className="text-muted text-sm">ルーム: {roomId}</span>
+					)}
+					{roomId && <span className={statusClass}>{statusLabel}</span>}
+				</div>
 			</header>
 
 			<div className="page page-top">
 				<div className="board-container">
-					{/* Gote player info */}
+					{/* Turn indicator */}
+					<div className="turn-indicator">
+						<span className={`turn-badge ${turn === "sente" ? "turn-sente" : "turn-gote"}`}>
+							{turn === "sente" ? "▲ 先手の番" : "△ 後手の番"}
+						</span>
+						{roomId && !gameOver && (
+							<span className="turn-you">
+								{isMyTurn ? "（あなたの番です）" : "（相手の番です）"}
+							</span>
+						)}
+						{gameOver && (
+							<span className="game-over-label">🎉 {gameOver}</span>
+						)}
+					</div>
+
+					{/* Gote player info + hand */}
 					<div className="board-player-info">
 						<span className="board-player-badge badge-gote">後手</span>
-						<span>対戦相手</span>
+						<span>{mySide === "gote" ? "あなた" : "対戦相手"}</span>
+						<div className="hand-area">
+							{renderHand(goteHand, "gote", mySide === "gote")}
+						</div>
 					</div>
 
 					{/* 5×5 Board */}
 					<div className="board">
-						{INITIAL_BOARD.flatMap((row, rowIdx) =>
-							row.map((cell, colIdx) => (
-								<div
-									key={`${rowIdx}-${colIdx}`}
-									className="board-cell"
-								>
-									<PieceComponent piece={cell} />
-								</div>
-							))
+						{board.flatMap((row, rowIdx) =>
+							row.map((cell, colIdx) => {
+								const isSelected =
+									selected?.row === rowIdx && selected?.col === colIdx;
+								const legalTarget = isLegalTarget(rowIdx, colIdx);
+								const legalDrop = isLegalDropTarget(rowIdx, colIdx);
+								const isHighlighted = legalTarget || legalDrop;
+								const isCapture = isHighlighted && cell !== null;
+								const cellClass = `board-cell${isSelected ? " board-cell-selected" : ""}${isHighlighted ? " board-cell-legal" : ""}${isCapture ? " board-cell-capture" : ""}`;
+								const promoted = cell ? !!DEMOTE_MAP[cell.kanji] : false;
+								return (
+									<div
+										key={`${rowIdx}-${colIdx}`}
+										className={cellClass}
+										onClick={() => handleCellClick(rowIdx, colIdx)}
+									>
+										{isHighlighted && !cell && (
+											<div className="legal-dot" />
+										)}
+										<PieceComponent piece={cell} isPromoted={promoted} />
+									</div>
+								);
+							})
 						)}
 					</div>
 
-					{/* Sente player info */}
+					{/* Sente player info + hand */}
 					<div className="board-player-info">
 						<span className="board-player-badge badge-sente">先手</span>
-						<span>あなた</span>
+						<span>{mySide === "sente" ? "あなた" : "対戦相手"}</span>
+						<div className="hand-area">
+							{renderHand(senteHand, "sente", mySide === "sente")}
+						</div>
 					</div>
 
 					{/* End match button */}
@@ -120,9 +172,33 @@ function MatchBoard({ roomId }: MatchBoardProps) {
 					</button>
 				</div>
 			</div>
+
+			{/* Promotion dialog */}
+			{promoteDialog && (
+				<div className="promote-overlay" onClick={() => setPromoteDialog(null)}>
+					<div className="promote-dialog" onClick={(e) => e.stopPropagation()}>
+						<p className="promote-title">成りますか？</p>
+						<div className="promote-buttons">
+							<button
+								className="btn promote-btn promote-btn-yes"
+								onClick={() => executeMove(promoteDialog.from, promoteDialog.to, true)}
+							>
+								成る
+							</button>
+							<button
+								className="btn promote-btn promote-btn-no"
+								onClick={() => executeMove(promoteDialog.from, promoteDialog.to, false)}
+							>
+								不成
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
 		</div>
 	);
 }
 
 export default MatchBoard;
 export { MatchBoard };
+export type { PieceData };

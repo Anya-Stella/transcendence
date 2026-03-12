@@ -49,8 +49,7 @@ export default function LoginPage() {
 
 	return (
 		<div className="page">
-			<h1 className="logo">🐯 虎戦</h1>
-			<p className="logo-sub">5×5ミニ将棋オンライン</p>
+			<h1 className="logo">将棋ゲーム</h1>
 
 			<div className="card">
 				<div className="tabs">

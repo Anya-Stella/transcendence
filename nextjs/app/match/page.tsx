@@ -1,7 +1,7 @@
 "use client";
 
-import MatchBoard from "@/components/MatchBoard";
+import AiMatchBoard from "@/components/AiMatchBoard";
 
-export default function MatchPage() {
-	return <MatchBoard />;
+export default function AiMatchPage() {
+	return <AiMatchBoard mySide="sente" aiDepth={4} />;
 }

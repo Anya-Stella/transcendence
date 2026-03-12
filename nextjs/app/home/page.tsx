@@ -34,14 +34,10 @@ export default function HomePage() {
 			<header className="header">
 				<div className="header-logo">🐯 虎戦</div>
 				<div className="header-user">
-					{user && (
-						<>
-							<span className="header-username">{user.name}</span>
-							<button className="btn btn-outline btn-sm" onClick={handleLogout}>
-								ログアウト
-							</button>
-						</>
-					)}
+					{user && <span className="header-username">{user.name}</span>}
+					<button className="btn btn-outline btn-sm" onClick={handleLogout}>
+						ログアウト
+					</button>
 				</div>
 			</header>
 

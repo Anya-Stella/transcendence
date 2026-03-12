@@ -4,3 +4,6 @@ node_modules/
 postgres-data/
 dist/
 *.log
+*.o
+engine
+legal_checker
