@@ -1,9 +1,18 @@
 "use client";
 
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 
 export default function ResultPage() {
+	return (
+		<Suspense fallback={<div>Loading...</div>}>
+			<ResultContent />
+		</Suspense>
+	);
+}
+
+function ResultContent() {
 	const searchParams = useSearchParams();
 	const roomId = searchParams.get("roomId");
 

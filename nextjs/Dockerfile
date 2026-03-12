@@ -8,7 +8,7 @@ WORKDIR /app
 # ---- Engine Builder ----
 FROM base AS engine-builder
 WORKDIR /engine
-COPY ../55engine/ ./
+COPY 55engine/ ./
 RUN make clean || true && make
 
 # ---- Dependencies ----
@@ -38,9 +38,7 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
-COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
+COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/entrypoint.sh ./entrypoint.sh
 
 # Copy 55engine binary
