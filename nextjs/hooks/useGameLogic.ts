@@ -56,39 +56,36 @@ export function useGameLogic(mySide: "sente" | "gote") {
 	}, [state.turn, state.board, state.senteHand, state.goteHand, mySide, state.gameResult.isOver]);
 
 	// ========= Actions wrapper =========
-	const applyMove = useCallback(
+	const applyMove = (
 		(from: { row: number; col: number }, to: { row: number; col: number }, promote: boolean) => {
 			dispatch({ type: "APPLY_MOVE", payload: { from, to, promote } });
-		},
-		[]
+		}
 	);
 
-	const applyDrop = useCallback(
+	const applyDrop = (
 		(kanji: string, to: { row: number; col: number }, side: "sente" | "gote") => {
 			dispatch({ type: "APPLY_DROP", payload: { kanji, to, side } });
-		},
-		[]
+		}
 	);
 
-	const setSelected = useCallback((cell: { row: number; col: number } | null) => {
+	const setSelected = ((cell: { row: number; col: number } | null) => {
 		if (cell) dispatch({ type: "SELECT_CELL", payload: cell });
 		else dispatch({ type: "DESELECT" });
-	}, []);
+	});
 
-	const setSelectedHandPiece = useCallback((kanji: string | null) => {
-		if (kanji) dispatch({ type: "SELECT_HAND", payload: kanji });
-		else dispatch({ type: "DESELECT" });
-	}, []);
+	const setSelectedHandPiece = ((kanji: string | null) => {
+		dispatch({ type: "SELECT_HAND", payload: kanji });
+	});
 
-	const setPromoteDialog = useCallback((dialog: { from: { row: number; col: number }; to: { row: number; col: number } } | null) => {
+	const setPromoteDialog = ((dialog: { from: { row: number; col: number }; to: { row: number; col: number } } | null) => {
 		dispatch({ type: "SET_PROMOTE_DIALOG", payload: dialog });
-	}, []);
+	});
 
-	const setGameResult = useCallback((result: { isOver: boolean; winner: "sente" | "gote" | "draw" | null; message: string | null }) => {
+	const setGameResult = ((result: { isOver: boolean; winner: "sente" | "gote" | "draw" | null; message: string | null }) => {
 		if (result.isOver && result.winner) {
 			dispatch({ type: "SET_GAME_OVER", payload: { winner: result.winner, message: result.message || "" } });
 		}
-	}, []);
+	});
 
 	return {
 		// State

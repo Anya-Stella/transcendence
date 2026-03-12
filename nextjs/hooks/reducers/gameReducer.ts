@@ -22,7 +22,7 @@ export interface GameState {
 
 export type GameAction =
 	| { type: "SELECT_CELL"; payload: { row: number; col: number } }
-	| { type: "SELECT_HAND"; payload: string }
+	| { type: "SELECT_HAND"; payload: string | null}
 	| { type: "DESELECT" }
 	| { type: "SET_PROMOTE_DIALOG"; payload: { from: { row: number; col: number }; to: { row: number; col: number } } | null }
 	| { type: "APPLY_MOVE"; payload: { from: { row: number; col: number }; to: { row: number; col: number }; promote: boolean } }
@@ -41,7 +41,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 		case "SELECT_HAND":
 			return {
 				...state,
-				selected: null,
+				selected: action.payload === null ? state.selected : null,
 				selectedHandPiece: state.selectedHandPiece === action.payload ? null : action.payload,
 			};
 

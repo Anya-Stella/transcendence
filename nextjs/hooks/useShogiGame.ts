@@ -83,7 +83,7 @@ export function useShogiGame(
 
 	// ========= クリックハンドラ =========
 
-	const handleCellClick = useCallback(
+	const handleCellClick = (
 		(row: number, col: number) => {
 			if (roomId && wsStatus !== "connected") return;
 			if (roomId && !isMyTurn) return;
@@ -134,16 +134,10 @@ export function useShogiGame(
 					setSelectedHandPiece(null);
 				}
 			}
-		},
-		[
-			board, selected, selectedHandPiece, mySide, turn, isMyTurn,
-			roomId, wsStatus, promoteDialog, gameResult.isOver,
-			isLegalDropTarget, getLegalTargetInfo, executeMove, executeDrop,
-			setSelected, setSelectedHandPiece, setPromoteDialog
-		]
+		}
 	);
 
-	const handleHandPieceClick = useCallback(
+	const handleHandPieceClick = (
 		(kanji: string) => {
 			if (roomId && wsStatus !== "connected") return;
 			if (roomId && !isMyTurn) return;
@@ -153,13 +147,12 @@ export function useShogiGame(
 
 			setSelected(null);
 			setSelectedHandPiece(selectedHandPiece === kanji ? null : kanji);
-		},
-		[roomId, wsStatus, isMyTurn, promoteDialog, turn, mySide, gameResult.isOver, selectedHandPiece, setSelected, setSelectedHandPiece]
+		}
 	);
 
-	const handleEndMatch = useCallback(() => {
+	const handleEndMatch = (() => {
 		router.push("/result" + (roomId ? `?roomId=${roomId}` : ""));
-	}, [router, roomId]);
+	});
 
 	return {
 		board,

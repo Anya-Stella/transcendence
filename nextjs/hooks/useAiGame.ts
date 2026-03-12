@@ -123,7 +123,7 @@ export function useAiGame(
 
 	// ========= クリックハンドラ =========
 
-	const handleCellClick = useCallback(
+	const handleCellClick = (
 		(row: number, col: number) => {
 			if (!isMyTurn || aiThinking || gameResult.isOver) return;
 			if (promoteDialog) return;
@@ -169,30 +169,21 @@ export function useAiGame(
 					setSelectedHandPiece(null);
 				}
 			}
-		},
-		[
-			board, selected, selectedHandPiece, mySide, turn, isMyTurn,
-			aiThinking, gameResult.isOver, promoteDialog,
-			isLegalDropTarget, getLegalTargetInfo, executeMove, applyDrop,
-			setSelected, setSelectedHandPiece, setPromoteDialog
-		]
+		}
 	);
 
-	const handleHandPieceClick = useCallback(
-		(kanji: string) => {
-			if (!isMyTurn || aiThinking || gameResult.isOver) return;
-			if (promoteDialog) return;
-			if (turn !== mySide) return;
+	const handleHandPieceClick = (kanji: string) => {
+    if (!isMyTurn || aiThinking || gameResult.isOver) return;
+    if (promoteDialog) return;
+    if (turn !== mySide) return;
 
-			setSelected(null);
-			setSelectedHandPiece(selectedHandPiece === kanji ? null : kanji);
-		},
-		[isMyTurn, aiThinking, gameResult.isOver, promoteDialog, turn, mySide, selectedHandPiece, setSelected, setSelectedHandPiece]
-	);
+    setSelected(null);
+    setSelectedHandPiece(selectedHandPiece === kanji ? null : kanji);
+	};
 
-	const handleEndMatch = useCallback(() => {
+	const handleEndMatch = () => {
 		router.push("/result");
-	}, [router]);
+	};
 
 	return {
 		board,
