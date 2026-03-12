@@ -30,65 +30,61 @@ export default function HomePage() {
 	};
 
 	return (
-		<div>
-			<header className="header">
-				<div className="header-logo">🐯 虎戦</div>
-				<div className="header-user">
+		<div className="wafuu-page">
+			{/* 背景 */}
+			<div
+				className="wafuu-bg"
+				style={{ backgroundImage: "url(/images/home-bg.png)" }}
+			/>
+
+			{/* ヘッダー */}
+			<header className="wafuu-header">
+				<div className="wafuu-header-logo">将棋ゲーム</div>
+				<div className="wafuu-header-right">
 					{user && (
-						<>
-							<span className="header-username">{user.name}</span>
-							<button className="btn btn-outline btn-sm" onClick={handleLogout}>
-								ログアウト
-							</button>
-						</>
+						<span className="wafuu-header-username">{user.name}</span>
 					)}
+					<button
+						className="wafuu-header-btn"
+						onClick={handleLogout}
+					>
+						ログアウト
+					</button>
 				</div>
 			</header>
 
-			<div className="page page-top">
-				<h2
-					style={{
-						fontSize: "1.5rem",
-						fontWeight: 700,
-						marginBottom: "24px",
-						textAlign: "center",
-					}}
-				>
-					あそびかたを選ぼう
-				</h2>
+			{/* コンテンツ */}
+			<div className="wafuu-content">
 
-				<div className="menu-list" style={{ maxWidth: "420px" }}>
-					<Link href="/online" className="menu-item">
-						<span className="menu-item-icon">⚔️</span>
-						<div className="menu-item-content">
-							<div className="menu-item-title">オンライン対戦</div>
-							<div className="menu-item-desc">
+				<div className="wafuu-menu">
+					<Link href="/online" className="wafuu-menu-item">
+						<div className="wafuu-menu-text">
+							<div className="wafuu-menu-title">オンライン対戦</div>
+							<div className="wafuu-menu-desc">
 								ルームを作成して友達と対戦しよう
 							</div>
 						</div>
-						<span className="menu-item-arrow">→</span>
+						<span className="wafuu-menu-arrow">→</span>
 					</Link>
 
-					<Link href="/match" className="menu-item">
-						<span className="menu-item-icon">🤖</span>
-						<div className="menu-item-content">
-							<div className="menu-item-title">AI対戦</div>
-							<div className="menu-item-desc">
+					<Link href="/match" className="wafuu-menu-item">
+						<div className="wafuu-menu-text">
+							<div className="wafuu-menu-title">AI対戦</div>
+							<div className="wafuu-menu-desc">
 								コンピュータと練習しよう（準備中）
 							</div>
 						</div>
-						<span className="menu-item-arrow">→</span>
+						<span className="wafuu-menu-arrow">→</span>
 					</Link>
 
-					<Link href="/spectate" className="menu-item">
-						<span className="menu-item-icon">👁️</span>
-						<div className="menu-item-content">
-							<div className="menu-item-title">観戦する</div>
-							<div className="menu-item-desc">
+					<Link href="/spectate" className="wafuu-menu-item">
+						<div className="wafuu-menu-text">
+							<div className="wafuu-menu-title">観戦する</div>
+							<div className="wafuu-menu-desc">
 								他のプレイヤーの対局を見よう
 							</div>
 						</div>
-						<span className="menu-item-arrow">→</span>
+						<span className="wafuu-menu-arrow">→</span>
 					</Link>
 				</div>
 			</div>

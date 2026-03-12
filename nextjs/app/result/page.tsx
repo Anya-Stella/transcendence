@@ -7,56 +7,80 @@ export default function ResultPage() {
 	const searchParams = useSearchParams();
 	const roomId = searchParams.get("roomId");
 
-	// Dummy result data
+	// ダミーの結果データ
 	const isWin = true;
 	const reason = "王を取りました";
 
 	return (
-		<div>
-			<header className="header">
-				<Link
-					href="/home"
-					className="header-logo"
-					style={{ textDecoration: "none" }}
-				>
-					🐯 虎戦
+		<div className="wafuu-page">
+			{/* 背景 */}
+			<div
+				className="wafuu-bg"
+				style={{ backgroundImage: "url(/images/result-bg.png)" }}
+			/>
+
+			{/* ヘッダー */}
+			<header className="wafuu-header">
+				<Link href="/home" className="wafuu-header-logo">
+					将棋ゲーム
 				</Link>
 			</header>
 
-			<div className="page">
-				<div className="card card-wide">
-					<div className="result-container">
-						<div
-							style={{
-								fontSize: "4rem",
-								marginBottom: "8px",
-							}}
-						>
-							{isWin ? "🎉" : "😢"}
-						</div>
-						<h2 className={`result-title ${isWin ? "result-win" : "result-lose"}`}>
-							{isWin ? "勝利！" : "敗北"}
-						</h2>
-						<p className="result-reason">{reason}</p>
+			{/* コンテンツ */}
+			<div className="wafuu-content">
+				<div className="wafuu-card" style={{ textAlign: "center" }}>
+					{/* 結果アイコン */}
+					<div style={{ fontSize: "4rem", marginBottom: "8px" }}>
+						{isWin ? "🎉" : "😢"}
+					</div>
 
-						<div className="result-buttons">
-							{roomId && (
-								<Link
-									href={`/room/${roomId}?host=true`}
-									className="btn btn-primary btn-block btn-lg"
-									style={{ textAlign: "center" }}
-								>
-									🔄 もう一回（同じ相手）
-								</Link>
-							)}
+					{/* 結果テキスト */}
+					<h2
+						style={{
+							fontSize: "2rem",
+							fontWeight: 800,
+							letterSpacing: "0.15em",
+							color: isWin ? "#d4af37" : "#ff6b6b",
+							textShadow: isWin
+								? "0 0 20px rgba(212, 175, 55, 0.5)"
+								: "0 0 20px rgba(255, 107, 107, 0.3)",
+							margin: "0 0 8px",
+						}}
+					>
+						{isWin ? "勝利" : "敗北"}
+					</h2>
+
+					<p
+						style={{
+							color: "rgba(245, 230, 200, 0.6)",
+							fontSize: "0.9rem",
+							margin: "0 0 28px",
+						}}
+					>
+						{reason}
+					</p>
+
+					{/* ボタン */}
+					<div className="wafuu-flex-col wafuu-gap-12">
+						{roomId && (
 							<Link
-								href="/home"
-								className="btn btn-outline btn-block btn-lg"
-								style={{ textAlign: "center" }}
+								href={`/room/${roomId}?host=true`}
+								className="wafuu-btn-primary"
+								style={{
+									display: "block",
+									textAlign: "center",
+									textDecoration: "none",
+								}}
 							>
-								🏠 ホームへ
+								もう一局
 							</Link>
-						</div>
+						)}
+						<Link
+							href="/home"
+							className="wafuu-btn-outline"
+						>
+							← 戻る
+						</Link>
 					</div>
 				</div>
 			</div>

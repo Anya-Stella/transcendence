@@ -1,5 +1,12 @@
 FROM node:20-alpine AS base
 
+# ---- Engine Builder ----
+FROM base AS engine-builder
+RUN apk add --no-cache python3 make g++ libc6-compat libstdc++
+WORKDIR /engine
+COPY ../55engine/ ./
+RUN make clean || true && make
+
 # ---- Dependencies ----
 FROM base AS deps
 # argon2などのビルドに必要なパッケージをここだけでインストール
@@ -38,6 +45,11 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules ./node_modules
 
 COPY --from=builder /app/entrypoint.sh ./entrypoint.sh
+
+# Copy 55engine binary
+COPY --from=engine-builder /engine/engine ./engine/55engine
+COPY --from=engine-builder /engine/legal_checker ./engine/legal_checker
+
 RUN chmod +x entrypoint.sh
 
 # Prismaのバイナリが実行できるように権限を調整（念のため）

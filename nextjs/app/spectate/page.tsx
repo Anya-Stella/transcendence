@@ -20,31 +20,43 @@ export default function SpectatePage() {
 	};
 
 	return (
-		<div>
-			<header className="header">
-				<Link
-					href="/home"
-					className="header-logo"
-					style={{ textDecoration: "none" }}
-				>
-					🐯 虎戦
+		<div className="wafuu-page">
+			{/* 背景 */}
+			<div
+				className="wafuu-bg"
+				style={{ backgroundImage: "url(/images/online-bg.png)" }}
+			/>
+
+			{/* ヘッダー */}
+			<header className="wafuu-header">
+				<Link href="/home" className="wafuu-header-logo">
+					将棋ゲーム
 				</Link>
 			</header>
 
-			<div className="page page-top">
-				<div className="card">
-					<h3 className="card-title">👁️ 観戦する</h3>
+			{/* コンテンツ */}
+			<div className="wafuu-content">
+				<div className="wafuu-card">
+					<h3
+						className="wafuu-heading"
+						style={{ fontSize: "1.2rem", marginBottom: "16px" }}
+					>
+						観戦する
+					</h3>
 
-					{error && <div className="error-box">{error}</div>}
+					{error && <div className="wafuu-error">{error}</div>}
 
-					<form onSubmit={handleSubmit}>
-						<div className="form-group">
-							<label className="form-label" htmlFor="spectateRoomId">
+					<form
+						className="wafuu-flex-col wafuu-gap-16"
+						onSubmit={handleSubmit}
+					>
+						<div>
+							<label className="wafuu-label" htmlFor="spectateRoomId">
 								観戦するルームのID
 							</label>
 							<input
 								id="spectateRoomId"
-								className="form-input"
+								className="wafuu-input"
 								type="text"
 								placeholder="例: ABC123"
 								value={roomId}
@@ -56,24 +68,17 @@ export default function SpectatePage() {
 								style={{
 									textAlign: "center",
 									fontSize: "1.3rem",
-									letterSpacing: "0.1em",
+									letterSpacing: "0.15em",
 								}}
 								autoFocus
 							/>
 						</div>
 
-						<button
-							type="submit"
-							className="btn btn-primary btn-block btn-lg mt-16"
-						>
+						<button type="submit" className="wafuu-btn-primary">
 							観戦を開始
 						</button>
-						<Link
-							href="/home"
-							className="btn btn-outline btn-block mt-16"
-							style={{ textAlign: "center" }}
-						>
-							← ホームに戻る
+						<Link href="/home" className="wafuu-btn-outline">
+							← 戻る
 						</Link>
 					</form>
 				</div>

@@ -1,0 +1,175 @@
+import { useCallback, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Socket } from "socket.io-client";
+import { useGameLogic } from "./useGameLogic";
+
+export function useShogiGame(
+	socket: Socket | null | undefined,
+	roomId: string | undefined,
+	mySide: "sente" | "gote",
+	wsStatus: "connected" | "disconnected" | "connecting"
+) {
+	const router = useRouter();
+
+	const {
+		board,
+		turn,
+		senteHand,
+		goteHand,
+		selected,
+		setSelected,
+		selectedHandPiece,
+		setSelectedHandPiece,
+		promoteDialog,
+		setPromoteDialog,
+		isMyTurn,
+		isLegalTarget,
+		isLegalDropTarget,
+		getLegalTargetInfo,
+		applyMove,
+		applyDrop,
+		gameResult,
+	} = useGameLogic(mySide);
+
+	// ========= アクション (WebSocket付き) =========
+
+	const executeMove = useCallback(
+		(from: { row: number; col: number }, to: { row: number; col: number }, promote: boolean) => {
+			applyMove(from, to, promote);
+
+			if (socket && roomId) {
+				socket.emit("move", { roomId, from, to, promote });
+			}
+		},
+		[applyMove, socket, roomId]
+	);
+
+	const executeDrop = useCallback(
+		(kanji: string, to: { row: number; col: number }) => {
+			const side = turn;
+			applyDrop(kanji, to, side);
+
+			if (socket && roomId) {
+				socket.emit("move", { roomId, drop: kanji, to });
+			}
+		},
+		[turn, applyDrop, socket, roomId]
+	);
+
+	// ========= 相手の手を受信 =========
+
+	useEffect(() => {
+		if (!socket) return;
+
+		const handleMoveMade = (data: {
+			from?: { row: number; col: number };
+			to: { row: number; col: number };
+			promote?: boolean;
+			drop?: string;
+		}) => {
+			if (data.drop) {
+				const oppSide = mySide === "sente" ? "gote" : "sente";
+				applyDrop(data.drop, data.to, oppSide);
+			} else if (data.from) {
+				applyMove(data.from, data.to, data.promote ?? false);
+			}
+		};
+
+		socket.on("moveMade", handleMoveMade);
+		return () => {
+			socket.off("moveMade", handleMoveMade);
+		};
+	}, [socket, applyMove, applyDrop, mySide]);
+
+	// ========= クリックハンドラ =========
+
+	const handleCellClick = (
+		(row: number, col: number) => {
+			if (roomId && wsStatus !== "connected") return;
+			if (roomId && !isMyTurn) return;
+			if (promoteDialog) return;
+			if (gameResult.isOver) return;
+
+			const cell = board[row][col];
+
+			// 持ち駒選択中
+			if (selectedHandPiece) {
+				if (isLegalDropTarget(row, col)) {
+					executeDrop(selectedHandPiece, { row, col });
+				} else if (cell && cell.side === mySide) {
+					setSelectedHandPiece(null);
+					setSelected({ row, col });
+				} else {
+					setSelectedHandPiece(null);
+				}
+				return;
+			}
+
+			// 盤上の駒選択中
+			if (selected) {
+				if (cell && cell.side === mySide) {
+					setSelected({ row, col });
+					return;
+				}
+
+				const targetInfo = getLegalTargetInfo(row, col);
+				if (targetInfo) {
+					const from = { row: selected.row, col: selected.col };
+					const to = { row, col };
+
+					if (targetInfo.canPromote) {
+						setPromoteDialog({ from, to });
+					} else if (targetInfo.mustPromote) {
+						executeMove(from, to, true);
+					} else {
+						executeMove(from, to, targetInfo.promote);
+					}
+				} else {
+					setSelected(null);
+				}
+			} else {
+				// 自分の手番の駒を選択
+				if (cell && cell.side === turn) {
+					setSelected({ row, col });
+					setSelectedHandPiece(null);
+				}
+			}
+		}
+	);
+
+	const handleHandPieceClick = (
+		(kanji: string) => {
+			if (roomId && wsStatus !== "connected") return;
+			if (roomId && !isMyTurn) return;
+			if (promoteDialog) return;
+			if (turn !== mySide) return;
+			if (gameResult.isOver) return;
+
+			setSelected(null);
+			setSelectedHandPiece(selectedHandPiece === kanji ? null : kanji);
+		}
+	);
+
+	const handleEndMatch = (() => {
+		router.push("/result" + (roomId ? `?roomId=${roomId}` : ""));
+	});
+
+	return {
+		board,
+		turn,
+		senteHand,
+		goteHand,
+		selected,
+		selectedHandPiece,
+		isMyTurn,
+		isLegalTarget,
+		isLegalDropTarget,
+		promoteDialog,
+		setPromoteDialog,
+		executeMove,
+		handleCellClick,
+		handleHandPieceClick,
+		handleEndMatch,
+		gameOver: gameResult.message,
+	};
+}
