@@ -24,25 +24,32 @@ interface MatchBoardProps {
 
 function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente" }: MatchBoardProps) {
 	const {
-        board, // 盤面
-        turn, // ターン
-        senteHand, // 先手の持ち駒
-        goteHand, // 後手の持ち駒
-        selected, // 選択中の駒
-        selectedHandPiece, // 選択中の持ち駒
-        isMyTurn, // 自分のターンかどうか
-        isLegalTarget, // 移動先が合法かどうか
-        isLegalDropTarget, // 打ち先が合法かどうか
-        promoteDialog, // 成る・成らないのダイアログ
-        setPromoteDialog, // 成る・成らないのダイアログを設定する
-        executeMove, // 成る・成らないの実行
-        handleCellClick, // セルをクリックしたときの処理
-        handleHandPieceClick, // 持ち駒をクリックしたときの処理
-        handleEndMatch, // 対局を終えるときの処理
-        gameOver // 対局終了フラグ
-    } = useShogiGame(socket, roomId, mySide, wsStatus);
+		board,
+		turn,
+		senteHand,
+		goteHand,
+		selected,
+		selectedHandPiece,
+		isMyTurn,
+		isLegalTarget,
+		isLegalDropTarget,
+		promoteDialog,
+		setPromoteDialog,
+		executeMove,
+		handleCellClick,
+		handleHandPieceClick,
+		handleEndMatch,
+		gameOver
+	} = useShogiGame(socket, roomId, mySide, wsStatus);
 
-	// WS status label
+	// WS接続ステータス
+	const statusBadgeClass =
+		wsStatus === "connected"
+			? "wafuu-badge wafuu-badge-success"
+			: wsStatus === "connecting"
+				? "wafuu-badge wafuu-badge-warning"
+				: "wafuu-badge wafuu-badge-info";
+
 	const statusLabel =
 		wsStatus === "connected"
 			? "✅ 接続中"
@@ -83,94 +90,129 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 	};
 
 	return (
-		<div>
-			<header className="header">
-				<Link
-					href="/home"
-					className="header-logo"
-					style={{ textDecoration: "none" }}
-				>
-					🐯 虎戦
+		<div className="wafuu-page">
+			{/* 背景 */}
+			<div
+				className="wafuu-bg"
+				style={{ backgroundImage: "url(/images/match-bg.png)" }}
+			/>
+
+			{/* ヘッダー */}
+			<header className="wafuu-header">
+				<Link href="/home" className="wafuu-header-logo">
+					将棋ゲーム
 				</Link>
-				<div className="header-user">
+				<div className="wafuu-header-right">
 					{roomId && (
-						<span className="text-muted text-sm">ルーム: {roomId}</span>
+						<span
+							style={{
+								color: "rgba(245, 230, 200, 0.5)",
+								fontSize: "0.8rem",
+							}}
+						>
+							部屋: {roomId}
+						</span>
 					)}
-					{roomId && <span className={statusClass}>{statusLabel}</span>}
+					{roomId && (
+						<span className={statusBadgeClass}>{statusLabel}</span>
+					)}
 				</div>
 			</header>
 
-			<div className="page page-top">
-				<div className="board-container">
-					{/* Turn indicator */}
-					<div className="turn-indicator">
-						<span className={`turn-badge ${turn === "sente" ? "turn-sente" : "turn-gote"}`}>
-							{turn === "sente" ? "▲ 先手の番" : "△ 後手の番"}
-						</span>
-						{roomId && !gameOver && (
-							<span className="turn-you">
-								{isMyTurn ? "（あなたの番です）" : "（相手の番です）"}
-							</span>
-						)}
-						{gameOver && (
-							<span className="game-over-label">🎉 {gameOver}</span>
-						)}
-					</div>
-
-					{/* Gote player info + hand */}
-					<div className="board-player-info">
-						<span className="board-player-badge badge-gote">後手</span>
-						<span>{mySide === "gote" ? "あなた" : "対戦相手"}</span>
-						<div className="hand-area">
-							{renderHand(goteHand, "gote", mySide === "gote")}
-						</div>
-					</div>
-
-					{/* 5×5 Board */}
-					<div className="board">
-						{board.flatMap((row, rowIdx) =>
-							row.map((cell, colIdx) => {
-								const isSelected =
-									selected?.row === rowIdx && selected?.col === colIdx;
-								const legalTarget = isLegalTarget(rowIdx, colIdx);
-								const legalDrop = isLegalDropTarget(rowIdx, colIdx);
-								const isHighlighted = legalTarget || legalDrop;
-								const isCapture = isHighlighted && cell !== null;
-								const cellClass = `board-cell${isSelected ? " board-cell-selected" : ""}${isHighlighted ? " board-cell-legal" : ""}${isCapture ? " board-cell-capture" : ""}`;
-								const promoted = cell ? !!DEMOTE_MAP[cell.kanji] : false;
-								return (
-									<div
-										key={`${rowIdx}-${colIdx}`}
-										className={cellClass}
-										onClick={() => handleCellClick(rowIdx, colIdx)}
-									>
-										{isHighlighted && !cell && (
-											<div className="legal-dot" />
-										)}
-										<PieceComponent piece={cell} isPromoted={promoted} />
-									</div>
-								);
-							})
-						)}
-					</div>
-
-					{/* Sente player info + hand */}
-					<div className="board-player-info">
-						<span className="board-player-badge badge-sente">先手</span>
-						<span>{mySide === "sente" ? "あなた" : "対戦相手"}</span>
-						<div className="hand-area">
-							{renderHand(senteHand, "sente", mySide === "sente")}
-						</div>
-					</div>
-
-					{/* End match button */}
-					<button
-						className="btn btn-danger btn-lg mt-24"
-						onClick={handleEndMatch}
+			{/* コンテンツ */}
+			<div className="wafuu-content">
+				{/* 手番表示 */}
+				<div
+					style={{
+						display: "flex",
+						alignItems: "center",
+						gap: "12px",
+						marginBottom: "16px",
+					}}
+				>
+					<span
+						style={{
+							padding: "6px 16px",
+							borderRadius: "20px",
+							fontSize: "0.85rem",
+							fontWeight: 600,
+							background:
+								turn === "sente"
+									? "rgba(212, 175, 55, 0.2)"
+									: "rgba(100, 149, 237, 0.2)",
+							color:
+								turn === "sente" ? "#d4af37" : "#6495ed",
+							border: `1px solid ${turn === "sente"
+								? "rgba(212, 175, 55, 0.3)"
+								: "rgba(100, 149, 237, 0.3)"
+								}`,
+						}}
 					>
-						対局を終える
-					</button>
+						{turn === "sente" ? "▲ 先手の番" : "△ 後手の番"}
+					</span>
+					{roomId && !gameOver && (
+						<span className="turn-you">
+							{isMyTurn ? "（あなたの番です）" : "（相手の番です）"}
+						</span>
+					)}
+					{gameOver && (
+						<span className="game-over-label">🎉 {gameOver}</span>
+					)}
 				</div>
+
+				{/* Gote player info + hand */}
+				<div className="board-player-info">
+					<span className="board-player-badge badge-gote">後手</span>
+					<span>{mySide === "gote" ? "あなた" : "対戦相手"}</span>
+					<div className="hand-area">
+						{renderHand(goteHand, "gote", mySide === "gote")}
+					</div>
+				</div>
+
+				{/* 5×5 Board */}
+				<div className="board">
+					{board.flatMap((row, rowIdx) =>
+						row.map((cell, colIdx) => {
+							const isSelected =
+								selected?.row === rowIdx && selected?.col === colIdx;
+							const legalTarget = isLegalTarget(rowIdx, colIdx);
+							const legalDrop = isLegalDropTarget(rowIdx, colIdx);
+							const isHighlighted = legalTarget || legalDrop;
+							const isCapture = isHighlighted && cell !== null;
+							const cellClass = `board-cell${isSelected ? " board-cell-selected" : ""}${isHighlighted ? " board-cell-legal" : ""}${isCapture ? " board-cell-capture" : ""}`;
+							const promoted = cell ? !!DEMOTE_MAP[cell.kanji] : false;
+							return (
+								<div
+									key={`${rowIdx}-${colIdx}`}
+									className={cellClass}
+									onClick={() => handleCellClick(rowIdx, colIdx)}
+								>
+									{isHighlighted && !cell && (
+										<div className="legal-dot" />
+									)}
+									<PieceComponent piece={cell} isPromoted={promoted} />
+								</div>
+							);
+						})
+					)}
+				</div>
+
+				{/* Sente player info + hand */}
+				<div className="board-player-info">
+					<span className="board-player-badge badge-sente">先手</span>
+					<span>{mySide === "sente" ? "あなた" : "対戦相手"}</span>
+					<div className="hand-area">
+						{renderHand(senteHand, "sente", mySide === "sente")}
+					</div>
+				</div>
+
+				{/* End match button */}
+				<button
+					className="btn btn-danger btn-lg mt-24"
+					onClick={handleEndMatch}
+				>
+					🏳️ 投了する
+				</button>
 			</div>
 
 			{/* Promotion dialog */}

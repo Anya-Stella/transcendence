@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./wafuu-theme.css";
 
 export const metadata: Metadata = {
 	title: "将棋ゲーム",

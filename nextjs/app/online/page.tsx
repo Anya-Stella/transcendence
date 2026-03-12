@@ -39,69 +39,65 @@ export default function OnlinePage() {
 	};
 
 	return (
-		<div>
-			<header className="header">
-				<Link href="/home" className="header-logo" style={{ textDecoration: "none" }}>
-					🐯 虎戦
+		<div className="wafuu-page">
+			{/* 背景 */}
+			<div
+				className="wafuu-bg"
+				style={{ backgroundImage: "url(/images/online-bg.png)" }}
+			/>
+
+			{/* ヘッダー */}
+			<header className="wafuu-header">
+				<Link href="/home" className="wafuu-header-logo">
+					将棋ゲーム
 				</Link>
 			</header>
 
-			<div className="page page-top">
-				<h2
-					style={{
-						fontSize: "1.5rem",
-						fontWeight: 700,
-						marginBottom: "24px",
-						textAlign: "center",
-					}}
-				>
-					オンライン対戦
-				</h2>
+			{/* コンテンツ */}
+			<div className="wafuu-content">
 
 				{mode === "select" ? (
-					<div className="card">
-						<div
-							style={{
-								display: "flex",
-								flexDirection: "column",
-								gap: "12px",
-							}}
-						>
+					<div className="wafuu-card">
+						<div className="wafuu-flex-col wafuu-gap-12">
 							<button
-								className="btn btn-primary btn-block btn-lg"
+								className="wafuu-btn-primary"
 								onClick={handleCreateRoom}
 							>
-								✨ ルームを作成する
+								部屋を立てる
 							</button>
 							<button
-								className="btn btn-secondary btn-block btn-lg"
+								className="wafuu-btn-secondary"
 								onClick={() => setMode("join")}
 							>
-								🔑 ルームに参加する
+								部屋に入る
 							</button>
-							<Link
-								href="/home"
-								className="btn btn-outline btn-block"
-								style={{ textAlign: "center" }}
-							>
-								← ホームに戻る
+							<Link href="/home" className="wafuu-btn-outline wafuu-mt-8">
+								← 戻る
 							</Link>
 						</div>
 					</div>
 				) : (
-					<div className="card">
-						<h3 className="card-title">ルームに参加</h3>
+					<div className="wafuu-card">
+						<h3
+							className="wafuu-heading"
+							style={{ fontSize: "1.2rem", marginBottom: "16px" }}
+						>
+							部屋に入る
+						</h3>
 
-						{error && <div className="error-box">{error}</div>}
+						{error && <div className="wafuu-error">{error}</div>}
 
-						<form onSubmit={handleJoinRoom}>
-							<div className="form-group">
-								<label className="form-label" htmlFor="roomId">
+						<form
+							className="wafuu-flex-col wafuu-gap-16"
+							onSubmit={handleJoinRoom}
+						>
+							<div>
+								<label className="wafuu-label" htmlFor="roomId">
 									ルームID
 								</label>
 								<input
 									id="roomId"
-									className="form-input"
+									className="wafuu-input"
 									type="text"
 									placeholder="例: ABC123"
 									value={joinRoomId}
@@ -110,20 +106,21 @@ export default function OnlinePage() {
 										setError("");
 									}}
 									maxLength={10}
-									style={{ textAlign: "center", fontSize: "1.3rem", letterSpacing: "0.1em" }}
+									style={{
+										textAlign: "center",
+										fontSize: "1.3rem",
+										letterSpacing: "0.15em",
+									}}
 									autoFocus
 								/>
 							</div>
 
-							<button
-								type="submit"
-								className="btn btn-primary btn-block btn-lg mt-16"
-							>
+							<button type="submit" className="wafuu-btn-primary">
 								参加する
 							</button>
 							<button
 								type="button"
-								className="btn btn-outline btn-block mt-16"
+								className="wafuu-btn-outline"
 								onClick={() => {
 									setMode("select");
 									setError("");

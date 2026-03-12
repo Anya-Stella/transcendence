@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import "./login.css";
 
 export default function LoginPage() {
 	const router = useRouter();
@@ -48,88 +49,97 @@ export default function LoginPage() {
 	};
 
 	return (
-		<div className="page">
-			<h1 className="logo">将棋ゲーム</h1>
+		<div className="login-page">
+			{/* 背景 */}
+			<div className="login-bg" />
 
-			<div className="card">
-				<div className="tabs">
-					<button
-						className={`tab ${mode === "login" ? "tab-active" : ""}`}
-						onClick={() => { setMode("login"); setError(""); }}
-					>
-						ログイン
-					</button>
-					<button
-						className={`tab ${mode === "signup" ? "tab-active" : ""}`}
-						onClick={() => { setMode("signup"); setError(""); }}
-					>
-						新規登録
-					</button>
-				</div>
+			{/* コンテンツ */}
+			<div className="login-content">
+				<h1 className="login-title">将棋ゲーム</h1>
 
-				{error && <div className="error-box">{error}</div>}
+				<div className="login-card">
+					{/* タブ */}
+					<div className="login-tabs">
+						<button
+							className={`login-tab ${mode === "login" ? "login-tab-active" : ""}`}
+							onClick={() => { setMode("login"); setError(""); }}
+						>
+							ログイン
+						</button>
+						<button
+							className={`login-tab ${mode === "signup" ? "login-tab-active" : ""}`}
+							onClick={() => { setMode("signup"); setError(""); }}
+						>
+							新規登録
+						</button>
+					</div>
 
-				<form onSubmit={handleSubmit}>
-					{mode === "signup" && (
-						<div className="form-group">
-							<label className="form-label" htmlFor="name">
-								名前
+					{/* エラー */}
+					{error && <div className="login-error">{error}</div>}
+
+					{/* フォーム */}
+					<form className="login-form" onSubmit={handleSubmit}>
+						{mode === "signup" && (
+							<div className="login-field">
+								<label className="login-label" htmlFor="name">
+									名前
+								</label>
+								<input
+									id="name"
+									className="login-input"
+									type="text"
+									placeholder="表示名を入力"
+									value={name}
+									onChange={(e) => setName(e.target.value)}
+									required
+								/>
+							</div>
+						)}
+
+						<div className="login-field">
+							<label className="login-label" htmlFor="email">
+								メールアドレス
 							</label>
 							<input
-								id="name"
-								className="form-input"
-								type="text"
-								placeholder="表示名を入力"
-								value={name}
-								onChange={(e) => setName(e.target.value)}
+								id="email"
+								className="login-input"
+								type="email"
+								placeholder="example@email.com"
+								value={email}
+								onChange={(e) => setEmail(e.target.value)}
 								required
 							/>
 						</div>
-					)}
 
-					<div className="form-group">
-						<label className="form-label" htmlFor="email">
-							メールアドレス
-						</label>
-						<input
-							id="email"
-							className="form-input"
-							type="email"
-							placeholder="example@email.com"
-							value={email}
-							onChange={(e) => setEmail(e.target.value)}
-							required
-						/>
-					</div>
+						<div className="login-field">
+							<label className="login-label" htmlFor="password">
+								パスワード
+							</label>
+							<input
+								id="password"
+								className="login-input"
+								type="password"
+								placeholder={mode === "signup" ? "8文字以上" : "パスワード"}
+								value={password}
+								onChange={(e) => setPassword(e.target.value)}
+								required
+								minLength={mode === "signup" ? 8 : undefined}
+							/>
+						</div>
 
-					<div className="form-group">
-						<label className="form-label" htmlFor="password">
-							パスワード
-						</label>
-						<input
-							id="password"
-							className="form-input"
-							type="password"
-							placeholder={mode === "signup" ? "8文字以上" : "パスワード"}
-							value={password}
-							onChange={(e) => setPassword(e.target.value)}
-							required
-							minLength={mode === "signup" ? 8 : undefined}
-						/>
-					</div>
-
-					<button
-						type="submit"
-						className="btn btn-primary btn-block btn-lg mt-16"
-						disabled={loading}
-					>
-						{loading
-							? "処理中..."
-							: mode === "login"
-								? "ログイン"
-								: "アカウントを作成"}
-					</button>
-				</form>
+						<button
+							type="submit"
+							className="login-btn"
+							disabled={loading}
+						>
+							{loading
+								? "処理中..."
+								: mode === "login"
+									? "ログイン"
+									: "新規登録"}
+						</button>
+					</form>
+				</div>
 			</div>
 		</div>
 	);
