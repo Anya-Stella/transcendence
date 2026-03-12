@@ -118,8 +118,10 @@ io.on("connection", (socket: Socket) => {
 		"move",
 		(data: {
 			roomId: string;
-			from: { row: number; col: number };
+			from?: { row: number; col: number };
 			to: { row: number; col: number };
+			promote?: boolean;
+			drop?: string;
 		}) => {
 			const room = rooms.get(data.roomId);
 			if (!room) return;
@@ -127,14 +129,22 @@ io.on("connection", (socket: Socket) => {
 			const isPlayer = room.players.some((p) => p.socketId === socket.id);
 			if (!isPlayer) return;
 
-			console.log(
-				`[WS] Move in room ${data.roomId}: (${data.from.row},${data.from.col}) → (${data.to.row},${data.to.col})`
-			);
+			if (data.drop) {
+				console.log(
+					`[WS] Drop in room ${data.roomId}: ${data.drop} → (${data.to.row},${data.to.col})`
+				);
+			} else if (data.from) {
+				console.log(
+					`[WS] Move in room ${data.roomId}: (${data.from.row},${data.from.col}) → (${data.to.row},${data.to.col})${data.promote ? "+" : ""}`
+				);
+			}
 
 			// Broadcast to other players in the room (not to sender)
 			socket.to(data.roomId).emit("moveMade", {
 				from: data.from,
 				to: data.to,
+				promote: data.promote,
+				drop: data.drop,
 			});
 		}
 	);

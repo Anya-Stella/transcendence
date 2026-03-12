@@ -670,3 +670,225 @@ body {
   color: var(--color-text-muted);
   font-weight: 500;
 }
+
+/* ===== Legal move highlights ===== */
+.board-cell-legal {
+  position: relative;
+}
+
+.legal-dot {
+  position: absolute;
+  width: 28%;
+  height: 28%;
+  border-radius: 50%;
+  background: rgba(76, 175, 80, 0.55);
+  z-index: 5;
+  pointer-events: none;
+  animation: legalPulse 1.2s ease-in-out infinite;
+}
+
+@keyframes legalPulse {
+  0%, 100% { transform: scale(1); opacity: 0.55; }
+  50% { transform: scale(1.15); opacity: 0.75; }
+}
+
+.board-cell-capture {
+  background: rgba(229, 115, 115, 0.35) !important;
+  box-shadow: inset 0 0 6px rgba(229, 115, 115, 0.5);
+}
+
+/* ===== Hand (持ち駒) area ===== */
+.hand-area {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+
+.hand-empty {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  margin-left: auto;
+}
+
+.hand-piece {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 40px;
+  border: 2px solid var(--color-wood-dark);
+  border-radius: var(--radius-sm);
+  background: var(--color-piece-sente);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-family: var(--font-main);
+  padding: 0;
+}
+
+.hand-piece:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.hand-piece:not(:disabled):hover {
+  border-color: var(--color-primary);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.hand-piece-gote {
+  background: var(--color-piece-gote-bg);
+}
+
+.hand-piece-gote .hand-piece-kanji {
+  transform: rotate(180deg);
+}
+
+.hand-piece-selected {
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 0 0 3px rgba(232, 131, 74, 0.35), var(--shadow-md) !important;
+  background: #FFE8D0 !important;
+  transform: translateY(-3px) !important;
+}
+
+.hand-piece-kanji {
+  font-size: 1rem;
+  font-weight: 900;
+  color: var(--color-text);
+}
+
+.hand-piece-count {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  background: var(--color-primary);
+  color: white;
+  font-size: 0.6rem;
+  font-weight: 700;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+/* ===== Promoted piece (成り駒) ===== */
+.piece-promoted .piece-inner {
+  color: #c62828;
+}
+
+/* ===== Promotion dialog ===== */
+.promote-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1000;
+  backdrop-filter: blur(3px);
+  animation: fadeIn 0.15s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.promote-dialog {
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  border: 3px solid var(--color-wood-dark);
+  padding: 28px 36px;
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+  animation: scaleIn 0.2s ease;
+}
+
+@keyframes scaleIn {
+  from { transform: scale(0.85); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.promote-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+  color: var(--color-text);
+}
+
+.promote-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.promote-btn {
+  min-width: 100px;
+  padding: 12px 24px !important;
+  font-size: 1rem !important;
+  border-radius: var(--radius-md) !important;
+}
+
+.promote-btn-yes {
+  background: var(--color-primary) !important;
+  color: white !important;
+  border-color: var(--color-primary-hover) !important;
+  box-shadow: 0 3px 0 var(--color-primary-hover), var(--shadow-sm) !important;
+}
+
+.promote-btn-yes:hover {
+  background: var(--color-primary-hover) !important;
+}
+
+.promote-btn-no {
+  background: var(--color-bg-alt) !important;
+  color: var(--color-text) !important;
+  border-color: var(--color-border) !important;
+  box-shadow: 0 3px 0 #d0c0a8, var(--shadow-sm) !important;
+}
+
+.promote-btn-no:hover {
+  background: var(--color-wood-light) !important;
+}
+
+/* ===== Board player info extended with hand area ===== */
+.board-player-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 20px;
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  border: 2px solid var(--color-border);
+  font-weight: 600;
+  font-size: 0.95rem;
+  min-width: 350px;
+}
+
+/* ===== AI Match ===== */
+.ai-thinking {
+  display: inline-block;
+  margin-left: 12px;
+  font-size: 0.9rem;
+  color: var(--color-primary);
+  animation: pulse-thinking 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse-thinking {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.game-over-label {
+  display: inline-block;
+  margin-left: 12px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #e74c3c;
+}
