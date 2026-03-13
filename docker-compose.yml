@@ -21,8 +21,8 @@ services:
 
   nextjs:
     build:
-      context: ./nextjs
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: nextjs/Dockerfile
     restart: unless-stopped
     env_file: .env
     environment:
@@ -34,8 +34,8 @@ services:
 
   ws-server:
     build:
-      context: ./ws-server
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ws-server/Dockerfile
     restart: unless-stopped
     env_file: .env
     environment:

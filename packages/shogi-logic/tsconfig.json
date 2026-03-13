@@ -15,15 +15,7 @@
 		"declaration": true,
 		"declarationMap": true,
 		"sourceMap": true,
-		"baseUrl": ".",
-		"paths": {
-			"@torassen/shogi-logic": [
-				"../packages/shogi-logic/src"
-			],
-			"@torassen/shogi-logic/*": [
-				"../packages/shogi-logic/src/*"
-			]
-		}
+		"composite": true
 	},
 	"include": [
 		"src/**/*"

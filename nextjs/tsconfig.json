@@ -24,6 +24,12 @@
 		"paths": {
 			"@/*": [
 				"./*"
+			],
+			"@torassen/shogi-logic": [
+				"../packages/shogi-logic/src"
+			],
+			"@torassen/shogi-logic/*": [
+				"../packages/shogi-logic/src/*"
 			]
 		}
 	},
