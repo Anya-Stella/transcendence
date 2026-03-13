@@ -4,7 +4,7 @@ WORKDIR /app
 
 # ---- Shared Package Build ----
 FROM base AS shared-builder
-WORKDIR /app/packages/shogi-logic
+WORKDIR /shared
 COPY packages/shogi-logic/package.json ./
 COPY packages/shogi-logic/tsconfig.json ./
 COPY packages/shogi-logic/src/ ./src/
@@ -14,18 +14,15 @@ RUN npm run build
 # ---- Dependencies ----
 FROM base AS deps
 WORKDIR /app
-COPY package.json ./
-COPY nextjs/package.json ./nextjs/
-COPY ws-server/package.json ./ws-server/
-COPY packages/shogi-logic/package.json ./packages/shogi-logic/
-RUN npm install --workspace=ws-server
+COPY ws-server/package.json ./
+RUN node -e "const p=require('./package.json'); delete p.dependencies['@torassen/shogi-logic']; require('fs').writeFileSync('./package.json', JSON.stringify(p,null,2))"
+RUN npm install
 
 # ---- Builder ----
 FROM base AS builder
-WORKDIR /app/ws-server
-COPY --from=deps /app/ws-server/node_modules ./node_modules
-COPY --from=deps /app/node_modules ../node_modules
-COPY --from=shared-builder /app/packages/shogi-logic ../packages/shogi-logic
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=shared-builder /shared ./node_modules/@torassen/shogi-logic
 COPY ws-server/ .
 
 RUN npm run build
