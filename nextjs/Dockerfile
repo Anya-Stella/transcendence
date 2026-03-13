@@ -8,19 +8,31 @@ WORKDIR /app
 # ---- Engine Builder ----
 FROM base AS engine-builder
 WORKDIR /engine
-COPY ../55engine/ ./
+COPY nextjs/55engine/ ./
 RUN make clean || true && make
+
+# ---- Shared Package Build ----
+FROM base AS shared-builder
+WORKDIR /shared
+COPY packages/shogi-logic/package.json ./
+COPY packages/shogi-logic/tsconfig.json ./
+COPY packages/shogi-logic/src/ ./src/
+RUN npm install
+RUN npm run build
 
 # ---- Dependencies ----
 FROM base AS deps
-COPY package.json ./
+WORKDIR /app
+COPY nextjs/package.json ./
+RUN node -e "const p=require('./package.json'); delete p.dependencies['@torassen/shogi-logic']; require('fs').writeFileSync('./package.json', JSON.stringify(p,null,2))"
 RUN npm install
 
 # ---- Builder ----
 FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
-COPY . .
+COPY --from=shared-builder /shared ./node_modules/@torassen/shogi-logic
+COPY nextjs/ .
 
 RUN npx prisma generate
 RUN npm run build
@@ -38,9 +50,7 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
-COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
+COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/entrypoint.sh ./entrypoint.sh
 
 # Copy 55engine binary

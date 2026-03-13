@@ -1,0 +1,36 @@
+# Dependencies (installed inside container)
+**/node_modules/
+
+# Build outputs
+**/.next/
+**/dist/
+**/*.tsbuildinfo
+
+# Git
+.git/
+.gitignore
+
+# Env files (passed via docker-compose env_file)
+.env
+.env.*
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Docker
+docker-compose.yml
+.dockerignore
+
+# Docs
+README.md
+FRONTEND.md
+*.md
+!nextjs/prisma/*.md
+
+# Misc
+**/*.log
+**/*.o
+.gemini/

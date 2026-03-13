@@ -1,11 +1,8 @@
 #!/bin/sh
 set -e
 
-echo "Running Prisma migrations..."
-npx prisma migrate deploy
-
-echo "Generating Prisma client..."
-npx prisma generate
+echo "Pushing Prisma schema to database..."
+npx prisma db push
 
 echo "Starting Next.js..."
 exec node server.js

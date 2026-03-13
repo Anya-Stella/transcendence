@@ -1,0 +1,9 @@
+{
+	"name": "torassen",
+	"private": true,
+	"workspaces": [
+		"packages/*",
+		"nextjs",
+		"ws-server"
+	]
+}
