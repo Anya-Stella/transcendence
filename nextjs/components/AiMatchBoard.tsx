@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useAiGame } from "@/hooks/useAiGame";
-import { PieceData, HandPieces, DEMOTE_MAP } from "@/utils/shogiConstants";
+import { DEMOTE_MAP } from "@/utils/shogiConstants";
+import { PieceData,HandPieces, Pos } from "@/lib/shogi/types";
 
 function PieceComponent({ piece, isPromoted }: { piece: PieceData; isPromoted?: boolean }) {
 	if (!piece) return null;
@@ -109,8 +110,8 @@ function AiMatchBoard({ mySide = "sente", aiDepth = 4 }: AiMatchBoardProps) {
 							row.map((cell, colIdx) => {
 								const isSelected =
 									selected?.row === rowIdx && selected?.col === colIdx;
-								const legalTarget = isLegalTarget(rowIdx, colIdx);
-								const legalDrop = isLegalDropTarget(rowIdx, colIdx);
+								const legalTarget = isLegalTarget({row: rowIdx,col: colIdx});
+								const legalDrop = isLegalDropTarget({row: rowIdx,col: colIdx});
 								const isHighlighted = legalTarget || legalDrop;
 								const isCapture = isHighlighted && cell !== null;
 								const cellClass = `board-cell${isSelected ? " board-cell-selected" : ""}${isHighlighted ? " board-cell-legal" : ""}${isCapture ? " board-cell-capture" : ""}`;
@@ -119,7 +120,7 @@ function AiMatchBoard({ mySide = "sente", aiDepth = 4 }: AiMatchBoardProps) {
 									<div
 										key={`${rowIdx}-${colIdx}`}
 										className={cellClass}
-										onClick={() => handleCellClick(rowIdx, colIdx)}
+										onClick={() => handleCellClick({row: rowIdx,col: colIdx})}
 									>
 										{isHighlighted && !cell && (
 											<div className="legal-dot" />
