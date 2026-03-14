@@ -28,6 +28,8 @@ services:
       - /app/node_modules    # コンテナのライブラリを優先
       - /app/.next     
       - ./packages/shogi-logic:/app/node_modules/@torassen/shogi-logic      # キャッシュを隔離
+    command: >
+      sh -c "cd /app/node_modules/@torassen/shogi-logic && npx tsc -w & cd /app && npm run dev"
     ports:
       - "3000:3000"
     depends_on:
