@@ -1,24 +1,5 @@
-import {
-	PieceData,
-	HandPieces,
-	PROMOTE_MAP,
-	DEMOTE_MAP
-} from "@/utils/shogiConstants";
-
-export interface GameState {
-	board: PieceData[][];
-	senteHand: HandPieces;
-	goteHand: HandPieces;
-	turn: "sente" | "gote";
-	selected: { row: number; col: number } | null;
-	selectedHandPiece: string | null;
-	promoteDialog: { from: { row: number; col: number }; to: { row: number; col: number } } | null;
-	gameResult: {
-		isOver: boolean;
-		winner: "sente" | "gote" | "draw" | null;
-		message: string | null;
-	};
-}
+import { PROMOTE_MAP, DEMOTE_MAP } from "@/utils/shogiConstants";
+import { PieceData, GameState,Pos } from "@/lib/shogi/types";
 
 export type GameAction =
 	| { type: "SELECT_CELL"; payload: { row: number; col: number } }

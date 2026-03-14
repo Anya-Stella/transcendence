@@ -5,14 +5,15 @@ import {
 	type LegalTarget,
 	type PieceInfo,
 } from "@/lib/shogi/board";
-import { PieceData, HandPieces } from "@/utils/shogiConstants";
+import { PieceData, HandPieces } from "@/lib/shogi/types";
+import { Pos } from "@/lib/shogi/types";
 
 export function useLegalMoves(
 	board: PieceData[][],
 	turn: "sente" | "gote",
 	senteHand: HandPieces,
 	goteHand: HandPieces,
-	selected: { row: number; col: number } | null,
+	selected: Pos | null,
 	selectedHandPiece: string | null
 ) {
 	const legalTargets: LegalTarget[] = useMemo(() => {
@@ -39,22 +40,22 @@ export function useLegalMoves(
 	}, [selectedHandPiece, board, turn, senteHand, goteHand]);
 
 	const isLegalTarget = useCallback(
-		(row: number, col: number) => {
-			return legalTargets.some((t) => t.row === row && t.col === col);
+		(pos:Pos) => {
+			return legalTargets.some((t) => t.row === pos.row && t.col === pos.col);
 		},
 		[legalTargets]
 	);
 
 	const isLegalDropTarget = useCallback(
-		(row: number, col: number) => {
-			return legalDropTargets.some((t) => t.row === row && t.col === col);
+		(pos:Pos) => {
+			return legalDropTargets.some((t) => t.row === pos.row && t.col === pos.col);
 		},
 		[legalDropTargets]
 	);
 
 	const getLegalTargetInfo = useCallback(
-		(row: number, col: number): LegalTarget | undefined => {
-			return legalTargets.find((t) => t.row === row && t.col === col);
+		(pos:Pos): LegalTarget | undefined => {
+			return legalTargets.find((t) => t.row === pos.row && t.col === pos.col);
 		},
 		[legalTargets]
 	);
