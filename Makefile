@@ -8,6 +8,6 @@ prod:
 	docker compose -f docker-compose.yml up --build -d
 	@echo "本番用環境が起動しました"
 
-# 停止 (共通)
+# 開発環境の停止 (dev 専用)
 down:
 	docker compose -f docker-compose.dev.yml down
