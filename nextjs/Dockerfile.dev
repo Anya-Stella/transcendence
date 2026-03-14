@@ -1,0 +1,21 @@
+FROM node:20-alpine
+
+RUN apk add --no-cache python3 make g++ libc6-compat libstdc++
+
+WORKDIR /app
+
+# 1. package.json を先にコピー
+COPY nextjs/package.json ./
+
+# 2. 未公開の自作パッケージを package.json から一時的に削除（npm install を通すため）
+RUN node -e "const p=require('./package.json'); delete p.dependencies['@torassen/shogi-logic']; require('fs').writeFileSync('./package.json', JSON.stringify(p,null,2))"
+
+# 3. インストール実行
+RUN npm install
+
+# 4. Prisma などの準備
+COPY nextjs/prisma ./prisma
+RUN npx prisma generate
+
+# 起動コマンド
+CMD ["npm", "run", "dev"]
