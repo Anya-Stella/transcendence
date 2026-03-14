@@ -4,6 +4,10 @@ RUN apk add --no-cache python3 make g++ libc6-compat libstdc++
 
 WORKDIR /app
 
+# 55engine のソースをコピーしてバイナリをビルド
+COPY nextjs/55engine ./55engine
+RUN mkdir -p /app/engine && cd ./55engine && make && cp 55engine /app/engine/55engine
+
 # 1. package.json を先にコピー
 COPY nextjs/package.json ./
 
