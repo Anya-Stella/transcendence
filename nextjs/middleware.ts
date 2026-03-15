@@ -8,62 +8,57 @@ const JWT_SECRET = new TextEncoder().encode(
 
 const COOKIE_NAME = "torassen_token";
 
-// Pages that require authentication
-const PROTECTED_PATHS = ["/home", "/online", "/room", "/match", "/spectate", "/result"];
-
 // Pages only for unauthenticated users
-const AUTH_PAGES = ["/login"];
+const PUBLIC_PAGES = ["/login"];
 
-export async function middleware(request: NextRequest) {
+async function verifyToken(token: string | undefined): Promise<boolean>
+{
+	if (!token)
+		return false;
+	try {
+		await jwtVerify(token, JWT_SECRET);
+		return true;
+	}
+	catch {
+		return false;
+	}
+}
+
+function redirect(request: NextRequest, pathname: string)
+{
+	const url = request.nextUrl.clone();
+	url.pathname = pathname;
+	return NextResponse.redirect(url);
+}
+
+export async function middleware(request: NextRequest)
+{
 	const { pathname } = request.nextUrl;
 	const token = request.cookies.get(COOKIE_NAME)?.value;
-
-	let isAuthenticated = false;
-	if (token) {
-		try {
-			await jwtVerify(token, JWT_SECRET);
-			isAuthenticated = true;
-		} catch {
-			// Invalid token
-		}
-	}
+	const isAuthenticated = await verifyToken(token);
 
 	// Redirect root to appropriate page
-	if (pathname === "/") {
-		const url = request.nextUrl.clone();
-		url.pathname = isAuthenticated ? "/home" : "/login";
-		return NextResponse.redirect(url);
-	}
+	if (pathname === "/")
+		return redirect(request, isAuthenticated ? "/home" : "/login");
 
 	// Redirect authenticated users away from login
-	if (AUTH_PAGES.some((p) => pathname.startsWith(p)) && isAuthenticated) {
-		const url = request.nextUrl.clone();
-		url.pathname = "/home";
-		return NextResponse.redirect(url);
+	if (PUBLIC_PAGES.some((p) => pathname.startsWith(p)))
+	{
+		if(isAuthenticated)
+			return redirect(request, "/home");
+		return NextResponse.next();
 	}
 
-	// Redirect unauthenticated users to login
-	if (
-		PROTECTED_PATHS.some((p) => pathname.startsWith(p)) &&
-		!isAuthenticated
-	) {
-		const url = request.nextUrl.clone();
-		url.pathname = "/login";
-		return NextResponse.redirect(url);
-	}
+	// the other
+	if (!isAuthenticated)
+		return redirect(request, "/login");
 
 	return NextResponse.next();
 }
 
+//settings for using middleware
 export const config = {
 	matcher: [
-		"/",
-		"/login",
-		"/home",
-		"/online",
-		"/room/:path*",
-		"/match/:path*",
-		"/spectate/:path*",
-		"/result",
+		"/((?!api|_next/static|_next/image|favicon.ico).*)"
 	],
 };
