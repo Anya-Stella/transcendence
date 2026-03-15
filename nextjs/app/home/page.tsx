@@ -86,6 +86,16 @@ export default function HomePage() {
 						</div>
 						<span className="wafuu-menu-arrow">→</span>
 					</Link>
+
+					<Link href="/friends" className="wafuu-menu-item">
+						<div className="wafuu-menu-text">
+							<div className="wafuu-menu-title">フレンド</div>
+							<div className="wafuu-menu-desc">
+								友達を探して追加・管理しよう
+							</div>
+						</div>
+						<span className="wafuu-menu-arrow">→</span>
+					</Link>
 				</div>
 			</div>
 		</div>
