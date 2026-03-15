@@ -2,15 +2,8 @@ import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { boardFromPieces, type PieceInfo } from "@/lib/shogi/board";
 import { useGameLogic } from "./useGameLogic";
-
-// USI駒文字 → 漢字
-const USI_TO_DROP_KANJI: Record<string, string> = {
-	P: "歩",
-	S: "銀",
-	G: "金",
-	B: "角",
-	R: "飛",
-};
+import { USI_TO_DROP_KANJI } from "@/utils/shogiConstants";
+import { Pos } from "@/lib/shogi/types";
 
 export function useAiGame(
 	mySide: "sente" | "gote" = "sente",
@@ -124,18 +117,18 @@ export function useAiGame(
 	// ========= クリックハンドラ =========
 
 	const handleCellClick = (
-		(row: number, col: number) => {
+		(pos:Pos) => {
 			if (!isMyTurn || aiThinking || gameResult.isOver) return;
 			if (promoteDialog) return;
 
-			const cell = board[row][col];
+			const cell = board[pos.row][pos.col];
 
 			if (selectedHandPiece) {
-				if (isLegalDropTarget(row, col)) {
-					applyDrop(selectedHandPiece, { row, col }, mySide);
+				if (isLegalDropTarget(pos)) {
+					applyDrop(selectedHandPiece, pos, mySide);
 				} else if (cell && cell.side === mySide) {
 					setSelectedHandPiece(null);
-					setSelected({ row, col });
+					setSelected(pos);
 				} else {
 					setSelectedHandPiece(null);
 				}
@@ -144,14 +137,14 @@ export function useAiGame(
 
 			if (selected) {
 				if (cell && cell.side === mySide) {
-					setSelected({ row, col });
+					setSelected(pos);
 					return;
 				}
 
-				const targetInfo = getLegalTargetInfo(row, col);
+				const targetInfo = getLegalTargetInfo(pos);
 				if (targetInfo) {
-					const from = { row: selected.row, col: selected.col };
-					const to = { row, col };
+					const from = selected;
+					const to = pos;
 
 					if (targetInfo.canPromote) {
 						setPromoteDialog({ from, to });
@@ -165,7 +158,7 @@ export function useAiGame(
 				}
 			} else {
 				if (cell && cell.side === turn) {
-					setSelected({ row, col });
+					setSelected(pos);
 					setSelectedHandPiece(null);
 				}
 			}

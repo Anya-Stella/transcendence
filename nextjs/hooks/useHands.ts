@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
-import { HandPieces, INITIAL_HAND, DEMOTE_MAP } from "@/utils/shogiConstants";
+import {INITIAL_HAND, DEMOTE_MAP } from "@/utils/shogiConstants";
+import { HandPieces } from "@/lib/shogi/types";
 
 export function useHands() {
 	const [senteHand, setSenteHand] = useState<HandPieces>({ ...INITIAL_HAND });

@@ -1,7 +1,12 @@
-export type PieceData = {
-	kanji: string;
-	side: "sente" | "gote";
-} | null;
+import { PieceData,HandPieces } from "@/lib/shogi/types";
+
+export const USI_TO_DROP_KANJI: Record<string, string> = {
+	P: "歩",
+	S: "銀",
+	G: "金",
+	B: "角",
+	R: "飛",
+};
 
 // 成駒の漢字マッピング
 export const PROMOTE_MAP: Record<string, string> = {
@@ -56,7 +61,5 @@ export const INITIAL_BOARD: PieceData[][] = [
 		{ kanji: "王", side: "sente" },
 	],
 ];
-
-export type HandPieces = Record<string, number>;
 
 export const INITIAL_HAND: HandPieces = {};

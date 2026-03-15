@@ -2,6 +2,7 @@ import { useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Socket } from "socket.io-client";
 import { useGameLogic } from "./useGameLogic";
+import { Pos } from "@/lib/shogi/types";
 
 export function useShogiGame(
 	socket: Socket | null | undefined,
@@ -84,21 +85,21 @@ export function useShogiGame(
 	// ========= クリックハンドラ =========
 
 	const handleCellClick = (
-		(row: number, col: number) => {
+		(pos:Pos) => {
 			if (roomId && wsStatus !== "connected") return;
 			if (roomId && !isMyTurn) return;
 			if (promoteDialog) return;
 			if (gameResult.isOver) return;
 
-			const cell = board[row][col];
+			const cell = board[pos.row][pos.col];
 
 			// 持ち駒選択中
 			if (selectedHandPiece) {
-				if (isLegalDropTarget(row, col)) {
-					executeDrop(selectedHandPiece, { row, col });
+				if (isLegalDropTarget(pos)) {
+					executeDrop(selectedHandPiece, pos);
 				} else if (cell && cell.side === mySide) {
 					setSelectedHandPiece(null);
-					setSelected({ row, col });
+					setSelected(pos);
 				} else {
 					setSelectedHandPiece(null);
 				}
@@ -108,14 +109,14 @@ export function useShogiGame(
 			// 盤上の駒選択中
 			if (selected) {
 				if (cell && cell.side === mySide) {
-					setSelected({ row, col });
+					setSelected(pos);
 					return;
 				}
 
-				const targetInfo = getLegalTargetInfo(row, col);
+				const targetInfo = getLegalTargetInfo(pos);
 				if (targetInfo) {
 					const from = { row: selected.row, col: selected.col };
-					const to = { row, col };
+					const to = pos;
 
 					if (targetInfo.canPromote) {
 						setPromoteDialog({ from, to });
@@ -130,7 +131,7 @@ export function useShogiGame(
 			} else {
 				// 自分の手番の駒を選択
 				if (cell && cell.side === turn) {
-					setSelected({ row, col });
+					setSelected(pos);
 					setSelectedHandPiece(null);
 				}
 			}

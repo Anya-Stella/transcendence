@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { Socket } from "socket.io-client";
 import { useShogiGame } from "@/hooks/useShogiGame";
-import { PieceData, HandPieces, DEMOTE_MAP } from "@/utils/shogiConstants";
+import { DEMOTE_MAP } from "@/utils/shogiConstants";
+import { PieceData, HandPieces, Pos } from "@/lib/shogi/types";
 import TatamiBackground from "@/components/TatamiBackground";
 
 function PieceComponent({ piece, isPromoted }: { piece: PieceData; isPromoted?: boolean }) {
@@ -76,9 +77,8 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 		return pieces.map((kanji) => (
 			<button
 				key={kanji}
-				className={`hand-piece ${side === "sente" ? "hand-piece-sente" : "hand-piece-gote"}${
-					isOwn && selectedHandPiece === kanji ? " hand-piece-selected" : ""
-				}`}
+				className={`hand-piece ${side === "sente" ? "hand-piece-sente" : "hand-piece-gote"}${isOwn && selectedHandPiece === kanji ? " hand-piece-selected" : ""
+					}`}
 				onClick={() => isOwn && handleHandPieceClick(kanji)}
 				disabled={!isOwn}
 			>
@@ -173,8 +173,8 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 						row.map((cell, colIdx) => {
 							const isSelected =
 								selected?.row === rowIdx && selected?.col === colIdx;
-							const legalTarget = isLegalTarget(rowIdx, colIdx);
-							const legalDrop = isLegalDropTarget(rowIdx, colIdx);
+							const legalTarget = isLegalTarget({ row: rowIdx, col: colIdx });
+							const legalDrop = isLegalDropTarget({ row: rowIdx, col: colIdx });
 							const isHighlighted = legalTarget || legalDrop;
 							const isCapture = isHighlighted && cell !== null;
 							const cellClass = `board-cell${isSelected ? " board-cell-selected" : ""}${isHighlighted ? " board-cell-legal" : ""}${isCapture ? " board-cell-capture" : ""}`;
@@ -183,7 +183,7 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 								<div
 									key={`${rowIdx}-${colIdx}`}
 									className={cellClass}
-									onClick={() => handleCellClick(rowIdx, colIdx)}
+									onClick={() => handleCellClick({ row: rowIdx, col: colIdx })}
 								>
 									{isHighlighted && !cell && (
 										<div className="legal-dot" />

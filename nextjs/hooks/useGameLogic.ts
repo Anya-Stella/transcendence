@@ -1,8 +1,9 @@
 import { useCallback, useReducer, useEffect } from "react";
-import { INITIAL_BOARD, INITIAL_HAND, PieceData } from "@/utils/shogiConstants";
+import { INITIAL_BOARD, INITIAL_HAND } from "@/utils/shogiConstants";
 import { useLegalMoves } from "./useLegalMoves";
 import { hasLegalMoves, type PieceInfo } from "@/lib/shogi/board";
-import { gameReducer, GameState, GameAction } from "./reducers/gameReducer";
+import { gameReducer,  GameAction } from "./reducers/gameReducer";
+import { PieceData,GameState, Pos } from "@/lib/shogi/types";
 
 export function useGameLogic(mySide: "sente" | "gote") {
 	function deepCopyBoard(board: PieceData[][]): PieceData[][] {
@@ -63,12 +64,12 @@ export function useGameLogic(mySide: "sente" | "gote") {
 	);
 
 	const applyDrop = (
-		(kanji: string, to: { row: number; col: number }, side: "sente" | "gote") => {
+		(kanji: string, to: Pos, side: "sente" | "gote") => {
 			dispatch({ type: "APPLY_DROP", payload: { kanji, to, side } });
 		}
 	);
 
-	const setSelected = ((cell: { row: number; col: number } | null) => {
+	const setSelected = ((cell: Pos | null) => {
 		if (cell) dispatch({ type: "SELECT_CELL", payload: cell });
 		else dispatch({ type: "DESELECT" });
 	});
