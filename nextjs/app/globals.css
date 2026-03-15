@@ -445,18 +445,18 @@ body {
   grid-template-columns: repeat(5, 1fr);
   grid-template-rows: repeat(5, 1fr);
   gap: 2px;
-  background: var(--color-wood-line);
+  background: transparent;
   padding: 3px;
   border-radius: var(--radius-md);
-  border: 3px solid var(--color-wood-dark);
-  box-shadow: var(--shadow-lg);
+  border: 3px solid transparent;
+  box-shadow: none;
   width: 100%;
   max-width: 350px;
   aspect-ratio: 1;
 }
 
 .board-cell {
-  background: var(--color-wood-board);
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -466,7 +466,7 @@ body {
 }
 
 .board-cell:hover {
-  background: var(--color-wood-light);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .piece {

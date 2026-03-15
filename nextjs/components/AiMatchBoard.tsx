@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useAiGame } from "@/hooks/useAiGame";
 import { PieceData, HandPieces, DEMOTE_MAP } from "@/utils/shogiConstants";
+import TatamiBackground from "@/components/TatamiBackground";
 
 function PieceComponent({ piece, isPromoted }: { piece: PieceData; isPromoted?: boolean }) {
 	if (!piece) return null;
@@ -66,6 +67,8 @@ function AiMatchBoard({ mySide = "sente", aiDepth = 4 }: AiMatchBoardProps) {
 
 	return (
 		<div>
+			{/* 背景 */}
+			<TatamiBackground />
 			<header className="header">
 				<Link
 					href="/home"

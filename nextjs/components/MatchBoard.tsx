@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Socket } from "socket.io-client";
 import { useShogiGame } from "@/hooks/useShogiGame";
 import { PieceData, HandPieces, DEMOTE_MAP } from "@/utils/shogiConstants";
+import TatamiBackground from "@/components/TatamiBackground";
 
 function PieceComponent({ piece, isPromoted }: { piece: PieceData; isPromoted?: boolean }) {
 	if (!piece) return null;
@@ -92,10 +93,7 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 	return (
 		<div className="wafuu-page">
 			{/* 背景 */}
-			<div
-				className="wafuu-bg"
-				style={{ backgroundImage: "url(/images/match-bg.png)" }}
-			/>
+			<TatamiBackground />
 
 			{/* ヘッダー */}
 			<header className="wafuu-header">
