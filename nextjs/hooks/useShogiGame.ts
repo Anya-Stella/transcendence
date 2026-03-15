@@ -2,7 +2,7 @@ import { useCallback, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Socket } from "socket.io-client";
 import { useGameLogic } from "./useGameLogic";
-import { Pos } from "@/lib/shogi/types";
+import { Pos, UIBoard, sfenToUIBoard } from "@torassen/shogi-logic";
 
 export function useShogiGame(
 	socket: Socket | null | undefined,
@@ -30,6 +30,7 @@ export function useShogiGame(
 		applyMove,
 		applyDrop,
 		gameResult,
+		syncBoardState,
 	} = useGameLogic(mySide);
 
 	// ========= アクション (WebSocket付き) =========
@@ -63,8 +64,8 @@ export function useShogiGame(
 		if (!socket) return;
 
 		const handleMoveMade = (data: {
-			from?: { row: number; col: number };
-			to: { row: number; col: number };
+			from?: Pos;
+			to: Pos;
 			promote?: boolean;
 			drop?: string;
 		}) => {
@@ -81,6 +82,22 @@ export function useShogiGame(
 			socket.off("moveMade", handleMoveMade);
 		};
 	}, [socket, applyMove, applyDrop, mySide]);
+
+	useEffect(() => {
+		if (!socket || !roomId) return;
+
+		socket.emit("getGameState", { roomId });
+
+		const handleSyncState = (data: { sfen: string }) => {
+			const syncedBoard = sfenToUIBoard(data.sfen);
+			syncBoardState(syncedBoard); 
+		};
+
+		socket.on("syncState", handleSyncState);
+		return () => {
+			socket.off("syncState", handleSyncState);
+		};
+	}, [socket, roomId]);
 
 	// ========= クリックハンドラ =========
 

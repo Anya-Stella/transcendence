@@ -3,8 +3,7 @@
 import Link from "next/link";
 import { Socket } from "socket.io-client";
 import { useShogiGame } from "@/hooks/useShogiGame";
-import { DEMOTE_MAP } from "@/utils/shogiConstants";
-import { PieceData,HandPieces, Pos } from "@/lib/shogi/types";
+import { DEMOTE_MAP,PieceData,HandPieces, Pos } from "@torassen/shogi-logic";
 
 function PieceComponent({ piece, isPromoted }: { piece: PieceData; isPromoted?: boolean }) {
 	if (!piece) return null;

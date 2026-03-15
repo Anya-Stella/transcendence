@@ -1,4 +1,4 @@
-import { PieceData,HandPieces } from "@/lib/shogi/types";
+import { PieceData,HandPieces } from "./types";
 
 export const USI_TO_DROP_KANJI: Record<string, string> = {
 	P: "歩",

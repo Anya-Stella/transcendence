@@ -1,22 +1,27 @@
 FROM node:20-alpine
 
-# 必要に応じてビルドツールを追加
+# ビルドツールの追加
 RUN apk add --no-cache python3 make g++
 
 WORKDIR /app
 
-# 1. package.json を先にコピー
-COPY ws-server/package.json ./
+# 1. ルートから両方の package.json をコピー（キャッシュ効率のため）
+COPY ws-server/package*.json ./ws-server/
+COPY next/package*.json ./next/
 
-# 2. 未公開の自作パッケージを一時的に削除（npm install の 404 回避）
+# 2. ws-server の依存関係をインストール
+WORKDIR /app/ws-server
 RUN node -e "const p=require('./package.json'); delete p.dependencies['@torassen/shogi-logic']; require('fs').writeFileSync('./package.json', JSON.stringify(p,null,2))"
-
-# 3. インストール実行
 RUN npm install
 
-# 4. ソースコードをコピー（tsconfig.json を含む）
-COPY ws-server/ .
+# 3. ★ここが最重要：コンテナ内に両方のソースコードをコピーする
+WORKDIR /app
+COPY ws-server/ ./ws-server/
+COPY next/ ./next/
 
-# 5. 開発時はビルド済みの JS ではなく ts-node 等で動かすため、
-# ここで無理に tsc を走らせず、起動コマンドに任せます
+# 4. ws-server に戻ってビルド
+WORKDIR /app/ws-server
+RUN npm run build
+
+EXPOSE 3001
 CMD ["npm", "run", "dev"]

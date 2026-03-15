@@ -3,10 +3,11 @@
 		"target": "ES2020",
 		"module": "commonjs",
 		"lib": [
-			"ES2020"
+			"ES2020",
+			"DOM"
 		],
 		"outDir": "./dist",
-		"rootDir": "./src",
+		// "rootDir": "./src",
 		"strict": true,
 		"esModuleInterop": true,
 		"skipLibCheck": true,
@@ -18,15 +19,16 @@
 		"baseUrl": ".",
 		"paths": {
 			"@torassen/shogi-logic": [
-				"../packages/shogi-logic/src"
+				"../packages/shogi-logic/src/index.ts"
 			],
 			"@torassen/shogi-logic/*": [
 				"../packages/shogi-logic/src/*"
-			]
+			],
 		}
 	},
 	"include": [
-		"src/**/*"
+		"src/**/*",
+		"../packages/shogi-logic/src/**/*"
 	],
 	"exclude": [
 		"node_modules",

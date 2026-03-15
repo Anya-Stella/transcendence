@@ -1,14 +1,17 @@
-import { PROMOTE_MAP, DEMOTE_MAP } from "@/utils/shogiConstants";
-import { PieceData, GameState,Pos } from "@/lib/shogi/types";
+import { PROMOTE_MAP,
+	DEMOTE_MAP,
+	PieceData,
+	GameState,Pos,UIBoard } from "@torassen/shogi-logic";
 
 export type GameAction =
-	| { type: "SELECT_CELL"; payload: { row: number; col: number } }
+	| { type: "SELECT_CELL"; payload: Pos }
 	| { type: "SELECT_HAND"; payload: string | null}
 	| { type: "DESELECT" }
-	| { type: "SET_PROMOTE_DIALOG"; payload: { from: { row: number; col: number }; to: { row: number; col: number } } | null }
-	| { type: "APPLY_MOVE"; payload: { from: { row: number; col: number }; to: { row: number; col: number }; promote: boolean } }
-	| { type: "APPLY_DROP"; payload: { kanji: string; to: { row: number; col: number }; side: "sente" | "gote" } }
-	| { type: "SET_GAME_OVER"; payload: { winner: "sente" | "gote" | "draw"; message: string } };
+	| { type: "SET_PROMOTE_DIALOG"; payload: { from: Pos; to: Pos } | null }
+	| { type: "APPLY_MOVE"; payload: { from: Pos; to: Pos; promote: boolean } }
+	| { type: "APPLY_DROP"; payload: { kanji: string; to: Pos; side: "sente" | "gote" } }
+	| { type: "SET_GAME_OVER"; payload: { winner: "sente" | "gote" | "draw"; message: string } }
+	| { type: "SYNC_STATE"; payload: UIBoard };
 
 function deepCopyBoard(board: PieceData[][]): PieceData[][] {
 	return board.map((row) => row.map((cell) => (cell ? { ...cell } : null)));
@@ -18,20 +21,16 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 	switch (action.type) {
 		case "SELECT_CELL":
 			return { ...state, selected: action.payload, selectedHandPiece: null };
-
 		case "SELECT_HAND":
 			return {
 				...state,
 				selected: action.payload === null ? state.selected : null,
 				selectedHandPiece: state.selectedHandPiece === action.payload ? null : action.payload,
 			};
-
 		case "DESELECT":
 			return { ...state, selected: null, selectedHandPiece: null, promoteDialog: null };
-
 		case "SET_PROMOTE_DIALOG":
 			return { ...state, promoteDialog: action.payload };
-
 		case "SET_GAME_OVER":
 			return {
 				...state,
@@ -43,7 +42,6 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 				selected: null,
 				selectedHandPiece: null,
 			};
-
 		case "APPLY_MOVE": {
 			const { from, to, promote } = action.payload;
 			const nextBoard = deepCopyBoard(state.board);
@@ -92,7 +90,6 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 				promoteDialog: null,
 			};
 		}
-
 		case "APPLY_DROP": {
 			const { kanji, to, side } = action.payload;
 			const nextBoard = deepCopyBoard(state.board);
@@ -121,7 +118,18 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 				selectedHandPiece: null,
 			};
 		}
-
+		case "SYNC_STATE": {
+			return {
+				...state,
+				board: action.payload.board,
+				turn: action.payload.turn,
+				senteHand: action.payload.senteHand,
+				goteHand: action.payload.goteHand,
+				selected: null,
+				selectedHandPiece: null,
+				promoteDialog: null,
+			};
+		}
 		default:
 			return state;
 	}
