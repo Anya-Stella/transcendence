@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { Socket } from "socket.io-client";
 import { useShogiGame } from "@/hooks/useShogiGame";
-import { PieceData, HandPieces, DEMOTE_MAP } from "@/utils/shogiConstants";
+import { DEMOTE_MAP } from "@/utils/shogiConstants";
+import { PieceData,HandPieces, Pos } from "@/lib/shogi/types";
 
 function PieceComponent({ piece, isPromoted }: { piece: PieceData; isPromoted?: boolean }) {
 	if (!piece) return null;
@@ -175,8 +176,8 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 						row.map((cell, colIdx) => {
 							const isSelected =
 								selected?.row === rowIdx && selected?.col === colIdx;
-							const legalTarget = isLegalTarget(rowIdx, colIdx);
-							const legalDrop = isLegalDropTarget(rowIdx, colIdx);
+							const legalTarget = isLegalTarget({row: rowIdx,col: colIdx});
+							const legalDrop = isLegalDropTarget({row: rowIdx,col: colIdx});
 							const isHighlighted = legalTarget || legalDrop;
 							const isCapture = isHighlighted && cell !== null;
 							const cellClass = `board-cell${isSelected ? " board-cell-selected" : ""}${isHighlighted ? " board-cell-legal" : ""}${isCapture ? " board-cell-capture" : ""}`;
@@ -185,7 +186,7 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 								<div
 									key={`${rowIdx}-${colIdx}`}
 									className={cellClass}
-									onClick={() => handleCellClick(rowIdx, colIdx)}
+									onClick={() => handleCellClick({row: rowIdx,col: colIdx})}
 								>
 									{isHighlighted && !cell && (
 										<div className="legal-dot" />

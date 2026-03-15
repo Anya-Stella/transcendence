@@ -1,5 +1,4 @@
 // 5×5 Shogi types – ported from 55engine/types.hpp
-
 export type Bitboard = number; // uint32 (only lower 25 bits used)
 
 export const enum Color {
@@ -21,9 +20,54 @@ export const enum PType {
   PTYPE_MAX = 10,
 }
 
-export interface Move {
-  from: number; // -1 for drop
+export type BitMove = {
+  from: number;
   to: number;
   dropType: PType;
   promote: boolean;
 }
+
+export type PieceData = {
+	kanji: string;
+	side: "sente" | "gote";
+}|null;
+
+export type ShogiPosition = {
+  board: PieceData[][],
+  senteHand: HandPieces;
+  goteHand: HandPieces;
+  trun: "sente" | "gote",
+};
+
+export type Move = {
+  from: Pos,
+  to: Pos,
+  promote: boolean,
+}
+
+export type Drop = {
+  to:Pos,
+  kanji: string,
+}
+
+export type Pos = {
+  row: number,
+  col:number,
+};
+
+export type HandPieces = Record<string, number>;
+
+export type GameState = {
+  board: PieceData[][];
+  senteHand: HandPieces;
+  goteHand: HandPieces;
+  turn: "sente" | "gote";
+  selected: Pos | null;
+  selectedHandPiece: string | null;
+  promoteDialog: { from: Pos; to: Pos } | null;
+  gameResult: {
+    isOver: boolean;
+    winner: "sente" | "gote" | "draw" | null;
+    message: string | null;
+  };
+};

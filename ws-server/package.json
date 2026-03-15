@@ -8,8 +8,8 @@
 		"start": "node dist/index.js"
 	},
 	"dependencies": {
-		"socket.io": "^4.8.3",
-		"@torassen/shogi-logic": "*"
+		"@torassen/shogi-logic": "*",
+		"socket.io": "^4.8.3"
 	},
 	"devDependencies": {
 		"@types/node": "^22.19.13",

@@ -1,5 +1,5 @@
 // 5×5 Shogi Board – ported from 55engine/board.cpp
-import { Color, PType, type Move, type Bitboard } from "./types";
+import { Color, PType, type BitMove, type Bitboard } from "./types";
 import {
   popLsb,
   kingAttacks,
@@ -148,7 +148,7 @@ export class Board {
     return attacks & MASK25;
   }
 
-  isPseudoLegal(m: Move): boolean {
+  isPseudoLegal(m: BitMove): boolean {
     const stm = this.sideToMove;
 
     // -- Drop --
@@ -220,7 +220,7 @@ export class Board {
     return true;
   }
 
-  makeMove(m: Move): void {
+  makeMove(m: BitMove): void {
     const stm = this.sideToMove;
 
     if (m.from === -1) {
@@ -279,7 +279,7 @@ export class Board {
     this.sideToMove = (1 - stm) as Color;
   }
 
-  isKingAttackedAfter(m: Move): boolean {
+  isKingAttackedAfter(m: BitMove): boolean {
     const next = this.clone();
     next.makeMove(m);
     const nextOpponent = next.sideToMove;
@@ -291,8 +291,8 @@ export class Board {
   /**
    * Generate all pseudo-legal moves (same logic as 55engine).
    */
-  generatePseudoLegalMoves(): Move[] {
-    const moves: Move[] = [];
+  generatePseudoLegalMoves(): BitMove[] {
+    const moves: BitMove[] = [];
     const stm = this.sideToMove;
     const myBB = this.colorBB[stm];
     const occ = this.colorBB[0] | this.colorBB[1];
@@ -387,9 +387,9 @@ export class Board {
   /**
    * Generate all legal moves.
    */
-  generateLegalMoves(): Move[] {
+  generateLegalMoves(): BitMove[] {
     const pseudo = this.generatePseudoLegalMoves();
-    const legal: Move[] = [];
+    const legal: BitMove[] = [];
     for (const m of pseudo) {
       if (this.isPseudoLegal(m) && !this.isKingAttackedAfter(m)) {
         legal.push(m);
@@ -401,7 +401,7 @@ export class Board {
   /**
    * Convert move to USI-style string (e.g. "5a4b", "P*3c", "5a4b+")
    */
-  moveToString(m: Move): string {
+  moveToString(m: BitMove): string {
     if (m.from === -1) {
       const ptChars: Record<number, string> = {
         [PType.PAWN]: "P",
@@ -694,7 +694,7 @@ export function isMoveFromToLegal(
   promote: boolean
 ): boolean {
   const board = boardFromPieces(pieces, turn, senteHand, goteHand);
-  const m: Move = {
+  const m: BitMove = {
     from: fromRow * 5 + fromCol,
     to: toRow * 5 + toCol,
     dropType: PType.PAWN,
