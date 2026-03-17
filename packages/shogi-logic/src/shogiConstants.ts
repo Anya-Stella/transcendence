@@ -28,11 +28,11 @@ export const DEMOTE_MAP: Record<string, string> = {
 export const INITIAL_BOARD: PieceData[][] = [
 	// Row 0 (Gote's back rank)
 	[
-		{ kanji: "王", side: "gote" },
-		{ kanji: "金", side: "gote" },
-		{ kanji: "銀", side: "gote" },
-		{ kanji: "角", side: "gote" },
 		{ kanji: "飛", side: "gote" },
+		{ kanji: "角", side: "gote" },
+		{ kanji: "銀", side: "gote" },
+		{ kanji: "金", side: "gote" },
+		{ kanji: "王", side: "gote" },
 	],
 	// Row 1 (Gote's pawn)
 	[
@@ -54,11 +54,11 @@ export const INITIAL_BOARD: PieceData[][] = [
 	],
 	// Row 4 (Sente's back rank)
 	[
-		{ kanji: "飛", side: "sente" },
-		{ kanji: "角", side: "sente" },
-		{ kanji: "銀", side: "sente" },
-		{ kanji: "金", side: "sente" },
 		{ kanji: "王", side: "sente" },
+		{ kanji: "金", side: "sente" },
+		{ kanji: "銀", side: "sente" },
+		{ kanji: "角", side: "sente" },
+		{ kanji: "飛", side: "sente" },
 	],
 ];
 

@@ -9,5 +9,11 @@ prod:
 	@echo "本番用環境が起動しました"
 
 # 開発環境の停止 (dev 専用)
-down:
+down test:
 	docker compose -f docker-compose.dev.yml down
+
+down prod:
+	docker compose down
+
+rmi:
+	docker image prune -a

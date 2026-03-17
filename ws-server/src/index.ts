@@ -7,7 +7,7 @@ const PORT = 3001;
 interface RoomState {
 	hostSocketId: string;
 	hostUserId?: string;
-	players: { socketId: string; userId?: string }[];
+	players: { socketId: string; userId?: string,side: "b" | "w" }[];
 	sfen: string;
 }
 
@@ -41,17 +41,22 @@ io.on("connection", (socket: Socket) => {
 			room = {
 				hostSocketId: socket.id,
 				hostUserId: userId,
-				players: [{ socketId: socket.id, userId }],
+				players: [{ socketId: socket.id, userId,side: "b" }],
 				sfen: INITIAL_SFEN,
 			};
 			rooms.set(roomId, room);
 		} else {
-			// Add player if not already in room and room not full
-			const alreadyIn = room.players.find((p) => p.socketId === socket.id);
-			if (!alreadyIn && room.players.length < 2) {
-				room.players.push({ socketId: socket.id, userId });
-			}
-		}
+            const existingPlayerIndex = room.players.findIndex(
+                (p) => p.userId && p.userId === userId
+			);
+            if (existingPlayerIndex !== -1) {
+                room.players[existingPlayerIndex].socketId = socket.id;
+            } else if (room.players.length < 2) {
+                const occupiedSide = room.players[0].side;
+                const newSide = occupiedSide === "b" ? "w" : "b";
+                room.players.push({ socketId: socket.id, userId, side: newSide });
+            }
+        }
 
 		socket.join(roomId);
 
@@ -64,6 +69,7 @@ io.on("connection", (socket: Socket) => {
 			players: room.players.map((p) => ({
 				socketId: p.socketId,
 				userId: p.userId,
+				side: p.side,
 			})),
 		});
 	});

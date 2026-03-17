@@ -28,13 +28,9 @@ export default function OnlineMatchPage() {
 		});
 
 		// Determine side based on room state
-		s.on("roomState", (state: { players: { socketId: string }[] }) => {
-			const myIndex = state.players.findIndex((p) => p.socketId === s.id);
-			if (myIndex === 0) {
-				setMySide("sente");
-			} else if (myIndex === 1) {
-				setMySide("gote");
-			}
+		s.on("roomState", (state: { players: { socketId: string, side: "b" | "w" }[] }) => {
+			const me = state.players.find((p) => p.socketId === s.id);
+			if (me) {setMySide(me.side === "b" ? "sente" : "gote");}
 		});
 
 		setSocket(s);
