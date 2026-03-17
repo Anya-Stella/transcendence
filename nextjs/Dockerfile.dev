@@ -21,5 +21,6 @@ RUN npm install
 COPY nextjs/prisma ./prisma
 RUN npx prisma generate
 
-# 起動コマンド
-CMD ["npm", "run", "dev"]
+COPY nextjs/ .
+
+CMD ["sh", "-c", "npx prisma db seed && npm run dev"]
