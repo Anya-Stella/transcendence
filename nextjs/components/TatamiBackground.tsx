@@ -3,8 +3,19 @@
 
 import { Canvas, useThree } from "@react-three/fiber";
 import { useGLTF, Environment } from "@react-three/drei";
-import { Suspense, useRef, useState, useCallback, useEffect } from "react";
+import { Suspense, useRef, useState, useCallback, useEffect, useMemo } from "react";
 import * as THREE from "three";
+import {
+	Color,
+	PieceType,
+	createInitialBoard,
+	isLegalMove,
+	applyMove,
+	generateLegalMoves,
+	type BoardState,
+	type Move,
+	type Square
+} from "@torassen/shogi-logic";
 
 function TatamiModel() {
 	const { scene } = useGLTF("/models/tatami.glb");
@@ -152,7 +163,7 @@ function DraggablePiece({
 			{isSelected && (
 				<mesh position={[0, 0.2, 0]} rotation={[-Math.PI / 2, 0, 0]}>
 					<ringGeometry args={[1.2, 1.6, 32]} />
-					<meshBasicMaterial color="#ffd700" transparent opacity={0.6} side={THREE.DoubleSide} />
+					<meshBasicMaterial color="#ffffff" transparent opacity={0.6} side={THREE.DoubleSide} />
 				</mesh>
 			)}
 			{/* クリック用の透明ヒットエリア（駒の当たり判定を広くする） */}
@@ -180,6 +191,16 @@ function DaiModelContent({ position, rotation, scale = [1, 1, 1] }: { position: 
 			position={position}
 			rotation={rotation}
 		/>
+	);
+}
+
+// 移動可能な場所を表示するマーカー
+function MoveMarker({ position }: { position: [number, number, number] }) {
+	return (
+		<mesh position={[position[0], position[1] + 0.1, position[2]]} rotation={[-Math.PI / 2, 0, 0]}>
+			<ringGeometry args={[0.8, 1.2, 32]} />
+			<meshBasicMaterial color="#4ade80" transparent opacity={0.6} side={THREE.DoubleSide} />
+		</mesh>
 	);
 }
 
@@ -226,33 +247,122 @@ function worldToGrid(x: number, z: number): { row: number; col: number } | null 
 	return { row: bestRow, col: bestCol };
 }
 
+// 各駒の初期グリッド位置（駒の移動判定に使用）
+const PIECE_INITIAL_GRID: Record<string, Square> = {
+	"sente-ou": { row: 4, col: 0 },
+	"sente-kin": { row: 4, col: 1 },
+	"sente-gin": { row: 4, col: 2 },
+	"sente-kaku": { row: 4, col: 3 },
+	"sente-hisya": { row: 4, col: 4 },
+	"sente-fu": { row: 3, col: 0 },
+	"gote-ou": { row: 0, col: 4 },
+	"gote-kin": { row: 0, col: 3 },
+	"gote-gin": { row: 0, col: 2 },
+	"gote-kaku": { row: 0, col: 1 },
+	"gote-hisya": { row: 0, col: 0 },
+	"gote-fu": { row: 1, col: 4 },
+};
+
 export default function TatamiBackground() {
 	const [selectedPiece, setSelectedPiece] = useState<string | null>(null);
 	const boardGroupRef = useRef<THREE.Group>(null);
-	// 各駒の現在位置を管理（ドロップ後のスナップ位置を記録）
+	// 将棋の論理的な盤面状態
+	const [boardState, setBoardState] = useState<BoardState>(() => createInitialBoard());
+	// 各駒の現在位置（ワールド座標）を管理
 	const [piecePositions, setPiecePositions] = useState<Record<string, [number, number, number]>>({});
 
 	const handleSelect = useCallback((id: string | null) => {
 		setSelectedPiece(id);
 	}, []);
 
+	// 現在の選択駒に対する有効な移動先を計算
+	const validMoveDestinations = useMemo(() => {
+		if (!selectedPiece) return [];
+
+		// 現在のグリッド位置を特定
+		const currentPos = piecePositions[selectedPiece] || gridToWorld(PIECE_INITIAL_GRID[selectedPiece].row, PIECE_INITIAL_GRID[selectedPiece].col);
+		const fromGrid = worldToGrid(currentPos[0], currentPos[2]);
+		if (!fromGrid) return [];
+
+		// そのマスに現在の手番の駒があるか確認
+		const piece = boardState.board[fromGrid.row][fromGrid.col];
+		if (!piece || piece.color !== boardState.sideToMove) return [];
+
+		// 合法手一覧から、移動元が一致するものを抽出
+		const legalMoves = generateLegalMoves(boardState);
+		return legalMoves
+			.filter(m => m.type === "move" && m.from.row === fromGrid.row && m.from.col === fromGrid.col)
+			.map(m => m.to);
+	}, [selectedPiece, boardState, piecePositions]);
+
 	const handleDragEnd = useCallback((id: string, newPos: [number, number, number]) => {
-		// ドロップ位置を最も近いグリッドにスナップ
-		const grid = worldToGrid(newPos[0], newPos[2]);
-		if (grid) {
-			const snappedPos = gridToWorld(grid.row, grid.col);
-			setPiecePositions(prev => ({ ...prev, [id]: snappedPos }));
-			console.log(`駒 ${id} を (${grid.row}, ${grid.col}) に移動`);
+		const toGrid = worldToGrid(newPos[0], newPos[2]);
+		if (!toGrid) return;
+
+		const currentPos = piecePositions[id];
+		let fromGrid: Square;
+		if (currentPos) {
+			const g = worldToGrid(currentPos[0], currentPos[2]);
+			fromGrid = g!;
 		} else {
-			// 盤外 → 元の位置に戻す（piecePositionsに記録がなければinitialPositionに戻る）
-			setPiecePositions(prev => {
-				const copy = { ...prev };
-				delete copy[id];
-				return copy;
-			});
-			console.log(`駒 ${id} は盤外のため元の位置に戻します`);
+			fromGrid = PIECE_INITIAL_GRID[id];
 		}
-	}, []);
+
+		if (fromGrid.row === toGrid.row && fromGrid.col === toGrid.col) return;
+
+		// ルールチェック (成りは一旦自動で行うか、後で行う)
+		// 行き止まりになる場合は強制的に成る
+		const mustPromote = (id.includes("fu") && ((boardState.sideToMove === Color.BLACK && toGrid.row === 0) || (boardState.sideToMove === Color.WHITE && toGrid.row === 4)));
+		
+		const move: Move = {
+			type: "move",
+			from: fromGrid,
+			to: toGrid,
+			promote: mustPromote // TODO: 選択UIが必要だが、一旦「歩」の行き止まりのみ
+		};
+
+		if (isLegalMove(boardState, move)) {
+			// 捕獲される駒があるか確認
+			const capturedPiece = boardState.board[toGrid.row][toGrid.col];
+			const nextState = applyMove(boardState, move);
+			
+			setPiecePositions(prev => {
+				const nextPosMap = { ...prev };
+				
+				// 移動させた駒の位置を更新
+				nextPosMap[id] = gridToWorld(toGrid.row, toGrid.col);
+				
+				// もし駒を取った場合、取られた駒を駒台へ移動させる
+				if (capturedPiece) {
+					// 取られた駒のIDを特定（現在の位置から逆算）
+					const capturedId = Object.keys(PIECE_INITIAL_GRID).find(pid => {
+						if (pid === id) return false;
+						const pPos = piecePositions[pid] || gridToWorld(PIECE_INITIAL_GRID[pid].row, PIECE_INITIAL_GRID[pid].col);
+						const pg = worldToGrid(pPos[0], pPos[2]);
+						return pg && pg.row === toGrid.row && pg.col === toGrid.col;
+					});
+
+					if (capturedId) {
+						// 駒台の位置（暫定）
+						// 先手が取った場合 -> 先手の駒台へ
+						const isSenteWin = boardState.sideToMove === Color.BLACK;
+						const handX = isSenteWin ? -12.5 : -21.2;
+						const handZ = isSenteWin ? -21 : 12.7;
+						// 少しずつずらす（簡易版）
+						const offset = Object.keys(nextPosMap).filter(k => k === capturedId).length * 2;
+						nextPosMap[capturedId] = [handX, 10.0, handZ + offset];
+					}
+				}
+				
+				return nextPosMap;
+			});
+
+			setBoardState(nextState);
+			console.log(`${boardState.sideToMove === Color.BLACK ? "先手" : "後手"}の移動: ${id} (${fromGrid.row},${fromGrid.col}) -> (${toGrid.row},${toGrid.col})`);
+		} else {
+			console.log("無効な移動です");
+		}
+	}, [boardState, piecePositions]);
 
 	// 背景クリックで選択解除
 	const handleBackgroundClick = useCallback(() => {
@@ -298,6 +408,12 @@ export default function TatamiBackground() {
 						</mesh>
 
 						<BanModelContent />
+
+						{/* アシストマーク（移動可能な場所の強調） */}
+						{validMoveDestinations.map((dest, idx) => {
+							const pos = gridToWorld(dest.row, dest.col);
+							return <MoveMarker key={`marker-${idx}`} position={pos} />;
+						})}
 
 						{/* 駒台 (Sente: 左上) */}
 						<DaiModelContent
@@ -453,7 +569,7 @@ export default function TatamiBackground() {
 						<DraggablePiece
 							pieceId="gote-fu"
 							modelPath="/models/fu.glb"
-							initialPosition={piecePositions["gote-fu"] || [-2.7, 10.0, 6.4]}
+							initialPosition={piecePositions["gote-fu"] || [0.6, 10.0, 6.4]}
 							rotation={[-Math.PI / 2, Math.PI, -Math.PI / 2]}
 							selectedId={selectedPiece}
 							onSelect={handleSelect}
