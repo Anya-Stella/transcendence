@@ -8,7 +8,19 @@ import { Color, PieceType, PromotedPieceType, type Piece, type BoardState, type 
 export const BOARD_SIZE = 5;
 
 /** 初期局面の SFEN 文字列 (5×5 将棋) */
-export const INITIAL_SFEN = "rbsgk/4p/5/P4/KGSBR b - 1";
+export const INITIAL_SFEN = "rbsgk/4p/5/P4/KGSBR b - 1"; // TODO: SFENの修正が必要な場合は再構築
+// 修正前の SFEN: "rbsgk/4p/5/P4/KGSBR b - 1" (飛角銀金王 / ・・歩 / ... / 王金銀角飛)
+// 新しい SFEN を計算し直す必要があるかもしれません。
+// 飛:r, 角:b, 銀:s, 金:g, 王:k
+// 行0: rbsgk (飛角銀金王)
+// 行1: 4p (空空空空歩)
+// 行2: 5
+// 行3: P4 (歩空空空空)
+// 行4: KGSBR (王金銀角飛)
+// 行き先も同じなので INITIAL_SFEN = "rbsgk/4p/5/P4/KGSBR b - 1" のままで合っています。
+// ※以前のSFENは "ksgbr/4p/5/P4/RBSGK b - 1" だった可能性がありますが、
+// 現在の INITIAL_SFEN は既に修正後の意図（rbsgk...）に沿っているようです。
+// コード内の生成ロジックと SFEN を確実に一致させます。
 
 /** 成れる駒の対応表 */
 export const PROMOTION_MAP: Partial<Record<number, number>> = {
@@ -72,7 +84,7 @@ export function createInitialBoard(): BoardState {
 	);
 
 	// 後手 (WHITE) — 上段 row=0
-	// rbsgk → col 0..4
+	// 飛角銀金王 → col 0..4
 	board[0][0] = { color: Color.WHITE, pieceType: PieceType.ROOK };
 	board[0][1] = { color: Color.WHITE, pieceType: PieceType.BISHOP };
 	board[0][2] = { color: Color.WHITE, pieceType: PieceType.SILVER };
@@ -86,7 +98,7 @@ export function createInitialBoard(): BoardState {
 	board[3][0] = { color: Color.BLACK, pieceType: PieceType.PAWN };
 
 	// 先手 (BLACK) — 下段 row=4
-	// KGSBR → col 0..4
+	// 王金銀角飛 → col 0..4
 	board[4][0] = { color: Color.BLACK, pieceType: PieceType.KING };
 	board[4][1] = { color: Color.BLACK, pieceType: PieceType.GOLD };
 	board[4][2] = { color: Color.BLACK, pieceType: PieceType.SILVER };

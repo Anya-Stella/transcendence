@@ -8,6 +8,9 @@ import { PieceData, HandPieces, Pos } from "@/lib/shogi/types";
 import TatamiBackground from "@/components/TatamiBackground";
 
 function PieceComponent({ piece, isPromoted }: { piece: PieceData; isPromoted?: boolean }) {
+	// 2Dの駒を非表示にする
+	return null;
+
 	if (!piece) return null;
 
 	return (

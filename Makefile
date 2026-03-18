@@ -11,3 +11,4 @@ prod:
 # 開発環境の停止 (dev 専用)
 down:
 	docker compose -f docker-compose.dev.yml down
+	@echo "開発用環境を停止しました"
