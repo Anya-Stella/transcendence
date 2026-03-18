@@ -22,7 +22,19 @@ function BanModelContent() {
 	// 盤は影を落とし・受ける
 	scene.traverse((child) => {
 		if ((child as THREE.Mesh).isMesh) {
-			child.castShadow = true;
+			const mesh = child as THREE.Mesh;
+			mesh.castShadow = true;
+			// mesh.receiveShadow = true; // 駒の影を受けるように設定
+
+			// 反射を消すために roughness を最大、metalness を最小にし、環境マップの影響を無視する
+			const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+			materials.forEach((mat) => {
+				if (mat instanceof THREE.MeshStandardMaterial) {
+					mat.roughness = 1.0;
+					mat.metalness = 0.0;
+					mat.envMapIntensity = 0;
+				}
+			});
 		}
 	});
 	return <primitive object={scene} scale={[1, 1, 1]} position={[0, 0, 0]} rotation={[0, 0, 0]} />;
@@ -120,6 +132,8 @@ function DraggablePiece({
 			gl.domElement.style.cursor = "auto";
 			setIsDragging(false);
 			onDragEnd(pieceId, posRef.current);
+			// ドロップ後に位置を強制的に再同期する（無効な位置の場合は initialPosition に戻るため）
+			setPos(initialPosition);
 		};
 
 		window.addEventListener("pointermove", onMove);
@@ -170,33 +184,46 @@ function DaiModelContent({ position, rotation, scale = [1, 1, 1] }: { position: 
 }
 
 // 盤面のグリッド座標定義（5×5）
-// Row 0 (後手側) → Row 4 (先手側)
-// Col 0 (左) → Col 4 (右)
-const BOARD_BASE_X = 3.9;   // Row 0 の X 座標
-const BOARD_ROW_STEP = -3.25; // 行ごとの X 間隔
-const BOARD_BASE_Z = -6.3;  // Col 0 の Z 座標
-const BOARD_COL_STEP = 3.175; // 列ごとの Z 間隔
+// Row 0 (後手側: X=3.9) → Row 4 (先手側: X=-9.1)
+// Col 0 (左: Z=-6.4) → Col 4 (右: Z=6.4)
+const BOARD_X_COORDS = [3.9, 0.6, -2.7, -6.0, -9.1];
+const BOARD_Z_COORDS = [-6.4, -3.2, 0, 3.2, 6.4];
 const BOARD_Y = 10.0;       // 駒の Y 座標（高さ）
 
 // グリッド座標 → 3D ワールド座標
 function gridToWorld(row: number, col: number): [number, number, number] {
 	return [
-		BOARD_BASE_X + row * BOARD_ROW_STEP,
+		BOARD_X_COORDS[row],
 		BOARD_Y,
-		BOARD_BASE_Z + col * BOARD_COL_STEP
+		BOARD_Z_COORDS[col]
 	];
 }
 
 // 3D ワールド座標 → 最も近いグリッド座標
 function worldToGrid(x: number, z: number): { row: number; col: number } | null {
-	const row = Math.round((x - BOARD_BASE_X) / BOARD_ROW_STEP);
-	const col = Math.round((z - BOARD_BASE_Z) / BOARD_COL_STEP);
-
-	// 盤面内（0〜4）に収まっているかチェック
-	if (row < 0 || row > 4 || col < 0 || col > 4) {
-		return null; // 盤外
+	// 最も近いX座標のインデックスを探す
+	let bestRow = 0;
+	let minXDist = Math.abs(x - BOARD_X_COORDS[0]);
+	for (let i = 1; i < BOARD_X_COORDS.length; i++) {
+		const dist = Math.abs(x - BOARD_X_COORDS[i]);
+		if (dist < minXDist) {
+			minXDist = dist;
+			bestRow = i;
+		}
 	}
-	return { row, col };
+
+	// 最も近いZ座標のインデックスを探す
+	let bestCol = 0;
+	let minZDist = Math.abs(z - BOARD_Z_COORDS[0]);
+	for (let i = 1; i < BOARD_Z_COORDS.length; i++) {
+		const dist = Math.abs(z - BOARD_Z_COORDS[i]);
+		if (dist < minZDist) {
+			minZDist = dist;
+			bestCol = i;
+		}
+	}
+
+	return { row: bestRow, col: bestCol };
 }
 
 export default function TatamiBackground() {
@@ -292,7 +319,7 @@ export default function TatamiBackground() {
 						<DraggablePiece
 							pieceId="sente-ou"
 							modelPath="/models/ousyo.glb"
-							initialPosition={piecePositions["sente-ou"] || [-9.1, 10.0, -6.3]}
+							initialPosition={piecePositions["sente-ou"] || [-9.1, 10.0, -6.4]}
 							rotation={[-Math.PI / 2, 0, -Math.PI / 2]}
 							selectedId={selectedPiece}
 							onSelect={handleSelect}
@@ -304,7 +331,7 @@ export default function TatamiBackground() {
 						<DraggablePiece
 							pieceId="sente-kin"
 							modelPath="/models/kin.glb"
-							initialPosition={piecePositions["sente-kin"] || [-9.1, 10.0, -3.1]}
+							initialPosition={piecePositions["sente-kin"] || [-9.1, 10.0, -3.2]}
 							rotation={[-Math.PI / 2, 0, -Math.PI / 2]}
 							selectedId={selectedPiece}
 							onSelect={handleSelect}
@@ -352,7 +379,7 @@ export default function TatamiBackground() {
 						<DraggablePiece
 							pieceId="sente-fu"
 							modelPath="/models/fu.glb"
-							initialPosition={piecePositions["sente-fu"] || [-5.8, 10.0, -6.3]}
+							initialPosition={piecePositions["sente-fu"] || [-6, 10.0, -6.4]}
 							rotation={[Math.PI / 2, 0, -Math.PI / 2]}
 							selectedId={selectedPiece}
 							onSelect={handleSelect}
@@ -378,7 +405,7 @@ export default function TatamiBackground() {
 						<DraggablePiece
 							pieceId="gote-kin"
 							modelPath="/models/kin.glb"
-							initialPosition={piecePositions["gote-kin"] || [3.9, 10.0, 3.1]}
+							initialPosition={piecePositions["gote-kin"] || [3.9, 10.0, 3.2]}
 							rotation={[Math.PI / 2, Math.PI, -Math.PI / 2]}
 							selectedId={selectedPiece}
 							onSelect={handleSelect}
@@ -390,7 +417,7 @@ export default function TatamiBackground() {
 						<DraggablePiece
 							pieceId="gote-gin"
 							modelPath="/models/gin.glb"
-							initialPosition={piecePositions["gote-gin"] || [3.9, 10.0, -0.1]}
+							initialPosition={piecePositions["gote-gin"] || [3.9, 10.0, 0]}
 							rotation={[Math.PI / 2, Math.PI, -Math.PI / 2]}
 							selectedId={selectedPiece}
 							onSelect={handleSelect}
@@ -426,7 +453,7 @@ export default function TatamiBackground() {
 						<DraggablePiece
 							pieceId="gote-fu"
 							modelPath="/models/fu.glb"
-							initialPosition={piecePositions["gote-fu"] || [0.6, 10.0, 6.3]}
+							initialPosition={piecePositions["gote-fu"] || [-2.7, 10.0, 6.4]}
 							rotation={[-Math.PI / 2, Math.PI, -Math.PI / 2]}
 							selectedId={selectedPiece}
 							onSelect={handleSelect}
