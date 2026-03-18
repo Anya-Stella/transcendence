@@ -1,16 +1,19 @@
 import { NextResponse } from "next/server";
-import { getAuthFromCookie } from "@/lib/auth";
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 
 // フレンドとフレンド申請一覧の取得
 export async function GET() {
-	const auth = await getAuthFromCookie();
-	if (!auth) {
+	const session = await auth();
+	if (!session?.user) {
 		return NextResponse.json({ error: "未認証" }, { status: 401 });
 	}
 
 	try {
-		const userId = auth.userId;
+		const userId = session.user.id;
+		if (!userId) {
+			return NextResponse.json({ error: "ユーザーIDが不明です" }, { status: 400 });
+		}
 
 		// 自分が関わっている Friendship をすべて取得
 		const friendships = await prisma.friendship.findMany({
@@ -19,10 +22,10 @@ export async function GET() {
 			},
 			include: {
 				requester: {
-					select: { id: true, name: true, avatarUrl: true },
+					select: { id: true, name: true, image: true },
 				},
 				addressee: {
-					select: { id: true, name: true, avatarUrl: true },
+					select: { id: true, name: true, image: true },
 				},
 			},
 		});
@@ -32,7 +35,7 @@ export async function GET() {
 		const pendingRequests: any[] = []; // 自分宛の承認待ち
 		const sentRequests: any[] = []; // 自分が送った承認待ち
 
-		friendships.forEach((f) => {
+		friendships.forEach((f: any) => {
 			const isRequester = f.requesterUserId === userId;
 			const otherUser = isRequester ? f.addressee : f.requester;
 
@@ -74,7 +77,7 @@ export async function GET() {
 				},
 			});
 
-			matches.forEach((match) => {
+			matches.forEach((match: any) => {
 				const isWin = match.winnerUserId === userId;
 				const opponentId = match.blackUserId === userId ? match.whiteUserId : match.blackUserId;
 
@@ -98,14 +101,17 @@ export async function GET() {
 
 // フレンド申請の送信
 export async function POST(req: Request) {
-	const auth = await getAuthFromCookie();
-	if (!auth) {
+	const session = await auth();
+	if (!session?.user) {
 		return NextResponse.json({ error: "未認証" }, { status: 401 });
 	}
 
 	try {
 		const { targetUserId, targetEmail } = await req.json();
-		const userId = auth.userId;
+		const userId = session.user.id;
+		if (!userId) {
+			return NextResponse.json({ error: "ユーザーIDが不明です" }, { status: 400 });
+		}
 
 		let addresseeId = targetUserId;
 

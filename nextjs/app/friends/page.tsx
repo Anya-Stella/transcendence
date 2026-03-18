@@ -7,7 +7,7 @@ import Link from "next/link";
 interface UserProfile {
 	id: string;
 	name: string;
-	avatarUrl: string | null;
+	image: string | null;
 }
 
 interface FriendshipData {

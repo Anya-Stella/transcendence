@@ -1,64 +1,34 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
-import { jwtVerify } from "jose";
+import NextAuth from "next-auth";
+import authConfig from "./auth.config";
 
-const JWT_SECRET = new TextEncoder().encode(
-	process.env.JWT_SECRET || "fallback-secret-do-not-use-in-prod"
-);
+const { auth } = NextAuth(authConfig);
 
-const COOKIE_NAME = "torassen_token";
+export default auth((req) => {
+  const { nextUrl } = req;
+  const isAuthenticated = !!req.auth?.user;
 
-// Pages only for unauthenticated users
-const PUBLIC_PAGES = ["/login"];
+  const isPublicPage = nextUrl.pathname.startsWith("/login");
+  const isApiAuthRoute = nextUrl.pathname.startsWith("/api/auth");
+  const isRoot = nextUrl.pathname === "/";
 
-async function verifyToken(token: string | undefined): Promise<boolean>
-{
-	if (!token)
-		return false;
-	try {
-		await jwtVerify(token, JWT_SECRET);
-		return true;
-	}
-	catch {
-		return false;
-	}
-}
+  if (isApiAuthRoute) return;
 
-function redirect(request: NextRequest, pathname: string)
-{
-	const url = request.nextUrl.clone();
-	url.pathname = pathname;
-	return NextResponse.redirect(url);
-}
+  if (isRoot) {
+    return Response.redirect(new URL(isAuthenticated ? "/home" : "/login", nextUrl));
+  }
 
-export async function middleware(request: NextRequest)
-{
-	const { pathname } = request.nextUrl;
-	const token = request.cookies.get(COOKIE_NAME)?.value;
-	const isAuthenticated = await verifyToken(token);
+  if (isPublicPage) {
+    if (isAuthenticated) {
+      return Response.redirect(new URL("/home", nextUrl));
+    }
+    return;
+  }
 
-	// Redirect root to appropriate page
-	if (pathname === "/")
-		return redirect(request, isAuthenticated ? "/home" : "/login");
+  if (!isAuthenticated) {
+    return Response.redirect(new URL("/login", nextUrl));
+  }
+});
 
-	// Redirect authenticated users away from login
-	if (PUBLIC_PAGES.some((p) => pathname.startsWith(p)))
-	{
-		if(isAuthenticated)
-			return redirect(request, "/home");
-		return NextResponse.next();
-	}
-
-	// the other
-	if (!isAuthenticated)
-		return redirect(request, "/login");
-
-	return NextResponse.next();
-}
-
-//settings for using middleware
 export const config = {
-	matcher: [
-		"/((?!api|_next/static|_next/image|favicon.ico).*)"
-	],
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)", "/"],
 };
