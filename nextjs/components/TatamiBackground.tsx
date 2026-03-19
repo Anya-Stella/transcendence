@@ -1,8 +1,8 @@
 // @ts-nocheck
 "use client";
 
-import { Canvas, useThree } from "@react-three/fiber";
-import { useGLTF, Environment } from "@react-three/drei";
+import { Canvas, useThree, useFrame } from "@react-three/fiber";
+import { useGLTF, Environment, Html } from "@react-three/drei";
 import { Suspense, useRef, useState, useCallback, useEffect, useMemo } from "react";
 import * as THREE from "three";
 import {
@@ -12,6 +12,7 @@ import {
 	isLegalMove,
 	applyMove,
 	generateLegalMoves,
+	UNPROMOTE_MAP,
 	type BoardState,
 	type Move,
 	type Square
@@ -19,13 +20,25 @@ import {
 
 function TatamiModel() {
 	const { scene } = useGLTF("/models/tatami.glb");
+	const clonedScene = scene.clone();
+
 	// 畳は影を受ける
-	scene.traverse((child) => {
+	clonedScene.traverse((child) => {
 		if ((child as THREE.Mesh).isMesh) {
-			child.receiveShadow = true;
+			const mesh = child as THREE.Mesh;
+			// モデル内に元々含まれている影用メッシュを非表示にする
+			if (mesh.name.toLowerCase().includes("shadow") || mesh.name.toLowerCase().includes("plane")) {
+				mesh.visible = false;
+				return;
+			}
+			mesh.receiveShadow = true;
+			// 環境マップ（背景画像）からの自動ライティングを無効化
+			if (mesh.material instanceof THREE.MeshStandardMaterial) {
+				mesh.material.envMapIntensity = 0;
+			}
 		}
 	});
-	return <primitive object={scene} scale={[1, 1, 1]} position={[0, -1, 0]} rotation={[(Math.PI / 180) * 30, Math.PI / 2, 0]} />;
+	return <primitive object={clonedScene} scale={[1, 1, 1]} position={[0, -1, 0]} rotation={[(Math.PI / 180) * 30, Math.PI / 2, 0]} />;
 }
 
 function BanModelContent() {
@@ -59,6 +72,8 @@ function DraggablePiece({
 	scale = [0.9, 0.9, 0.9],
 	pieceId,
 	selectedId,
+	count = 1,
+	isPromoted = false,
 	onSelect,
 	onDragEnd,
 	parentGroupRef
@@ -69,6 +84,8 @@ function DraggablePiece({
 	scale?: [number, number, number];
 	pieceId: string;
 	selectedId: string | null;
+	count?: number;
+	isPromoted?: boolean;
 	onSelect: (id: string | null) => void;
 	onDragEnd: (id: string, newPos: [number, number, number]) => void;
 	parentGroupRef: React.RefObject<THREE.Group>;
@@ -78,10 +95,21 @@ function DraggablePiece({
 	// 駒の全メッシュに影を落とす設定
 	clonedScene.traverse((child) => {
 		if ((child as THREE.Mesh).isMesh) {
-			child.castShadow = true;
+			const mesh = child as THREE.Mesh;
+			// モデル内に元々含まれている影用メッシュ（"shadow"など）を非表示にする
+			if (mesh.name.toLowerCase().includes("shadow") || mesh.name.toLowerCase().includes("plane")) {
+				mesh.visible = false;
+				return;
+			}
+			mesh.castShadow = true;
+			// 環境マップ（背景画像）からの自動ライティングを無効化して影を1つに絞る
+			if (mesh.material instanceof THREE.MeshStandardMaterial) {
+				mesh.material.envMapIntensity = 0;
+			}
 		}
 	});
-	const groupRef = useRef<THREE.Group>(null);
+	const positionGroupRef = useRef<THREE.Group>(null);
+	const rotationGroupRef = useRef<THREE.Group>(null);
 	const [pos, setPos] = useState<[number, number, number]>(initialPosition);
 	const [isDragging, setIsDragging] = useState(false);
 	const isSelected = selectedId === pieceId;
@@ -108,18 +136,17 @@ function DraggablePiece({
 
 		// 駒のワールド位置を取得してドラッグ平面を設定
 		const parentGroup = parentGroupRef.current;
-		if (!parentGroup || !groupRef.current) return;
+		if (!parentGroup || !positionGroupRef.current) return;
 
 		// 駒のワールド位置を取得
 		const worldPos = new THREE.Vector3();
-		groupRef.current.getWorldPosition(worldPos);
+		positionGroupRef.current.getWorldPosition(worldPos);
 
 		// 親グループのワールドY軸方向（ローカルY軸のワールド表現）を法線として使用
 		// これにより回転されたグループの「上面」に沿ったドラッグ平面になる
 		const normal = new THREE.Vector3(0, 1, 0);
 		normal.applyQuaternion(parentGroup.quaternion);
 		const dragPlane = new THREE.Plane().setFromNormalAndCoplanarPoint(normal, worldPos);
-
 		const onMove = (ev: PointerEvent) => {
 			const rect = gl.domElement.getBoundingClientRect();
 			mouseRef.current.set(
@@ -151,31 +178,89 @@ function DraggablePiece({
 		window.addEventListener("pointerup", onUp);
 	}, [pieceId, onSelect, onDragEnd, gl, camera, parentGroupRef]);
 
+	const targetQuat = useMemo(() => {
+		const q = new THREE.Quaternion();
+		const e = new THREE.Euler(...rotation);
+		q.setFromEuler(e);
+		return q;
+	}, [rotation]);
+
+	const targetPos = useMemo(() => new THREE.Vector3(...pos), [pos]);
+	const isFirstFrame = useRef(true);
+
+	useFrame((state, delta) => {
+		if (!positionGroupRef.current || !rotationGroupRef.current) return;
+
+		// 初回フレームは即座に位置と回転をセットしてアニメーションを防止
+		if (isFirstFrame.current) {
+			positionGroupRef.current.position.set(targetPos.x, targetPos.y + (isDragging ? 1 : 0), targetPos.z);
+			rotationGroupRef.current.quaternion.copy(targetQuat);
+			isFirstFrame.current = false;
+			return;
+		}
+
+		// 1. 位置のアニメーション (Lerp)
+		if (!isDragging) {
+			const currentPos = positionGroupRef.current.position;
+			currentPos.lerp(new THREE.Vector3(targetPos.x, targetPos.y, targetPos.z), 0.2);
+
+			// 2. 回転のアニメーション (Slerp) - 内側のグループのみ回転
+			rotationGroupRef.current.quaternion.slerp(targetQuat, 0.15);
+		} else {
+			// ドラッグ中は即座に位置を反映
+			positionGroupRef.current.position.set(pos[0], pos[1] + 1, pos[2]);
+			rotationGroupRef.current.quaternion.copy(targetQuat);
+		}
+	});
+
 	return (
 		<group
-			ref={groupRef}
-			position={[pos[0], pos[1] + (isDragging ? 1 : 0), pos[2]]}
+			ref={positionGroupRef}
 			onPointerDown={handlePointerDown}
 			onPointerOver={() => { gl.domElement.style.cursor = "grab"; }}
 			onPointerOut={() => { gl.domElement.style.cursor = "auto"; }}
 		>
-			{/* 選択時のハイライト（光るリング） */}
+			{/* 選択時のハイライト（位置グループに属するため駒が回転しても水平を維持） */}
 			{isSelected && (
 				<mesh position={[0, 0.2, 0]} rotation={[-Math.PI / 2, 0, 0]}>
 					<ringGeometry args={[1.2, 1.6, 32]} />
 					<meshBasicMaterial color="#ffffff" transparent opacity={0.6} side={THREE.DoubleSide} />
 				</mesh>
 			)}
-			{/* クリック用の透明ヒットエリア（駒の当たり判定を広くする） */}
+			{/* クリック用の透明ヒットエリア */}
 			<mesh visible={false}>
 				<boxGeometry args={[2.5, 2.5, 2.5]} />
 				<meshBasicMaterial transparent opacity={0} />
 			</mesh>
-			<primitive
-				object={clonedScene}
-				scale={scale}
-				rotation={rotation}
-			/>
+
+			{/* 回転アニメーション用の内部グループ */}
+			<group ref={rotationGroupRef}>
+				<primitive
+					object={clonedScene}
+					scale={scale}
+				/>
+			</group>
+
+			{count > 1 && (
+				<Html position={[1.5, 0.5, 1.5]} center pointerEvents="none">
+					<div style={{
+						background: "rgba(0, 0, 0, 0.8)",
+						color: "white",
+						width: "24px",
+						height: "24px",
+						borderRadius: "50%",
+						display: "flex",
+						alignItems: "center",
+						justifyContent: "center",
+						fontSize: "14px",
+						fontWeight: "bold",
+						border: "2px solid #ffffff",
+						userSelect: "none"
+					}}>
+						{count}
+					</div>
+				</Html>
+			)}
 		</group>
 	);
 }
@@ -183,6 +268,23 @@ function DraggablePiece({
 function DaiModelContent({ position, rotation, scale = [1, 1, 1] }: { position: [number, number, number], rotation: [number, number, number], scale?: [number, number, number] }) {
 	const { scene } = useGLTF("/models/dai.glb");
 	const clonedScene = scene.clone();
+
+	clonedScene.traverse((child) => {
+		if ((child as THREE.Mesh).isMesh) {
+			const mesh = child as THREE.Mesh;
+			// モデル内に元々含まれている影用メッシュを非表示にする
+			if (mesh.name.toLowerCase().includes("shadow") || mesh.name.toLowerCase().includes("plane")) {
+				mesh.visible = false;
+				return;
+			}
+			mesh.castShadow = true;
+			mesh.receiveShadow = true;
+			// 環境マップ（背景画像）からの自動ライティングを無効化
+			if (mesh.material instanceof THREE.MeshStandardMaterial) {
+				mesh.material.envMapIntensity = 0;
+			}
+		}
+	});
 
 	return (
 		<primitive
@@ -247,6 +349,27 @@ function worldToGrid(x: number, z: number): { row: number; col: number } | null 
 	return { row: bestRow, col: bestCol };
 }
 
+// 駒の位置が盤外（駒台）かどうかを判定する
+function checkIsHandPos(pos: [number, number, number]): boolean {
+	// 盤の範囲 X:[3.9, -9.1] Z:[-6.4, 6.4] から外れているか判定
+	return pos[0] > 5.0 || pos[0] < -10.0 || pos[2] > 7.0 || pos[2] < -7.0;
+}
+
+// 成り駒かどうかを判定（PieceType で判定）
+function isPromotedPieceType(type: number): boolean {
+	return type >= 6; // 0-5 は成りなし、6-9 は成り込み駒
+}
+
+// IDから基本の駒種を取得する
+function getBasePieceType(id: string): PieceType {
+	if (id.includes("fu")) return PieceType.PAWN;
+	if (id.includes("hisya")) return PieceType.ROOK;
+	if (id.includes("kaku")) return PieceType.BISHOP;
+	if (id.includes("gin")) return PieceType.SILVER;
+	if (id.includes("kin")) return PieceType.GOLD;
+	return PieceType.KING;
+}
+
 // 各駒の初期グリッド位置（駒の移動判定に使用）
 const PIECE_INITIAL_GRID: Record<string, Square> = {
 	"sente-ou": { row: 4, col: 0 },
@@ -263,17 +386,162 @@ const PIECE_INITIAL_GRID: Record<string, Square> = {
 	"gote-fu": { row: 1, col: 4 },
 };
 
+// 駒台の座標定義
+const SENTE_HAND_COORDS: Partial<Record<PieceType, [number, number, number]>> = {
+	[PieceType.PAWN]: [-3, 10.0, 10.2],
+	[PieceType.ROOK]: [-3, 10.0, 13.2],
+	[PieceType.BISHOP]: [-3, 10.0, 16.2],
+	[PieceType.SILVER]: [-7.1, 10.0, 10.2],
+	[PieceType.GOLD]: [-7.1, 10.0, 13.2],
+};
+
+const GOTE_HAND_COORDS: Partial<Record<PieceType, [number, number, number]>> = {
+	[PieceType.PAWN]: [-2.7, 10.0, -10.2],
+	[PieceType.ROOK]: [-2.7, 10.0, -13.2],
+	[PieceType.BISHOP]: [-2.7, 10.0, -16.2],
+	[PieceType.SILVER]: [1.5, 10.0, -10.2],
+	[PieceType.GOLD]: [1.5, 10.0, -13.2],
+};
+
 export default function TatamiBackground() {
 	const [selectedPiece, setSelectedPiece] = useState<string | null>(null);
+	const [pendingPromotion, setPendingPromotion] = useState<{ id: string, move: BoardMove } | null>(null);
 	const boardGroupRef = useRef<THREE.Group>(null);
 	// 将棋の論理的な盤面状態
 	const [boardState, setBoardState] = useState<BoardState>(() => createInitialBoard());
 	// 各駒の現在位置（ワールド座標）を管理
 	const [piecePositions, setPiecePositions] = useState<Record<string, [number, number, number]>>({});
+	// 各駒の現在の所有者（先手/後手）を管理
+	const [pieceOwners, setPieceOwners] = useState<Record<string, Color>>(() => {
+		const initial: Record<string, Color> = {};
+		Object.keys(PIECE_INITIAL_GRID).forEach(id => {
+			initial[id] = id.startsWith("sente-") ? Color.BLACK : Color.WHITE;
+		});
+		return initial;
+	});
+	// 各駒の成り状態を管理
+	const [piecePromotions, setPiecePromotions] = useState<Record<string, boolean>>(() => {
+		const initial: Record<string, boolean> = {};
+		Object.keys(PIECE_INITIAL_GRID).forEach(id => {
+			initial[id] = false;
+		});
+		return initial;
+	});
+
+	// 指し手を実行する共通関数
+	const executeMove = useCallback((id: string, move: Move) => {
+		const toGrid = move.to;
+		const capturedPiece = move.type === "move" ? boardState.board[toGrid.row][toGrid.col] : null;
+		const nextState = applyMove(boardState, move);
+
+		// 所有者の更新が必要な場合（捕獲）
+		if (capturedPiece) {
+			const capturedId = Object.keys(PIECE_INITIAL_GRID).find(pid => {
+				if (pid === id) return false;
+				const pPos = piecePositions[pid] || gridToWorld(PIECE_INITIAL_GRID[pid].row, PIECE_INITIAL_GRID[pid].col);
+				// 駒台にいない、かつ位置が一致する駒を盤上から探す
+				if (checkIsHandPos(pPos)) return false;
+				const pg = worldToGrid(pPos[0], pPos[2]);
+				return pg && pg.row === toGrid.row && pg.col === toGrid.col;
+			});
+			if (capturedId) {
+				setPieceOwners(prev => ({ ...prev, [capturedId]: boardState.sideToMove }));
+				// 捕獲されたら成り状態を解除
+				setPiecePromotions(prev => ({ ...prev, [capturedId]: false }));
+			}
+		}
+
+		// 駒が成った場合は状態を更新
+		if (move.type === "move" && move.promote) {
+			setPiecePromotions(prev => ({ ...prev, [id]: true }));
+		}
+
+		setPiecePositions(prev => {
+			const nextPosMap = { ...prev };
+			nextPosMap[id] = gridToWorld(toGrid.row, toGrid.col);
+
+			if (capturedPiece) {
+				const capturedId = Object.keys(PIECE_INITIAL_GRID).find(pid => {
+					if (pid === id) return false;
+					const pPos = prev[pid] || gridToWorld(PIECE_INITIAL_GRID[pid].row, PIECE_INITIAL_GRID[pid].col);
+					if (checkIsHandPos(pPos)) return false;
+					const pg = worldToGrid(pPos[0], pPos[2]);
+					return pg && pg.row === toGrid.row && pg.col === toGrid.col;
+				});
+
+				if (capturedId) {
+					const winnerColor = boardState.sideToMove;
+					const coordsMap = winnerColor === Color.BLACK ? SENTE_HAND_COORDS : GOTE_HAND_COORDS;
+					// 成り駒の場合、元の駒種に戻してから駒台の座標を取得する
+					const baseType = UNPROMOTE_MAP[capturedPiece.pieceType] ?? capturedPiece.pieceType;
+					nextPosMap[capturedId] = coordsMap[baseType] || [0, 0, 0];
+				}
+			}
+			return nextPosMap;
+		});
+
+		setBoardState(nextState);
+
+		if (move.type === "move") {
+			console.log(`${boardState.sideToMove === Color.BLACK ? "先手" : "後手"}の移動: ${id} (${move.from.row},${move.from.col}) -> (${toGrid.row},${toGrid.col}) ${move.promote ? "(成)" : ""}`);
+		} else {
+			console.log(`${boardState.sideToMove === Color.BLACK ? "先手" : "後手"}の打ち: ${id} -> (${toGrid.row},${toGrid.col})`);
+		}
+	}, [boardState, piecePositions, pieceOwners]);
+
+	// 駒の向きを計算するヘルパー
+	const getPieceRotation = (id: string, color: Color, isPromoted: boolean): [number, number, number] => {
+		const isSente = color === Color.BLACK;
+		const isFu = id.includes("fu");
+		let rotation: [number, number, number];
+		// 歩兵(fu.glb)だけモデルの基本向きが違うため調整
+		if (isFu) {
+			rotation = isSente ? [Math.PI / 2, 0, -Math.PI / 2] : [-Math.PI / 2, Math.PI, -Math.PI / 2];
+		} else {
+			rotation = isSente ? [-Math.PI / 2, 0, -Math.PI / 2] : [Math.PI / 2, Math.PI, -Math.PI / 2];
+		}
+
+		// 成っている場合は裏返しにする(X軸180度回転)
+		if (isPromoted) {
+			return [rotation[0] + Math.PI, rotation[1], rotation[2]];
+		}
+		return rotation;
+	};
+
+	// 駒が成っているか確認する
+	const isPiecePromoted = useCallback((id: string): boolean => {
+		return piecePromotions[id] || false;
+	}, [piecePromotions]);
 
 	const handleSelect = useCallback((id: string | null) => {
 		setSelectedPiece(id);
 	}, []);
+
+	// IDから現在の持ち駒の個数を取得する
+	const getHandPieceCount = useCallback((id: string): number => {
+		const pos = piecePositions[id] || gridToWorld(PIECE_INITIAL_GRID[id].row, PIECE_INITIAL_GRID[id].col);
+		if (!checkIsHandPos(pos)) return 1;
+
+		const owner = pieceOwners[id];
+		const type = getBasePieceType(id);
+		return boardState.hands[owner][type] || 0;
+	}, [piecePositions, pieceOwners, boardState.hands]);
+
+	// その持ち駒の種類の中で、表示されるべき代表駒かどうかを判定（重複表示防止）
+	const isPrimaryHandPiece = useCallback((id: string): boolean => {
+		const pos = piecePositions[id] || gridToWorld(PIECE_INITIAL_GRID[id].row, PIECE_INITIAL_GRID[id].col);
+		if (!checkIsHandPos(pos)) return true;
+
+		const owner = pieceOwners[id];
+		const type = getBasePieceType(id);
+		// 同じ種類かつ同じ所有者の駒リストを取得
+		const sameTypeIds = Object.keys(PIECE_INITIAL_GRID).filter(pid => {
+			const pPos = piecePositions[pid] || gridToWorld(PIECE_INITIAL_GRID[pid].row, PIECE_INITIAL_GRID[pid].col);
+			return checkIsHandPos(pPos) && pieceOwners[pid] === owner && getBasePieceType(pid) === type;
+		});
+		// リストの先頭のIDだけを代表とする
+		return sameTypeIds[0] === id;
+	}, [piecePositions, pieceOwners]);
 
 	// 現在の選択駒に対する有効な移動先を計算
 	const validMoveDestinations = useMemo(() => {
@@ -281,88 +549,97 @@ export default function TatamiBackground() {
 
 		// 現在のグリッド位置を特定
 		const currentPos = piecePositions[selectedPiece] || gridToWorld(PIECE_INITIAL_GRID[selectedPiece].row, PIECE_INITIAL_GRID[selectedPiece].col);
+		const isHand = checkIsHandPos(currentPos);
 		const fromGrid = worldToGrid(currentPos[0], currentPos[2]);
-		if (!fromGrid) return [];
+		if (!fromGrid && !isHand) return [];
 
-		// そのマスに現在の手番の駒があるか確認
-		const piece = boardState.board[fromGrid.row][fromGrid.col];
-		if (!piece || piece.color !== boardState.sideToMove) return [];
+		// そのマスに現在の手番の駒があるか確認（駒台の場合は所有者を確認）
+		if (pieceOwners[selectedPiece] !== boardState.sideToMove) return [];
 
-		// 合法手一覧から、移動元が一致するものを抽出
+		// 合法手一覧から抽出
 		const legalMoves = generateLegalMoves(boardState);
-		return legalMoves
-			.filter(m => m.type === "move" && m.from.row === fromGrid.row && m.from.col === fromGrid.col)
-			.map(m => m.to);
-	}, [selectedPiece, boardState, piecePositions]);
+
+		if (isHand) {
+			const type = getBasePieceType(selectedPiece);
+			return legalMoves
+				.filter(m => m.type === "drop" && m.pieceType === type)
+				.map(m => m.to);
+		} else {
+			return legalMoves
+				.filter(m => m.type === "move" && fromGrid && m.from.row === fromGrid.row && m.from.col === fromGrid.col)
+				.map(m => m.to);
+		}
+	}, [selectedPiece, boardState, piecePositions, pieceOwners]);
 
 	const handleDragEnd = useCallback((id: string, newPos: [number, number, number]) => {
 		const toGrid = worldToGrid(newPos[0], newPos[2]);
 		if (!toGrid) return;
 
-		const currentPos = piecePositions[id];
-		let fromGrid: Square;
-		if (currentPos) {
-			const g = worldToGrid(currentPos[0], currentPos[2]);
-			fromGrid = g!;
+		const currentPos = piecePositions[id] || gridToWorld(PIECE_INITIAL_GRID[id].row, PIECE_INITIAL_GRID[id].col);
+		const isFromHand = checkIsHandPos(currentPos);
+
+		let move: Move;
+
+		if (isFromHand) {
+			// 持ち駒を打つ
+			move = {
+				type: "drop",
+				pieceType: getBasePieceType(id),
+				to: toGrid
+			};
 		} else {
-			fromGrid = PIECE_INITIAL_GRID[id];
+			// 盤上の移動
+			const fromGrid = worldToGrid(currentPos[0], currentPos[2]);
+			if (fromGrid.row === toGrid.row && fromGrid.col === toGrid.col) return;
+
+			// 成り判定: 敵陣（1段目/5段目）に入る、または敵陣内から移動する場合
+			const promoRank = boardState.sideToMove === Color.BLACK ? 0 : 4;
+			const isToEnemyTerritory = toGrid.row === promoRank;
+			const isFromEnemyTerritory = fromGrid.row === promoRank;
+			const isEnemyTerritoryMove = isToEnemyTerritory || isFromEnemyTerritory;
+
+			const canPromote = (id.includes("fu") || id.includes("gin") || id.includes("hisya") || id.includes("kaku"));
+
+			// 既に成っている駒は promote: false (shogi-logicの仕様に合わせる)
+			const promote = canPromote && isEnemyTerritoryMove && !isPiecePromoted(id);
+
+			move = {
+				type: "move",
+				from: fromGrid,
+				to: toGrid,
+				promote: promote
+			};
 		}
 
-		if (fromGrid.row === toGrid.row && fromGrid.col === toGrid.col) return;
-
-		// ルールチェック (成りは一旦自動で行うか、後で行う)
-		// 行き止まりになる場合は強制的に成る
-		const mustPromote = (id.includes("fu") && ((boardState.sideToMove === Color.BLACK && toGrid.row === 0) || (boardState.sideToMove === Color.WHITE && toGrid.row === 4)));
-		
-		const move: Move = {
-			type: "move",
-			from: fromGrid,
-			to: toGrid,
-			promote: mustPromote // TODO: 選択UIが必要だが、一旦「歩」の行き止まりのみ
-		};
-
 		if (isLegalMove(boardState, move)) {
-			// 捕獲される駒があるか確認
-			const capturedPiece = boardState.board[toGrid.row][toGrid.col];
-			const nextState = applyMove(boardState, move);
-			
-			setPiecePositions(prev => {
-				const nextPosMap = { ...prev };
-				
-				// 移動させた駒の位置を更新
-				nextPosMap[id] = gridToWorld(toGrid.row, toGrid.col);
-				
-				// もし駒を取った場合、取られた駒を駒台へ移動させる
-				if (capturedPiece) {
-					// 取られた駒のIDを特定（現在の位置から逆算）
-					const capturedId = Object.keys(PIECE_INITIAL_GRID).find(pid => {
-						if (pid === id) return false;
-						const pPos = piecePositions[pid] || gridToWorld(PIECE_INITIAL_GRID[pid].row, PIECE_INITIAL_GRID[pid].col);
-						const pg = worldToGrid(pPos[0], pPos[2]);
-						return pg && pg.row === toGrid.row && pg.col === toGrid.col;
-					});
+			if (move.type === "move") {
+				// 成り選択のプロンプトが必要か再判定
+				const promoRank = boardState.sideToMove === Color.BLACK ? 0 : 4;
+				const isToEnemyTerritory = toGrid.row === promoRank;
+				const isFromEnemyTerritory = move.from.row === promoRank;
+				const isEnemyTerritoryMove = isToEnemyTerritory || isFromEnemyTerritory;
 
-					if (capturedId) {
-						// 駒台の位置（暫定）
-						// 先手が取った場合 -> 先手の駒台へ
-						const isSenteWin = boardState.sideToMove === Color.BLACK;
-						const handX = isSenteWin ? -12.5 : -21.2;
-						const handZ = isSenteWin ? -21 : 12.7;
-						// 少しずつずらす（簡易版）
-						const offset = Object.keys(nextPosMap).filter(k => k === capturedId).length * 2;
-						nextPosMap[capturedId] = [handX, 10.0, handZ + offset];
+				const isAlreadyPromoted = isPiecePromoted(id);
+				const canPromote = (id.includes("fu") || id.includes("gin") || id.includes("hisya") || id.includes("kaku")) && !isAlreadyPromoted;
+
+				if (canPromote && isEnemyTerritoryMove) {
+					if (id.includes("fu")) {
+						// 歩は強制成り
+						executeMove(id, { ...move, promote: true });
+					} else {
+						// それ以外は選択
+						setPendingPromotion({ id, move: move as BoardMove });
 					}
+				} else {
+					executeMove(id, move);
 				}
-				
-				return nextPosMap;
-			});
-
-			setBoardState(nextState);
-			console.log(`${boardState.sideToMove === Color.BLACK ? "先手" : "後手"}の移動: ${id} (${fromGrid.row},${fromGrid.col}) -> (${toGrid.row},${toGrid.col})`);
+			} else {
+				executeMove(id, move);
+			}
 		} else {
 			console.log("無効な移動です");
 		}
-	}, [boardState, piecePositions]);
+	}, [boardState, piecePositions, executeMove, isPiecePromoted]);
 
 	// 背景クリックで選択解除
 	const handleBackgroundClick = useCallback(() => {
@@ -432,155 +709,286 @@ export default function TatamiBackground() {
 						{/* === 先手の駒 === */}
 
 						{/* 王将 (Sente: Row 4, Col 0) */}
-						<DraggablePiece
-							pieceId="sente-ou"
-							modelPath="/models/ousyo.glb"
-							initialPosition={piecePositions["sente-ou"] || [-9.1, 10.0, -6.4]}
-							rotation={[-Math.PI / 2, 0, -Math.PI / 2]}
-							selectedId={selectedPiece}
-							onSelect={handleSelect}
-							onDragEnd={handleDragEnd}
-							parentGroupRef={boardGroupRef}
-						/>
+						{isPrimaryHandPiece("sente-ou") && (
+							<DraggablePiece
+								pieceId="sente-ou"
+								modelPath="/models/ousyo.glb"
+								initialPosition={piecePositions["sente-ou"] || [-9.1, 10.0, -6.4]}
+								rotation={getPieceRotation("sente-ou", pieceOwners["sente-ou"], isPiecePromoted("sente-ou"))}
+								count={getHandPieceCount("sente-ou")}
+								selectedId={selectedPiece}
+								isPromoted={isPiecePromoted("sente-ou")}
+								onSelect={handleSelect}
+								onDragEnd={handleDragEnd}
+								parentGroupRef={boardGroupRef}
+							/>
+						)}
 
 						{/* 金将 (Sente: Row 4, Col 1) */}
-						<DraggablePiece
-							pieceId="sente-kin"
-							modelPath="/models/kin.glb"
-							initialPosition={piecePositions["sente-kin"] || [-9.1, 10.0, -3.2]}
-							rotation={[-Math.PI / 2, 0, -Math.PI / 2]}
-							selectedId={selectedPiece}
-							onSelect={handleSelect}
-							onDragEnd={handleDragEnd}
-							parentGroupRef={boardGroupRef}
-						/>
+						{isPrimaryHandPiece("sente-kin") && (
+							<DraggablePiece
+								pieceId="sente-kin"
+								modelPath="/models/kin.glb"
+								initialPosition={piecePositions["sente-kin"] || [-9.1, 10.0, -3.2]}
+								rotation={getPieceRotation("sente-kin", pieceOwners["sente-kin"], isPiecePromoted("sente-kin"))}
+								count={getHandPieceCount("sente-kin")}
+								selectedId={selectedPiece}
+								isPromoted={isPiecePromoted("sente-kin")}
+								onSelect={handleSelect}
+								onDragEnd={handleDragEnd}
+								parentGroupRef={boardGroupRef}
+							/>
+						)}
 
 						{/* 銀将 (Sente: Row 4, Col 2) */}
-						<DraggablePiece
-							pieceId="sente-gin"
-							modelPath="/models/gin.glb"
-							initialPosition={piecePositions["sente-gin"] || [-9.1, 10.0, 0.0]}
-							rotation={[-Math.PI / 2, 0, -Math.PI / 2]}
-							selectedId={selectedPiece}
-							onSelect={handleSelect}
-							onDragEnd={handleDragEnd}
-							parentGroupRef={boardGroupRef}
-						/>
+						{isPrimaryHandPiece("sente-gin") && (
+							<DraggablePiece
+								pieceId="sente-gin"
+								modelPath="/models/gin.glb"
+								initialPosition={piecePositions["sente-gin"] || [-9.1, 10.0, 0.0]}
+								rotation={getPieceRotation("sente-gin", pieceOwners["sente-gin"], isPiecePromoted("sente-gin"))}
+								count={getHandPieceCount("sente-gin")}
+								selectedId={selectedPiece}
+								isPromoted={isPiecePromoted("sente-gin")}
+								onSelect={handleSelect}
+								onDragEnd={handleDragEnd}
+								parentGroupRef={boardGroupRef}
+							/>
+						)}
 
 						{/* 角行 (Sente: Row 4, Col 3) */}
-						<DraggablePiece
-							pieceId="sente-kaku"
-							modelPath="/models/kaku.glb"
-							initialPosition={piecePositions["sente-kaku"] || [-9.1, 10.0, 3.2]}
-							rotation={[-Math.PI / 2, 0, -Math.PI / 2]}
-							selectedId={selectedPiece}
-							onSelect={handleSelect}
-							onDragEnd={handleDragEnd}
-							parentGroupRef={boardGroupRef}
-						/>
+						{isPrimaryHandPiece("sente-kaku") && (
+							<DraggablePiece
+								pieceId="sente-kaku"
+								modelPath="/models/kaku.glb"
+								initialPosition={piecePositions["sente-kaku"] || [-9.1, 10.0, 3.2]}
+								rotation={getPieceRotation("sente-kaku", pieceOwners["sente-kaku"], isPiecePromoted("sente-kaku"))}
+								count={getHandPieceCount("sente-kaku")}
+								selectedId={selectedPiece}
+								isPromoted={isPiecePromoted("sente-kaku")}
+								onSelect={handleSelect}
+								onDragEnd={handleDragEnd}
+								parentGroupRef={boardGroupRef}
+							/>
+						)}
 
 						{/* 飛車 (Sente: Row 4, Col 4) */}
-						<DraggablePiece
-							pieceId="sente-hisya"
-							modelPath="/models/hisya.glb"
-							initialPosition={piecePositions["sente-hisya"] || [-9.1, 10.0, 6.4]}
-							rotation={[-Math.PI / 2, 0, -Math.PI / 2]}
-							selectedId={selectedPiece}
-							onSelect={handleSelect}
-							onDragEnd={handleDragEnd}
-							parentGroupRef={boardGroupRef}
-						/>
+						{isPrimaryHandPiece("sente-hisya") && (
+							<DraggablePiece
+								pieceId="sente-hisya"
+								modelPath="/models/hisya.glb"
+								initialPosition={piecePositions["sente-hisya"] || [-9.1, 10.0, 6.4]}
+								rotation={getPieceRotation("sente-hisya", pieceOwners["sente-hisya"], isPiecePromoted("sente-hisya"))}
+								count={getHandPieceCount("sente-hisya")}
+								selectedId={selectedPiece}
+								isPromoted={isPiecePromoted("sente-hisya")}
+								onSelect={handleSelect}
+								onDragEnd={handleDragEnd}
+								parentGroupRef={boardGroupRef}
+							/>
+						)}
 
 						{/* 歩兵 (Sente: Row 3, Col 0) */}
-						<DraggablePiece
-							pieceId="sente-fu"
-							modelPath="/models/fu.glb"
-							initialPosition={piecePositions["sente-fu"] || [-6, 10.0, -6.4]}
-							rotation={[Math.PI / 2, 0, -Math.PI / 2]}
-							selectedId={selectedPiece}
-							onSelect={handleSelect}
-							onDragEnd={handleDragEnd}
-							parentGroupRef={boardGroupRef}
-						/>
+						{isPrimaryHandPiece("sente-fu") && (
+							<DraggablePiece
+								pieceId="sente-fu"
+								modelPath="/models/fu.glb"
+								initialPosition={piecePositions["sente-fu"] || [-6, 10.0, -6.4]}
+								rotation={getPieceRotation("sente-fu", pieceOwners["sente-fu"], isPiecePromoted("sente-fu"))}
+								count={getHandPieceCount("sente-fu")}
+								selectedId={selectedPiece}
+								isPromoted={isPiecePromoted("sente-fu")}
+								onSelect={handleSelect}
+								onDragEnd={handleDragEnd}
+								parentGroupRef={boardGroupRef}
+							/>
+						)}
 
 						{/* === 後手の駒 === */}
 
 						{/* 玉将 (Gote: Row 0, Col 4) */}
-						<DraggablePiece
-							pieceId="gote-ou"
-							modelPath="/models/ousyo_NoTen.glb"
-							initialPosition={piecePositions["gote-ou"] || [3.9, 10.0, 6.4]}
-							rotation={[Math.PI / 2, Math.PI, -Math.PI / 2]}
-							selectedId={selectedPiece}
-							onSelect={handleSelect}
-							onDragEnd={handleDragEnd}
-							parentGroupRef={boardGroupRef}
-						/>
+						{isPrimaryHandPiece("gote-ou") && (
+							<DraggablePiece
+								pieceId="gote-ou"
+								modelPath="/models/ousyo_NoTen.glb"
+								initialPosition={piecePositions["gote-ou"] || [3.9, 10.0, 6.4]}
+								rotation={getPieceRotation("gote-ou", pieceOwners["gote-ou"], isPiecePromoted("gote-ou"))}
+								count={getHandPieceCount("gote-ou")}
+								selectedId={selectedPiece}
+								isPromoted={isPiecePromoted("gote-ou")}
+								onSelect={handleSelect}
+								onDragEnd={handleDragEnd}
+								parentGroupRef={boardGroupRef}
+							/>
+						)}
 
 						{/* 金将 (Gote: Row 0, Col 3) */}
-						<DraggablePiece
-							pieceId="gote-kin"
-							modelPath="/models/kin.glb"
-							initialPosition={piecePositions["gote-kin"] || [3.9, 10.0, 3.2]}
-							rotation={[Math.PI / 2, Math.PI, -Math.PI / 2]}
-							selectedId={selectedPiece}
-							onSelect={handleSelect}
-							onDragEnd={handleDragEnd}
-							parentGroupRef={boardGroupRef}
-						/>
+						{isPrimaryHandPiece("gote-kin") && (
+							<DraggablePiece
+								pieceId="gote-kin"
+								modelPath="/models/kin.glb"
+								initialPosition={piecePositions["gote-kin"] || [3.9, 10.0, 3.2]}
+								rotation={getPieceRotation("gote-kin", pieceOwners["gote-kin"], isPiecePromoted("gote-kin"))}
+								count={getHandPieceCount("gote-kin")}
+								selectedId={selectedPiece}
+								isPromoted={isPiecePromoted("gote-kin")}
+								onSelect={handleSelect}
+								onDragEnd={handleDragEnd}
+								parentGroupRef={boardGroupRef}
+							/>
+						)}
 
 						{/* 銀将 (Gote: Row 0, Col 2) */}
-						<DraggablePiece
-							pieceId="gote-gin"
-							modelPath="/models/gin.glb"
-							initialPosition={piecePositions["gote-gin"] || [3.9, 10.0, 0]}
-							rotation={[Math.PI / 2, Math.PI, -Math.PI / 2]}
-							selectedId={selectedPiece}
-							onSelect={handleSelect}
-							onDragEnd={handleDragEnd}
-							parentGroupRef={boardGroupRef}
-						/>
+						{isPrimaryHandPiece("gote-gin") && (
+							<DraggablePiece
+								pieceId="gote-gin"
+								modelPath="/models/gin.glb"
+								initialPosition={piecePositions["gote-gin"] || [3.9, 10.0, 0]}
+								rotation={getPieceRotation("gote-gin", pieceOwners["gote-gin"], isPiecePromoted("gote-gin"))}
+								count={getHandPieceCount("gote-gin")}
+								selectedId={selectedPiece}
+								isPromoted={isPiecePromoted("gote-gin")}
+								onSelect={handleSelect}
+								onDragEnd={handleDragEnd}
+								parentGroupRef={boardGroupRef}
+							/>
+						)}
 
 						{/* 角行 (Gote: Row 0, Col 1) */}
-						<DraggablePiece
-							pieceId="gote-kaku"
-							modelPath="/models/kaku.glb"
-							initialPosition={piecePositions["gote-kaku"] || [3.9, 10.0, -3.2]}
-							rotation={[Math.PI / 2, Math.PI, -Math.PI / 2]}
-							selectedId={selectedPiece}
-							onSelect={handleSelect}
-							onDragEnd={handleDragEnd}
-							parentGroupRef={boardGroupRef}
-						/>
+						{isPrimaryHandPiece("gote-kaku") && (
+							<DraggablePiece
+								pieceId="gote-kaku"
+								modelPath="/models/kaku.glb"
+								initialPosition={piecePositions["gote-kaku"] || [3.9, 10.0, -3.2]}
+								rotation={getPieceRotation("gote-kaku", pieceOwners["gote-kaku"], isPiecePromoted("gote-kaku"))}
+								count={getHandPieceCount("gote-kaku")}
+								selectedId={selectedPiece}
+								isPromoted={isPiecePromoted("gote-kaku")}
+								onSelect={handleSelect}
+								onDragEnd={handleDragEnd}
+								parentGroupRef={boardGroupRef}
+							/>
+						)}
 
 						{/* 飛車 (Gote: Row 0, Col 0) */}
-						<DraggablePiece
-							pieceId="gote-hisya"
-							modelPath="/models/hisya.glb"
-							initialPosition={piecePositions["gote-hisya"] || [3.9, 10.0, -6.4]}
-							rotation={[Math.PI / 2, Math.PI, -Math.PI / 2]}
-							selectedId={selectedPiece}
-							onSelect={handleSelect}
-							onDragEnd={handleDragEnd}
-							parentGroupRef={boardGroupRef}
-						/>
+						{isPrimaryHandPiece("gote-hisya") && (
+							<DraggablePiece
+								pieceId="gote-hisya"
+								modelPath="/models/hisya.glb"
+								initialPosition={piecePositions["gote-hisya"] || [3.9, 10.0, -6.4]}
+								rotation={getPieceRotation("gote-hisya", pieceOwners["gote-hisya"], isPiecePromoted("gote-hisya"))}
+								count={getHandPieceCount("gote-hisya")}
+								selectedId={selectedPiece}
+								isPromoted={isPiecePromoted("gote-hisya")}
+								onSelect={handleSelect}
+								onDragEnd={handleDragEnd}
+								parentGroupRef={boardGroupRef}
+							/>
+						)}
 
 						{/* 歩兵 (Gote: Row 1, Col 4) */}
-						<DraggablePiece
-							pieceId="gote-fu"
-							modelPath="/models/fu.glb"
-							initialPosition={piecePositions["gote-fu"] || [0.6, 10.0, 6.4]}
-							rotation={[-Math.PI / 2, Math.PI, -Math.PI / 2]}
-							selectedId={selectedPiece}
-							onSelect={handleSelect}
-							onDragEnd={handleDragEnd}
-							parentGroupRef={boardGroupRef}
-						/>
+						{isPrimaryHandPiece("gote-fu") && (
+							<DraggablePiece
+								pieceId="gote-fu"
+								modelPath="/models/fu.glb"
+								initialPosition={piecePositions["gote-fu"] || [0.6, 10.0, 6.4]}
+								rotation={getPieceRotation("gote-fu", pieceOwners["gote-fu"], isPiecePromoted("gote-fu"))}
+								count={getHandPieceCount("gote-fu")}
+								selectedId={selectedPiece}
+								isPromoted={isPiecePromoted("gote-fu")}
+								onSelect={handleSelect}
+								onDragEnd={handleDragEnd}
+								parentGroupRef={boardGroupRef}
+							/>
+						)}
 					</group>
 
 					<Environment preset="sunset" />
 				</Suspense>
 			</Canvas>
+
+			{/* 成り選択UI */}
+			{pendingPromotion && (
+				<div style={{
+					position: "absolute",
+					top: "50%",
+					left: "50%",
+					transform: "translate(-50%, -50%)",
+					zIndex: 1000,
+					background: "rgba(255, 255, 255, 0.1)",
+					backdropFilter: "blur(20px)",
+					border: "1px solid rgba(255, 255, 255, 0.2)",
+					padding: "40px",
+					borderRadius: "32px",
+					boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.5)",
+					textAlign: "center",
+					minWidth: "300px",
+					color: "white",
+					animation: "fadeIn 0.3s ease-out"
+				}}>
+					<h2 style={{
+						margin: "0 0 30px 0",
+						fontSize: "24px",
+						fontWeight: "light",
+						letterSpacing: "0.1em",
+						textTransform: "uppercase"
+					}}>成りますか？</h2>
+					<div style={{
+						display: "flex",
+						gap: "20px",
+						justifyContent: "center"
+					}}>
+						<button
+							onClick={() => {
+								executeMove(pendingPromotion.id, { ...pendingPromotion.move, promote: true });
+								setPendingPromotion(null);
+							}}
+							style={{
+								padding: "16px 32px",
+								fontSize: "18px",
+								borderRadius: "16px",
+								border: "none",
+								background: "linear-gradient(135deg, #ef4444 0%, #dc2626 100%)",
+								color: "white",
+								cursor: "pointer",
+								boxShadow: "0 10px 15px -3px rgba(239, 68, 68, 0.3)",
+								transition: "transform 0.2s, box-shadow 0.2s"
+							}}
+							onMouseOver={(e) => { e.currentTarget.style.transform = "scale(1.05)"; }}
+							onMouseOut={(e) => { e.currentTarget.style.transform = "scale(1)"; }}
+						>
+							成る
+						</button>
+						<button
+							onClick={() => {
+								executeMove(pendingPromotion.id, { ...pendingPromotion.move, promote: false });
+								setPendingPromotion(null);
+							}}
+							style={{
+								padding: "16px 32px",
+								fontSize: "18px",
+								borderRadius: "16px",
+								border: "none",
+								background: "rgba(255, 255, 255, 0.15)",
+								color: "white",
+								cursor: "pointer",
+								transition: "background 0.2s, transform 0.2s"
+							}}
+							onMouseOver={(e) => { e.currentTarget.style.transform = "scale(1.05)"; e.currentTarget.style.background = "rgba(255, 255, 255, 0.25)"; }}
+							onMouseOut={(e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.background = "rgba(255, 255, 255, 0.15)"; }}
+						>
+							成らない
+						</button>
+					</div>
+					<style dangerouslySetInnerHTML={{
+						__html: `
+						@keyframes fadeIn {
+							from { opacity: 0; transform: translate(-50%, -40%); }
+							to { opacity: 1; transform: translate(-50%, -50%); }
+						}
+					`}} />
+				</div>
+			)}
 		</div>
 	);
 }
