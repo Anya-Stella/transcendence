@@ -41,6 +41,7 @@ export function useAiGame(
 		getLegalTargetInfo, // 移動先が合法かどうか
 		gameResult, // 対局結果
 		setGameResult, // 対局結果を設定する
+		isCheck, // 王手判定
 	} = useGameLogic(mySide);
 
 	const [aiThinking, setAiThinking] = useState(false);
@@ -137,7 +138,7 @@ export function useAiGame(
 	// ========= クリックハンドラ =========
 
 	const handleCellClick = (
-		(pos:Pos) => {
+		(pos: Pos) => {
 			if (!isMyTurn || aiThinking || gameResult.isOver) return;
 			if (promoteDialog) return;
 
@@ -186,12 +187,12 @@ export function useAiGame(
 	);
 
 	const handleHandPieceClick = (kanji: string) => {
-    if (!isMyTurn || aiThinking || gameResult.isOver) return;
-    if (promoteDialog) return;
-    if (turn !== mySide) return;
+		if (!isMyTurn || aiThinking || gameResult.isOver) return;
+		if (promoteDialog) return;
+		if (turn !== mySide) return;
 
-    setSelected(null);
-    setSelectedHandPiece(selectedHandPiece === kanji ? null : kanji);
+		setSelected(null);
+		setSelectedHandPiece(selectedHandPiece === kanji ? null : kanji);
 	};
 
 	const handleEndMatch = () => {
@@ -217,6 +218,7 @@ export function useAiGame(
 		handleEndMatch,
 		aiThinking,
 		lastMove,
+		isCheck,
 		gameOver: gameResult.message,
 	};
 }

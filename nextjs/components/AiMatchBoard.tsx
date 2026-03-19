@@ -51,8 +51,22 @@ function AiMatchBoard({ mySide = "sente", aiDepth = 4 }: AiMatchBoardProps) {
 		handleEndMatch,
 		aiThinking,
 		lastMove,
+		isCheck,
 		gameOver
 	} = useAiGame(mySide as "sente" | "gote", aiDepth);
+
+	const [showCheckOverlay, setShowCheckOverlay] = useState(false);
+
+	// 王手が発生したときに一定時間（2秒）だけオーバーレイを表示
+	useEffect(() => {
+		if (isCheck) {
+			setShowCheckOverlay(true);
+			const timer = setTimeout(() => setShowCheckOverlay(false), 2000);
+			return () => clearTimeout(timer);
+		} else {
+			setShowCheckOverlay(false);
+		}
+	}, [isCheck]);
 
 	// ユーザー情報取得
 	useEffect(() => {
@@ -96,7 +110,7 @@ function AiMatchBoard({ mySide = "sente", aiDepth = 4 }: AiMatchBoardProps) {
 	return (
 		<div className="wafuu-page">
 			{/* 背景 */}
-			<TatamiBackground 
+			<TatamiBackground
 				playerColor={mySide === "sente" ? Color.BLACK : Color.WHITE}
 				externalTurn={turn === "sente" ? Color.BLACK : Color.WHITE}
 				lastExternalMove={lastMove || undefined}
@@ -132,6 +146,35 @@ function AiMatchBoard({ mySide = "sente", aiDepth = 4 }: AiMatchBoardProps) {
 			</header>
 
 			<div className="wafuu-content" style={{ flex: 1, padding: 0, overflow: "hidden", pointerEvents: "none" }}>
+				{/* 王手！ オーバーレイ (盤面中央) */}
+				{showCheckOverlay && (
+					<div
+						className="wafuu-pulse"
+						style={{
+							position: "fixed",
+							top: "50%",
+							left: "50%",
+							transform: "translate(-50%, -50%)",
+							zIndex: 100,
+							pointerEvents: "none",
+							textAlign: "center"
+						}}
+					>
+						<span
+							style={{
+								fontSize: "8rem",
+								fontWeight: 900,
+								color: "#000000",
+								textShadow: "0 0 15px rgba(255, 255, 255, 0.6), 0 0 30px rgba(255, 255, 255, 0.3)",
+								letterSpacing: "0.4em",
+								whiteSpace: "nowrap",
+								filter: "drop-shadow(0 0 10px rgba(0,0,0,0.8))"
+							}}
+						>
+							王手
+						</span>
+					</div>
+				)}
 				{/* ターン表示 (中央上部) */}
 				<div
 					style={{
@@ -163,6 +206,24 @@ function AiMatchBoard({ mySide = "sente", aiDepth = 4 }: AiMatchBoardProps) {
 					>
 						{turn === "sente" ? "▲ 先手の番" : "△ 後手の番"}
 					</span>
+					{isCheck && (
+						<span
+							style={{
+								padding: "6px 16px",
+								background: "rgba(0, 0, 0, 0.3)",
+								border: "2px solid #000000",
+								borderRadius: "20px",
+								color: "#000000",
+								fontSize: "0.9rem",
+								fontWeight: 900,
+								animation: "pulse 1.5s infinite",
+								boxShadow: "0 0 10px rgba(0, 0, 0, 0.4)",
+								textShadow: "0 0 5px rgba(255, 255, 255, 0.2)"
+							}}
+						>
+							王手
+						</span>
+					)}
 					{aiThinking && (
 						<span className="ai-thinking" style={{ color: "#f5e6c8" }}>🤔 AI思考中...</span>
 					)}

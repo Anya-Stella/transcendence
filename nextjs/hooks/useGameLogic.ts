@@ -1,9 +1,10 @@
-import { useCallback, useReducer, useEffect } from "react";
+import { useCallback, useReducer, useEffect, useMemo } from "react";
 import { INITIAL_BOARD, INITIAL_HAND } from "@/utils/shogiConstants";
 import { useLegalMoves } from "./useLegalMoves";
-import { hasLegalMoves, type PieceInfo } from "@/lib/shogi/board";
-import { gameReducer,  GameAction } from "./reducers/gameReducer";
-import { PieceData,GameState, Pos } from "@/lib/shogi/types";
+import { hasLegalMoves, boardFromPieces, type PieceInfo } from "@/lib/shogi/board";
+import { Color, PType } from "@/lib/shogi/types"; // For check detection
+import { gameReducer, GameAction } from "./reducers/gameReducer";
+import { PieceData, GameState, Pos } from "@/lib/shogi/types";
 
 export function useGameLogic(mySide: "sente" | "gote") {
 	function deepCopyBoard(board: PieceData[][]): PieceData[][] {
@@ -56,6 +57,27 @@ export function useGameLogic(mySide: "sente" | "gote") {
 		}
 	}, [state.turn, state.board, state.senteHand, state.goteHand, mySide, state.gameResult.isOver]);
 
+	// ========= 王手判定 =========
+	const isCheck = useMemo(() => {
+		if (state.gameResult.isOver) return false;
+		const boardObj = boardFromPieces(
+			state.board as (PieceInfo | null)[][],
+			state.turn,
+			state.senteHand,
+			state.goteHand
+		);
+		const currentSTM = boardObj.sideToMove;
+		const opponent = (1 - currentSTM) as Color;
+		const occ = boardObj.colorBB[0] | boardObj.colorBB[1];
+		
+		// 相手の攻撃範囲を取得
+		const oppAttacks = boardObj.getAttacks(opponent, occ);
+		// 自分の玉の位置
+		const myKing = boardObj.colorBB[currentSTM] & boardObj.pieceBB[PType.KING];
+		
+		return (oppAttacks & myKing) !== 0;
+	}, [state.board, state.turn, state.senteHand, state.goteHand, state.gameResult.isOver]);
+
 	// ========= Actions wrapper =========
 	const applyMove = (
 		(from: { row: number; col: number }, to: { row: number; col: number }, promote: boolean) => {
@@ -100,6 +122,9 @@ export function useGameLogic(mySide: "sente" | "gote") {
 		setGameResult,
 		applyMove,
 		applyDrop,
+
+		// Check status
+		isCheck,
 
 		// Legal Moves
 		...legalMoves,

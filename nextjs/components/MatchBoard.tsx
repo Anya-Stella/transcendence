@@ -53,8 +53,22 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 		handleHandPieceClick,
 		handleEndMatch,
 		lastMove,
+		isCheck,
 		gameOver
 	} = useShogiGame(socket, roomId, mySide, wsStatus);
+
+	const [showCheckOverlay, setShowCheckOverlay] = useState(false);
+
+	// 王手が発生したときに一定時間（2秒）だけオーバーレイを表示
+	useEffect(() => {
+		if (isCheck) {
+			setShowCheckOverlay(true);
+			const timer = setTimeout(() => setShowCheckOverlay(false), 2000);
+			return () => clearTimeout(timer);
+		} else {
+			setShowCheckOverlay(false);
+		}
+	}, [isCheck]);
 
 	// ユーザー情報取得
 	useEffect(() => {
@@ -162,6 +176,35 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 
 			{/* コンテンツ */}
 			<div className="wafuu-content" style={{ flex: 1, padding: 0, overflow: "hidden", pointerEvents: "none" }}>
+				{/* 王手！ オーバーレイ (盤面中央) */}
+				{showCheckOverlay && (
+					<div
+						className="wafuu-pulse"
+						style={{
+							position: "fixed",
+							top: "50%",
+							left: "50%",
+							transform: "translate(-50%, -50%)",
+							zIndex: 100,
+							pointerEvents: "none",
+							textAlign: "center"
+						}}
+					>
+						<span
+							style={{
+								fontSize: "8rem",
+								fontWeight: 900,
+								color: "#000000",
+								textShadow: "0 0 15px rgba(255, 255, 255, 0.6), 0 0 30px rgba(255, 255, 255, 0.3)",
+								letterSpacing: "0.4em",
+								whiteSpace: "nowrap",
+								filter: "drop-shadow(0 0 10px rgba(0,0,0,0.8))"
+							}}
+						>
+							王手
+						</span>
+					</div>
+				)}
 				{/* 手番表示 (中央上部) */}
 				<div
 					style={{
@@ -193,6 +236,24 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 					>
 						{turn === "sente" ? "▲ 先手の番" : "△ 後手の番"}
 					</span>
+					{isCheck && (
+						<span
+							style={{
+								padding: "6px 16px",
+								background: "rgba(0, 0, 0, 0.3)",
+								border: "2px solid #000000",
+								borderRadius: "20px",
+								color: "#000000",
+								fontSize: "0.9rem",
+								fontWeight: 900,
+								animation: "pulse 1.5s infinite",
+								boxShadow: "0 0 10px rgba(0, 0, 0, 0.4)",
+								textShadow: "0 0 5px rgba(255, 255, 255, 0.2)"
+							}}
+						>
+							王手
+						</span>
+					)}
 					{gameOver && (
 						<span className="game-over-label" style={{ fontSize: "1.1rem" }}>🎉 {gameOver}</span>
 					)}
@@ -296,7 +357,7 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 					}}
 					onClick={handleEndMatch}
 				>
-					🏳️ 投了する
+					投了する
 				</button>
 			</div>
 

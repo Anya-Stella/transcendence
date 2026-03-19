@@ -41,6 +41,7 @@ export function useShogiGame(
 		applyMove,
 		applyDrop,
 		gameResult,
+		isCheck,
 	} = useGameLogic(mySide);
 
 	// ========= アクション (WebSocket付き) =========
@@ -186,6 +187,7 @@ export function useShogiGame(
 		handleHandPieceClick,
 		handleEndMatch,
 		lastMove,
+		isCheck,
 		gameOver: gameResult.message,
 	};
 }
