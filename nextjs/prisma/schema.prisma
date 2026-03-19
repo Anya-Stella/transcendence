@@ -14,8 +14,6 @@ model User {
   emailVerified   DateTime?
   image           String?
   passwordHash    String?
-  oauthProvider   String?  // 古い実装用（移行後はAccountsを使用）
-  oauthProviderId String?
   totalMatches    Int      @default(0)
   wins            Int      @default(0)
   losses          Int      @default(0)

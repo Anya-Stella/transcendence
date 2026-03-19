@@ -26,7 +26,6 @@ services:
     env_file: .env
     environment:
       DATABASE_URL: ${DATABASE_URL}
-      JWT_SECRET: ${JWT_SECRET}
       AUTH_SECRET: ${AUTH_SECRET}
       AUTH_GITHUB_ID: ${AUTH_GITHUB_ID}
       AUTH_GITHUB_SECRET: ${AUTH_GITHUB_SECRET}
