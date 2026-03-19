@@ -4,12 +4,23 @@ import { boardFromPieces, type PieceInfo } from "@/lib/shogi/board";
 import { useGameLogic } from "./useGameLogic";
 import { USI_TO_DROP_KANJI } from "@/utils/shogiConstants";
 import { Pos } from "@/lib/shogi/types";
+import { PieceType, Move } from "@torassen/shogi-logic";
+
+const KANJI_TO_PIECE_TYPE: Record<string, PieceType> = {
+	"歩": PieceType.PAWN,
+	"銀": PieceType.SILVER,
+	"金": PieceType.GOLD,
+	"角": PieceType.BISHOP,
+	"飛": PieceType.ROOK,
+	"玉": PieceType.KING,
+};
 
 export function useAiGame(
 	mySide: "sente" | "gote" = "sente",
 	aiDepth: number = 4
 ) {
 	const router = useRouter();
+	const [lastMove, setLastMove] = useState<Move | null>(null);
 
 	const {
 		board, // 盤面
@@ -55,6 +66,13 @@ export function useAiGame(
 		[applyMove]
 	);
 
+	const executeDrop = useCallback(
+		(kanji: string, to: { row: number; col: number }) => {
+			applyDrop(kanji, to, turn);
+		},
+		[applyDrop, turn]
+	);
+
 	// ========= AI思考 =========
 
 	const requestAiMove = useCallback(async () => {
@@ -93,9 +111,11 @@ export function useAiGame(
 				const kanji = USI_TO_DROP_KANJI[parsed.drop];
 				if (kanji) {
 					applyDrop(kanji, parsed.to, aiSide);
+					setLastMove({ type: "drop", pieceType: KANJI_TO_PIECE_TYPE[kanji] || PieceType.PAWN, to: parsed.to });
 				}
 			} else if (parsed.from) {
 				applyMove(parsed.from, parsed.to, parsed.promote ?? false);
+				setLastMove({ type: "move", from: parsed.from, to: parsed.to, promote: parsed.promote ?? false });
 			}
 		} catch (err) {
 			console.error("AI move error:", err);
@@ -191,10 +211,12 @@ export function useAiGame(
 		promoteDialog,
 		setPromoteDialog,
 		executeMove,
+		executeDrop,
 		handleCellClick,
 		handleHandPieceClick,
 		handleEndMatch,
 		aiThinking,
+		lastMove,
 		gameOver: gameResult.message,
 	};
 }

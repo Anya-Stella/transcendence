@@ -7,7 +7,17 @@ import { Socket } from "socket.io-client";
 import { useShogiGame } from "@/hooks/useShogiGame";
 import { DEMOTE_MAP } from "@/utils/shogiConstants";
 import { PieceData, HandPieces, Pos } from "@/lib/shogi/types";
+import { Color, PieceType } from "@torassen/shogi-logic";
 import TatamiBackground from "@/components/TatamiBackground";
+
+const PIECE_TYPE_TO_KANJI: Record<number, string> = {
+	[PieceType.PAWN]: "歩",
+	[PieceType.SILVER]: "銀",
+	[PieceType.GOLD]: "金",
+	[PieceType.BISHOP]: "角",
+	[PieceType.ROOK]: "飛",
+	[PieceType.KING]: "玉",
+};
 
 function PieceComponent({ piece, isPromoted }: { piece: PieceData; isPromoted?: boolean }) {
 	// 2Dの駒を非表示にする
@@ -38,9 +48,11 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 		promoteDialog,
 		setPromoteDialog,
 		executeMove,
+		executeDrop,
 		handleCellClick,
 		handleHandPieceClick,
 		handleEndMatch,
+		lastMove,
 		gameOver
 	} = useShogiGame(socket, roomId, mySide, wsStatus);
 
@@ -88,7 +100,7 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 	const renderHand = (hand: HandPieces, side: "sente" | "gote", isOwn: boolean) => {
 		const pieces = handOrder.filter((k) => (hand[k] ?? 0) > 0);
 		if (pieces.length === 0) {
-			return <span className="hand-empty">なし</span>;
+			return null;
 		}
 		return pieces.map((kanji) => (
 			<button
@@ -109,7 +121,21 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 	return (
 		<div className="wafuu-page">
 			{/* 背景 */}
-			<TatamiBackground />
+			<TatamiBackground
+				playerColor={mySide === "sente" ? Color.BLACK : Color.WHITE}
+				externalTurn={turn === "sente" ? Color.BLACK : Color.WHITE}
+				lastExternalMove={lastMove || undefined}
+				onBoardMove={(move) => {
+					if (move.type === "move") {
+						executeMove(move.from, move.to, move.promote ?? false);
+					} else if (move.type === "drop") {
+						const kanji = PIECE_TYPE_TO_KANJI[move.pieceType];
+						if (kanji) {
+							executeDrop(kanji, move.to);
+						}
+					}
+				}}
+			/>
 
 			{/* ヘッダー */}
 			<header className="wafuu-header">
@@ -140,26 +166,29 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 				<div
 					style={{
 						position: "fixed",
-						top: "60px",
+						top: "76px",
 						left: "50%",
 						transform: "translateX(-50%)",
 						display: "flex",
 						alignItems: "center",
-						gap: "12px",
+						gap: "14px",
 						zIndex: 50,
 						pointerEvents: "auto"
 					}}
 				>
 					<span
 						style={{
-							padding: "8px 20px",
-							borderRadius: "20px",
-							fontSize: "0.9rem",
-							fontWeight: 700,
-							background: turn === "sente" ? "rgba(212, 175, 55, 0.2)" : "rgba(100, 149, 237, 0.2)",
+							padding: "10px 28px",
+							borderRadius: "30px",
+							fontSize: "1.05rem",
+							letterSpacing: "0.1em",
+							fontWeight: 900,
+							background: "rgba(20, 15, 10, 0.8)",
 							color: turn === "sente" ? "#f5e6c8" : "#6495ed",
-							border: `1px solid ${turn === "sente" ? "rgba(212, 175, 55, 0.4)" : "rgba(100, 149, 237, 0.4)"}`,
-							backdropFilter: "blur(6px)"
+							border: `2px solid ${turn === "sente" ? "rgba(212, 175, 55, 0.8)" : "rgba(100, 149, 237, 0.8)"}`,
+							boxShadow: `0 0 15px ${turn === "sente" ? "rgba(212, 175, 55, 0.3)" : "rgba(100, 149, 237, 0.3)"}, inset 0 0 8px rgba(255, 255, 255, 0.05)`,
+							backdropFilter: "blur(12px)",
+							textShadow: `0 0 10px ${turn === "sente" ? "rgba(212, 175, 55, 0.4)" : "rgba(100, 149, 237, 0.4)"}`
 						}}
 					>
 						{turn === "sente" ? "▲ 先手の番" : "△ 後手の番"}
@@ -171,58 +200,78 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 
 				{/* Gote player info + hand (右上) */}
 				<div
-					className="board-player-info"
 					style={{
 						position: "fixed",
-						top: "60px",
+						top: "76px",
 						right: "24px",
+						display: "flex",
 						flexDirection: "column",
 						alignItems: "flex-end",
-						background: "rgba(20, 15, 10, 0.5)",
-						padding: "16px",
-						borderRadius: "12px",
-						border: "1px solid rgba(212, 175, 55, 0.2)",
-						backdropFilter: "blur(12px)",
 						zIndex: 50,
 						pointerEvents: "auto",
-						gap: "10px"
+						gap: "12px"
 					}}
 				>
-					<div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-						<span className="board-player-badge badge-gote">後手</span>
-						<span style={{ color: "#f5e6c8", fontSize: "0.9rem" }}>{mySide === "gote" ? "あなた" : "対戦相手"}</span>
+					{/* 名前とバッジのカプセル（ゆとり重視） */}
+					<div style={{
+						display: "flex",
+						alignItems: "center",
+						gap: "12px",
+						background: "rgba(20, 15, 10, 0.7)",
+						padding: "8px 16px",
+						borderRadius: "24px",
+						border: "1px solid rgba(212, 175, 55, 0.25)",
+						backdropFilter: "blur(12px)",
+						boxShadow: "0 4px 15px rgba(0,0,0,0.4)"
+					}}>
+						<span style={{ color: "#f5e6c8", fontSize: "0.95rem", fontWeight: 600, letterSpacing: "0.02em" }}>{mySide === "gote" ? "あなた" : "対戦相手"}</span>
+						<span className="board-player-badge badge-gote" style={{ fontSize: "0.75rem", padding: "2px 8px", borderRadius: "12px", fontWeight: 700 }}>後手</span>
 					</div>
-					<div className="hand-area" style={{ justifyContent: "flex-end", width: "100%" }}>
+					{/* 持ち駒を名前の下に適度な間隔で配置 */}
+					{/* 3D盤面に表示するため、HUDの持ち駒表示は不要 */}
+					{/* 
+					<div className="hand-area" style={{ justifyContent: "flex-end", gap: "6px" }}>
 						{renderHand(goteHand, "gote", mySide === "gote")}
 					</div>
+					*/}
 				</div>
 
 				{/* Sente player info + hand (左下) */}
 				<div
-					className="board-player-info"
 					style={{
 						position: "fixed",
 						bottom: "24px",
 						left: "24px",
+						display: "flex",
 						flexDirection: "column",
 						alignItems: "flex-start",
-						background: "rgba(20, 15, 10, 0.5)",
-						padding: "16px",
-						borderRadius: "12px",
-						border: "1px solid rgba(212, 175, 55, 0.2)",
-						backdropFilter: "blur(12px)",
 						zIndex: 50,
 						pointerEvents: "auto",
-						gap: "10px"
+						gap: "12px"
 					}}
 				>
-					<div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-						<span className="board-player-badge badge-sente">先手</span>
-						<span style={{ color: "#f5e6c8", fontSize: "0.9rem" }}>{mySide === "sente" ? "あなた" : "対戦相手"}</span>
+					{/* 名前とバッジのカプセル（ゆとり重視） */}
+					<div style={{
+						display: "flex",
+						alignItems: "center",
+						gap: "12px",
+						background: "rgba(20, 15, 10, 0.7)",
+						padding: "8px 16px",
+						borderRadius: "24px",
+						border: "1px solid rgba(212, 175, 55, 0.25)",
+						backdropFilter: "blur(12px)",
+						boxShadow: "0 4px 15px rgba(0,0,0,0.4)"
+					}}>
+						<span className="board-player-badge badge-sente" style={{ fontSize: "0.75rem", padding: "2px 8px", borderRadius: "12px", fontWeight: 700 }}>先手</span>
+						<span style={{ color: "#f5e6c8", fontSize: "0.95rem", fontWeight: 600, letterSpacing: "0.02em" }}>{mySide === "sente" ? "あなた" : "対戦相手"}</span>
 					</div>
-					<div className="hand-area" style={{ justifyContent: "flex-start", width: "100%" }}>
+					{/* 持ち駒を名前の下に適度な間隔で配置 */}
+					{/* 3D盤面に表示するため、HUDの持ち駒表示は不要 */}
+					{/* 
+					<div className="hand-area" style={{ justifyContent: "flex-start", gap: "6px" }}>
 						{renderHand(senteHand, "sente", mySide === "sente")}
 					</div>
+					*/}
 				</div>
 
 				{/* 投了ボタン (右下) */}

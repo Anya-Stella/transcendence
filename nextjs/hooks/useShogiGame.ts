@@ -1,8 +1,18 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Socket } from "socket.io-client";
 import { useGameLogic } from "./useGameLogic";
 import { Pos } from "@/lib/shogi/types";
+import { PieceType, Move } from "@torassen/shogi-logic";
+
+const KANJI_TO_PIECE_TYPE: Record<string, PieceType> = {
+	"歩": PieceType.PAWN,
+	"銀": PieceType.SILVER,
+	"金": PieceType.GOLD,
+	"角": PieceType.BISHOP,
+	"飛": PieceType.ROOK,
+	"玉": PieceType.KING,
+};
 
 export function useShogiGame(
 	socket: Socket | null | undefined,
@@ -11,6 +21,7 @@ export function useShogiGame(
 	wsStatus: "connected" | "disconnected" | "connecting"
 ) {
 	const router = useRouter();
+	const [lastMove, setLastMove] = useState<Move | null>(null);
 
 	const {
 		board,
@@ -71,8 +82,10 @@ export function useShogiGame(
 			if (data.drop) {
 				const oppSide = mySide === "sente" ? "gote" : "sente";
 				applyDrop(data.drop, data.to, oppSide);
+				setLastMove({ type: "drop", pieceType: KANJI_TO_PIECE_TYPE[data.drop] || PieceType.PAWN, to: data.to });
 			} else if (data.from) {
 				applyMove(data.from, data.to, data.promote ?? false);
+				setLastMove({ type: "move", from: data.from, to: data.to, promote: data.promote ?? false });
 			}
 		};
 
@@ -85,7 +98,7 @@ export function useShogiGame(
 	// ========= クリックハンドラ =========
 
 	const handleCellClick = (
-		(pos:Pos) => {
+		(pos: Pos) => {
 			if (roomId && wsStatus !== "connected") return;
 			if (roomId && !isMyTurn) return;
 			if (promoteDialog) return;
@@ -168,9 +181,11 @@ export function useShogiGame(
 		promoteDialog,
 		setPromoteDialog,
 		executeMove,
+		executeDrop,
 		handleCellClick,
 		handleHandPieceClick,
 		handleEndMatch,
+		lastMove,
 		gameOver: gameResult.message,
 	};
 }
