@@ -58,7 +58,6 @@ TRANSCENDENCE/
 
 ```bash
 cp .env.example .env
-# .env の JWT_SECRET を書き換えてください（32文字以上推奨）
 ```
 
 ### 2. Docker Compose で起動
@@ -86,7 +85,6 @@ http://localhost:8080
 | `POSTGRES_PASSWORD` | DB パスワード | `torassen_secret` |
 | `POSTGRES_DB` | DB 名 | `torassen` |
 | `DATABASE_URL` | Prisma 接続文字列 | `postgresql://torassen:torassen_secret@postgres:5432/torassen` |
-| `JWT_SECRET` | JWT 署名鍵 | ランダムな32文字以上の文字列 |
 
 ## 🗄 DB 初期化
 

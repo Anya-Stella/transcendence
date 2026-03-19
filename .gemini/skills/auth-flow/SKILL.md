@@ -35,7 +35,6 @@ description: 認証・認可フローの全体像。JWT、Cookie、middleware、
 | アルゴリズム | HS256 |
 | 有効期限 | 24時間 |
 | ペイロード | `{ userId: string }` |
-| 署名鍵 | 環境変数 `JWT_SECRET`（32文字以上） |
 
 ## 3. Cookie 仕様
 
