@@ -2,7 +2,7 @@
 "use client";
 
 import { Canvas, useThree, useFrame } from "@react-three/fiber";
-import { useGLTF, Environment, Html } from "@react-three/drei";
+import { useGLTF, Environment, Html, useProgress } from "@react-three/drei";
 import { Suspense, useRef, useState, useCallback, useEffect, useMemo } from "react";
 import * as THREE from "three";
 import {
@@ -17,7 +17,95 @@ import {
 	type Move,
 	type Square
 } from "@torassen/shogi-logic";
+import { PieceData, GameState, Pos } from "@/lib/shogi/types";
 
+const LOADER_PIECES = [
+	"/models/fu.glb",
+	"/models/gin.glb",
+	"/models/hisya.glb",
+	"/models/kaku.glb",
+	"/models/kin.glb",
+	"/models/ousyo_NoTen.glb"
+];
+
+function ShogiLoader() {
+	const { progress } = useProgress();
+	// ランダムな駒を選択
+	const modelPath = useMemo(() => {
+		const randomIndex = Math.floor(Math.random() * LOADER_PIECES.length);
+		return LOADER_PIECES[randomIndex];
+	}, []);
+
+	const { scene } = useGLTF(modelPath);
+	const pieceRef = useRef<THREE.Group>(null);
+	const clonedScene = useMemo(() => scene.clone(), [scene]);
+
+	useFrame((state) => {
+		if (pieceRef.current) {
+			pieceRef.current.rotation.y += 0.02;
+			pieceRef.current.position.y = Math.sin(state.clock.elapsedTime * 2) * 0.5;
+		}
+	});
+
+	return (
+		<group>
+			{/* 中央で回転する飛車の駒 */}
+			<primitive
+				ref={pieceRef}
+				object={clonedScene}
+				scale={[3, 3, 3]}
+				position={[0, 0, 0]}
+				rotation={[0, 0, 0]}
+			/>
+
+			<Html center portal={undefined} distanceFactor={6} position={[0, -5, 0]}>
+				<div style={{
+					display: "flex",
+					flexDirection: "column",
+					alignItems: "center",
+					gap: "40px",
+					padding: "50px 80px",
+					background: "rgba(20, 15, 10, 0.8)",
+					backdropFilter: "blur(12px)",
+					borderRadius: "40px",
+					border: "1px solid rgba(212, 175, 55, 0.3)",
+					boxShadow: "0 25px 60px rgba(0,0,0,0.7)",
+					color: "#f5e6c8",
+					width: "600px",
+					zIndex: 1000,
+					marginTop: "1000px" // 駒の下に配置
+				}}>
+					<div style={{
+						width: "100%",
+						height: "20px",
+						background: "rgba(255, 255, 255, 0.05)",
+						borderRadius: "10px",
+						overflow: "hidden",
+						border: "1px solid rgba(212, 175, 55, 0.1)"
+					}}>
+						<div style={{
+							width: `${progress}%`,
+							height: "100%",
+							background: "linear-gradient(90deg, #d4af37, #f5e6c8)",
+							boxShadow: "0 0 20px rgba(212, 175, 55, 0.6)",
+							transition: "width 0.3s ease-out"
+						}} />
+					</div>
+					<div style={{
+						fontSize: "3.1rem",
+						opacity: 0.95,
+						fontWeight: 900,
+						letterSpacing: "0.15em",
+						fontFamily: "monospace",
+						textShadow: "0 0 15px rgba(212, 175, 55, 0.3)"
+					}}>
+						{progress.toFixed(0)}%
+					</div>
+				</div>
+			</Html>
+		</group>
+	);
+}
 function TatamiModel() {
 	const { scene } = useGLTF("/models/tatami.glb");
 	const clonedScene = scene.clone();
@@ -125,9 +213,11 @@ function DraggablePiece({
 	const mouseRef = useRef(new THREE.Vector2());
 	const intersectPoint = useRef(new THREE.Vector3());
 	const posRef = useRef<[number, number, number]>(initialPosition);
+	const initialPosRef = useRef<[number, number, number]>(initialPosition);
 
-	// posRefを最新のposと同期
+	// posRefとinitialPosRefを最新の状態に同期
 	posRef.current = pos;
+	initialPosRef.current = initialPosition;
 
 	const handlePointerDown = useCallback((e: ThreeEvent<PointerEvent>) => {
 		if (!draggable) return;
@@ -172,8 +262,9 @@ function DraggablePiece({
 			gl.domElement.style.cursor = "auto";
 			setIsDragging(false);
 			onDragEnd(pieceId, posRef.current);
-			// ドロップ後に位置を強制的に再同期する（無効な位置の場合は initialPosition に戻るため）
-			setPos(initialPosition);
+			// ドロップ後に位置を強制的に再同期する（無効な位置の場合は元の場所に戻る）
+			// 親が piecePositions を更新していれば、その最新位置にスナップする
+			setPos(initialPosRef.current);
 		};
 
 		window.addEventListener("pointermove", onMove);
@@ -189,13 +280,39 @@ function DraggablePiece({
 
 	const targetPos = useMemo(() => new THREE.Vector3(...pos), [pos]);
 	const isFirstFrame = useRef(true);
+	// 落下アニメーション用のランダムな初期高度
+	const dropOffset = useMemo(() => Math.random() * 15 + 20, []);
+
+	const ghostScene = useMemo(() => {
+		if (!isDragging) return null;
+		const s = scene.clone();
+		s.traverse((child) => {
+			if ((child as THREE.Mesh).isMesh) {
+				const mesh = child as THREE.Mesh;
+				if (mesh.name.toLowerCase().includes("shadow") || mesh.name.toLowerCase().includes("plane")) {
+					mesh.visible = false;
+					return;
+				}
+				mesh.castShadow = false;
+				mesh.receiveShadow = false;
+				if (mesh.material instanceof THREE.MeshStandardMaterial) {
+					// 既存の素材をクローンして透明度を設定
+					mesh.material = mesh.material.clone();
+					mesh.material.transparent = true;
+					mesh.material.opacity = 0.4;
+					mesh.material.envMapIntensity = 0;
+				}
+			}
+		});
+		return s;
+	}, [isDragging, scene]);
 
 	useFrame((state, delta) => {
 		if (!positionGroupRef.current || !rotationGroupRef.current) return;
 
-		// 初回フレームは即座に位置と回転をセットしてアニメーションを防止
+		// 初回フレームは空中でスタートさせる（落下アニメーション用）
 		if (isFirstFrame.current) {
-			positionGroupRef.current.position.set(targetPos.x, targetPos.y + (isDragging ? 1 : 0), targetPos.z);
+			positionGroupRef.current.position.set(targetPos.x, targetPos.y + dropOffset, targetPos.z);
 			rotationGroupRef.current.quaternion.copy(targetQuat);
 			isFirstFrame.current = false;
 			return;
@@ -242,6 +359,21 @@ function DraggablePiece({
 					scale={scale}
 				/>
 			</group>
+
+			{/* ドラッグ中のゴースト表示（元の位置に半透明で表示） */}
+			{isDragging && ghostScene && (
+				<group position={[
+					initialPosition[0] - pos[0],
+					initialPosition[1] - (pos[1] + 1),
+					initialPosition[2] - pos[2]
+				]}>
+					<primitive
+						object={ghostScene}
+						scale={scale}
+						rotation={rotation}
+					/>
+				</group>
+			)}
 
 			{count > 1 && (
 				<Html position={[1.5, 0.5, 1.5]} center pointerEvents="none">
@@ -721,6 +853,36 @@ export default function TatamiBackground({
 						// 歩は強制成り
 						executeMove(id, { ...move, promote: true });
 					} else {
+						// 移動先に駒があるか確認し、あれば先に駒取りだけ視覚的に行う
+						const toGrid = move.to;
+						const capturedPiece = boardState.board[toGrid.row][toGrid.col];
+						if (capturedPiece) {
+							const capturedId = Object.keys(PIECE_INITIAL_GRID).find(pid => {
+								if (pid === id) return false;
+								const pPos = piecePositions[pid] || gridToWorld(PIECE_INITIAL_GRID[pid].row, PIECE_INITIAL_GRID[pid].col);
+								if (checkIsHandPos(pPos)) return false;
+								const pg = worldToGrid(pPos[0], pPos[2]);
+								return pg && pg.row === toGrid.row && pg.col === toGrid.col;
+							});
+							if (capturedId) {
+								setPieceOwners(prev => ({ ...prev, [capturedId]: boardState.sideToMove }));
+								setPiecePromotions(prev => ({ ...prev, [capturedId]: false }));
+								setPiecePositions(prev => {
+									const winnerColor = boardState.sideToMove;
+									const coordsMap = winnerColor === Color.BLACK ? SENTE_HAND_COORDS : GOTE_HAND_COORDS;
+									const baseType = UNPROMOTE_MAP[capturedPiece.pieceType] ?? capturedPiece.pieceType;
+									const capturedHandPos = coordsMap[baseType] || [0, 0, 0];
+									return { ...prev, [capturedId]: capturedHandPos, [id]: gridToWorld(toGrid.row, toGrid.col) };
+								});
+							} else {
+								// 駒取りがない場合でも駒を移動先に進める
+								setPiecePositions(prev => ({ ...prev, [id]: gridToWorld(toGrid.row, toGrid.col) }));
+							}
+						} else {
+							// 駒がない場所への移動
+							setPiecePositions(prev => ({ ...prev, [id]: gridToWorld(toGrid.row, toGrid.col) }));
+						}
+
 						// それ以外は選択
 						setPendingPromotion({ id, move: move as BoardMove });
 					}
@@ -767,7 +929,7 @@ export default function TatamiBackground({
 					shadow-camera-bottom={-30}
 					shadow-bias={-0.001}
 				/>
-				<Suspense fallback={null}>
+				<Suspense fallback={<ShogiLoader />}>
 					<TatamiModel />
 
 					{/* 盤と駒を同じグループに入れて一括で傾ける */}
