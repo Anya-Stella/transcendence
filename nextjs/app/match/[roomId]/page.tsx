@@ -20,7 +20,7 @@ export default function OnlineMatchPage() {
 		s.on("connect", () => {
 			setWsStatus("connected");
 			// Join room for move sync
-			s.emit("joinRoom", { roomId });
+			s.emit("joinRoom", {roomId: roomId,isPlayer: true});
 		});
 
 		s.on("disconnect", () => {

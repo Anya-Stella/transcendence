@@ -7,7 +7,7 @@ import { Pos, UIBoard, sfenToUIBoard } from "@torassen/shogi-logic";
 export function useShogiGame(
 	socket: Socket | null | undefined,
 	roomId: string | undefined,
-	mySide: "sente" | "gote",
+	mySide: "sente" | "gote" | "spectator",
 	wsStatus: "connected" | "disconnected" | "connecting"
 ) {
 	const router = useRouter();
@@ -170,7 +170,13 @@ export function useShogiGame(
 	);
 
 	const handleEndMatch = (() => {
-		router.push("/result" + (roomId ? `?roomId=${roomId}` : ""));
+		if(mySide === "spectator")
+			router.push("/home");
+		else
+		{
+			router.push("/result" + (roomId ? `?roomId=${roomId}` : ""));
+		}
+		
 	});
 
 	return {
