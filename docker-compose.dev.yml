@@ -32,6 +32,7 @@ services:
       sh -c "cd /app/node_modules/@torassen/shogi-logic && npx tsc -w & cd /app && npm run dev"
     ports:
       - "3000:3000"
+      - "5555:5555"
     depends_on:
       postgres:
         condition: service_healthy

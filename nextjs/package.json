@@ -26,7 +26,9 @@
     "@types/node": "^22.13.10",
     "@types/react": "^19.0.12",
     "@types/react-dom": "^19.0.4",
-    "prisma": "^6.5.0",
-    "typescript": "^5.8.2"
+    "prisma": "^6.5.0"
+  },
+  "prisma": {
+    "seed": "npx ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
   }
 }

@@ -18,7 +18,8 @@ export default function HomePage() {
 		fetch("/api/me")
 			.then((res) => res.json())
 			.then((data) => {
-				if (data.user) setUser(data.user);
+				if (data.user) 	setUser(data.user);
+				
 			})
 			.catch(() => { });
 	}, []);

@@ -4,9 +4,9 @@ import {
 	getLegalDrops,
 	type LegalTarget,
 	type PieceInfo,
-} from "@/lib/shogi/board";
-import { PieceData, HandPieces } from "@/lib/shogi/types";
-import { Pos } from "@/lib/shogi/types";
+	PieceData, 
+	HandPieces,
+	Pos } from "@torassen/shogi-logic";
 
 export function useLegalMoves(
 	board: PieceData[][],

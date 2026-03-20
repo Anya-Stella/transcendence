@@ -1,9 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { boardFromPieces, type PieceInfo } from "@/lib/shogi/board";
 import { useGameLogic } from "./useGameLogic";
-import { USI_TO_DROP_KANJI } from "@/utils/shogiConstants";
-import { Pos } from "@/lib/shogi/types";
+import { boardFromPieces, type PieceInfo ,USI_TO_DROP_KANJI, Pos} from "@torassen/shogi-logic";
 
 export function useAiGame(
 	mySide: "sente" | "gote" = "sente",

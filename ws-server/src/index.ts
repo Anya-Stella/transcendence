@@ -1,13 +1,17 @@
 import { Server, Socket } from "socket.io";
 import http from "http";
+import {apply} from "@torassen/shogi-logic"
 
 const PORT = 3001;
 
 interface RoomState {
 	hostSocketId: string;
 	hostUserId?: string;
-	players: { socketId: string; userId?: string }[];
+	players: { socketId: string; userId?: string,side: "b" | "w" }[];
+	sfen: string;
 }
+
+const INITIAL_SFEN = "rbsgk/4p/5/P4/KGSBR b - 1";
 
 const rooms = new Map<string, RoomState>();
 
@@ -26,7 +30,6 @@ const io = new Server(httpServer, {
 io.on("connection", (socket: Socket) => {
 	console.log(`[WS] Client connected: ${socket.id}`);
 
-	// --- joinRoom ---
 	socket.on("joinRoom", (data: { roomId: string; userId?: string }) => {
 		const { roomId, userId } = data;
 		console.log(`[WS] joinRoom: ${roomId} by ${socket.id} (user: ${userId})`);
@@ -38,16 +41,22 @@ io.on("connection", (socket: Socket) => {
 			room = {
 				hostSocketId: socket.id,
 				hostUserId: userId,
-				players: [{ socketId: socket.id, userId }],
+				players: [{ socketId: socket.id, userId,side: "b" }],
+				sfen: INITIAL_SFEN,
 			};
 			rooms.set(roomId, room);
 		} else {
-			// Add player if not already in room and room not full
-			const alreadyIn = room.players.find((p) => p.socketId === socket.id);
-			if (!alreadyIn && room.players.length < 2) {
-				room.players.push({ socketId: socket.id, userId });
-			}
-		}
+            const existingPlayerIndex = room.players.findIndex(
+                (p) => p.userId && p.userId === userId
+			);
+            if (existingPlayerIndex !== -1) {
+                room.players[existingPlayerIndex].socketId = socket.id;
+            } else if (room.players.length < 2) {
+                const occupiedSide = room.players[0].side;
+                const newSide = occupiedSide === "b" ? "w" : "b";
+                room.players.push({ socketId: socket.id, userId, side: newSide });
+            }
+        }
 
 		socket.join(roomId);
 
@@ -60,11 +69,11 @@ io.on("connection", (socket: Socket) => {
 			players: room.players.map((p) => ({
 				socketId: p.socketId,
 				userId: p.userId,
+				side: p.side,
 			})),
 		});
 	});
 
-	// --- roomState (query) ---
 	socket.on("getRoomState", (data: { roomId: string }) => {
 		const room = rooms.get(data.roomId);
 		if (room) {
@@ -88,7 +97,6 @@ io.on("connection", (socket: Socket) => {
 		}
 	});
 
-	// --- hostStart ---
 	socket.on("hostStart", (data: { roomId: string }) => {
 		const room = rooms.get(data.roomId);
 		if (!room) {
@@ -113,7 +121,13 @@ io.on("connection", (socket: Socket) => {
 		});
 	});
 
-	// --- move ---
+	socket.on("getGameState", (data: { roomId: string }) => {
+		const room = rooms.get(data.roomId);
+		if (room) {
+			socket.emit("syncState", { sfen: room.sfen });
+		}
+	});
+
 	socket.on(
 		"move",
 		(data: {
@@ -139,7 +153,8 @@ io.on("connection", (socket: Socket) => {
 				);
 			}
 
-			// Broadcast to other players in the room (not to sender)
+			room.sfen = apply(room.sfen,data);
+
 			socket.to(data.roomId).emit("moveMade", {
 				from: data.from,
 				to: data.to,
@@ -149,7 +164,6 @@ io.on("connection", (socket: Socket) => {
 		}
 	);
 
-	// --- disconnect ---
 	socket.on("disconnect", () => {
 		console.log(`[WS] Client disconnected: ${socket.id}`);
 

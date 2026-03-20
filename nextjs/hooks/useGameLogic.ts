@@ -1,9 +1,14 @@
 import { useCallback, useReducer, useEffect } from "react";
-import { INITIAL_BOARD, INITIAL_HAND } from "@/utils/shogiConstants";
 import { useLegalMoves } from "./useLegalMoves";
-import { hasLegalMoves, type PieceInfo } from "@/lib/shogi/board";
 import { gameReducer,  GameAction } from "./reducers/gameReducer";
-import { PieceData,GameState, Pos } from "@/lib/shogi/types";
+import { PieceData,
+	GameState,
+	Pos,
+	UIBoard,
+	INITIAL_BOARD,
+	INITIAL_HAND,
+	hasLegalMoves,
+	type PieceInfo } from "@torassen/shogi-logic";
 
 export function useGameLogic(mySide: "sente" | "gote") {
 	function deepCopyBoard(board: PieceData[][]): PieceData[][] {
@@ -88,6 +93,10 @@ export function useGameLogic(mySide: "sente" | "gote") {
 		}
 	});
 
+	const syncBoardState = (syncedBoard: UIBoard) => {
+		dispatch({ type: "SYNC_STATE", payload: syncedBoard });
+	};
+
 	return {
 		// State
 		...state,
@@ -100,6 +109,7 @@ export function useGameLogic(mySide: "sente" | "gote") {
 		setGameResult,
 		applyMove,
 		applyDrop,
+		syncBoardState,
 
 		// Legal Moves
 		...legalMoves,
