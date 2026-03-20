@@ -41,6 +41,7 @@ export function useShogiGame(
 		applyMove,
 		applyDrop,
 		gameResult,
+		setGameResult,
 		isCheck,
 	} = useGameLogic(mySide);
 
@@ -90,11 +91,34 @@ export function useShogiGame(
 			}
 		};
 
+		const handleMatchEnded = (data: { winner: string | null; message: string }) => {
+			console.log("[WS] match_ended received:", data);
+			
+			// 自分の勝敗に合わせてメッセージを書き換える（または追記する）
+			let displayMessage = data.message;
+			if (data.winner) {
+				const isWin = data.winner === mySide;
+				displayMessage = isWin ? "あなたの勝ちです！" : "あなたの負けです。";
+				// 元のメッセージ（投了など）を括弧で残す
+				if (data.message.includes("投了")) {
+					displayMessage += ` (${data.message})`;
+				}
+			}
+
+			setGameResult({
+				isOver: true,
+				winner: data.winner as "sente" | "gote" | "draw" | null,
+				message: displayMessage,
+			});
+		};
+
 		socket.on("moveMade", handleMoveMade);
+		socket.on("match_ended", handleMatchEnded);
 		return () => {
 			socket.off("moveMade", handleMoveMade);
+			socket.off("match_ended", handleMatchEnded);
 		};
-	}, [socket, applyMove, applyDrop, mySide]);
+	}, [socket, applyMove, applyDrop, mySide, setGameResult]);
 
 	// ========= クリックハンドラ =========
 
@@ -165,9 +189,25 @@ export function useShogiGame(
 		}
 	);
 
-	const handleEndMatch = (() => {
-		router.push("/result" + (roomId ? `?roomId=${roomId}` : ""));
-	});
+	const handleEndMatch = () => {
+		// すでに終了している場合は何もしない（コンポーネント側の状態管理でリザルトを表示するため）
+		if (gameResult.isOver) {
+			return;
+		}
+
+		// 対局中の場合はサーバーに投了（負け）を通知し、ローカル状態を更新
+		if (roomId && socket) {
+			socket.emit("resign_match", { roomId });
+			setGameResult({
+				isOver: true,
+				winner: mySide === "sente" ? "gote" : "sente",
+				message: "投了しました"
+			});
+		} else {
+			// ルームIDがないなどの異常系はホームへ
+			router.push("/home");
+		}
+	};
 
 	return {
 		board,
@@ -188,6 +228,7 @@ export function useShogiGame(
 		handleEndMatch,
 		lastMove,
 		isCheck,
+		gameResult,
 		gameOver: gameResult.message,
 	};
 }

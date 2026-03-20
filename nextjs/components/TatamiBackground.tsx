@@ -30,11 +30,7 @@ const LOADER_PIECES = [
 
 function ShogiLoader() {
 	const { progress } = useProgress();
-	// ランダムな駒を選択
-	const modelPath = useMemo(() => {
-		const randomIndex = Math.floor(Math.random() * LOADER_PIECES.length);
-		return LOADER_PIECES[randomIndex];
-	}, []);
+	const modelPath = "/models/hisya.glb";
 
 	const { scene } = useGLTF(modelPath);
 	const pieceRef = useRef<THREE.Group>(null);
@@ -560,13 +556,17 @@ export default function TatamiBackground({
 	onBoardMove,
 	externalTurn,
 	playerColor,
-	lastExternalMove
+	lastExternalMove,
+	isGameOver = false,
+	isPreparing = false
 }: {
 	onTurnChange?: (turn: Color) => void;
 	onBoardMove?: (move: Move) => void;
 	externalTurn?: Color;
 	playerColor?: Color;
 	lastExternalMove?: Move;
+	isGameOver?: boolean;
+	isPreparing?: boolean;
 }) {
 	const [selectedPiece, setSelectedPiece] = useState<string | null>(null);
 	const [pendingPromotion, setPendingPromotion] = useState<{ id: string, move: Move } | null>(null);
@@ -653,6 +653,9 @@ export default function TatamiBackground({
 
 	// 駒が操作可能かどうかを判定（自分の手番かつ自分の駒であること）
 	const isPieceDraggable = useCallback((id: string) => {
+		// 終局している場合は操作不可
+		if (isGameOver) return false;
+
 		const owner = pieceOwners[id];
 		// その駒の所有者の手番であること
 		if (owner !== boardState.sideToMove) return false;
@@ -930,76 +933,82 @@ export default function TatamiBackground({
 					shadow-bias={-0.001}
 				/>
 				<Suspense fallback={<ShogiLoader />}>
-					<TatamiModel />
+					{isPreparing ? (
+						<ShogiLoader />
+					) : (
+						<>
+							<TatamiModel />
 
-					{/* 盤と駒を同じグループに入れて一括で傾ける */}
-					<group ref={boardGroupRef} position={[0, -0.9, 0]} rotation={[(Math.PI / 180) * 30, Math.PI / 2, 0]}>
-						{/* 背景クリックで選択解除用の透明な平面 */}
-						<mesh position={[0, 9.9, 0]} rotation={[-Math.PI / 2, 0, 0]} onClick={handleBackgroundClick} receiveShadow>
-							<planeGeometry args={[50, 50]} />
-							<shadowMaterial transparent opacity={0.4} />
-						</mesh>
+							{/* 盤と駒を同じグループに入れて一括で傾ける */}
+							<group ref={boardGroupRef} position={[0, -0.9, 0]} rotation={[(Math.PI / 180) * 30, Math.PI / 2, 0]}>
+								{/* 背景クリックで選択解除用の透明な平面 */}
+								<mesh position={[0, 9.9, 0]} rotation={[-Math.PI / 2, 0, 0]} onClick={handleBackgroundClick} receiveShadow>
+									<planeGeometry args={[50, 50]} />
+									<shadowMaterial transparent opacity={0.4} />
+								</mesh>
 
-						<BanModelContent />
+								<BanModelContent />
 
-						{/* アシストマーク（移動可能な場所の強調） */}
-						{validMoveDestinations.map((dest, idx) => {
-							const pos = gridToWorld(dest.row, dest.col);
-							return <MoveMarker key={`marker-${idx}`} position={pos} />;
-						})}
+								{/* アシストマーク（移動可能な場所の強調） */}
+								{validMoveDestinations.map((dest, idx) => {
+									const pos = gridToWorld(dest.row, dest.col);
+									return <MoveMarker key={`marker-${idx}`} position={pos} />;
+								})}
 
-						{/* 駒台 (Sente: 左上) */}
-						<DaiModelContent
-							position={[-12.5, 0, -21]}
-							rotation={[0, Math.PI, 0]}
-							scale={[1, 1, 1]}
-						/>
+								{/* 駒台 (Sente: 左上) */}
+								<DaiModelContent
+									position={[-12.5, 0, -21]}
+									rotation={[0, Math.PI, 0]}
+									scale={[1, 1, 1]}
+								/>
 
-						{/* 駒台 (Gote: 右下) */}
-						<DaiModelContent
-							position={[-21.2, 0, 12.7]}
-							rotation={[0, Math.PI, 0]}
-							scale={[1, 1, 1]}
-						/>
+								{/* 駒台 (Gote: 右下) */}
+								<DaiModelContent
+									position={[-21.2, 0, 12.7]}
+									rotation={[0, Math.PI, 0]}
+									scale={[1, 1, 1]}
+								/>
 
-						{/* === 先手の駒 === */}
-						{SENTE_PIECES_CONFIG.map(piece => isPrimaryHandPiece(piece.id) && (
-							<DraggablePiece
-								key={piece.id}
-								pieceId={piece.id}
-								modelPath={piece.model}
-								initialPosition={piecePositions[piece.id] || piece.defaultPos}
-								rotation={getPieceRotation(piece.id, pieceOwners[piece.id], isPiecePromoted(piece.id))}
-								count={getHandPieceCount(piece.id)}
-								selectedId={selectedPiece}
-								isPromoted={isPiecePromoted(piece.id)}
-								onSelect={handleSelect}
-								onDragEnd={handleDragEnd}
-								parentGroupRef={boardGroupRef}
-								draggable={isPieceDraggable(piece.id)}
-							/>
-						))}
+								{/* === 先手の駒 === */}
+								{SENTE_PIECES_CONFIG.map(piece => isPrimaryHandPiece(piece.id) && (
+									<DraggablePiece
+										key={piece.id}
+										pieceId={piece.id}
+										modelPath={piece.model}
+										initialPosition={piecePositions[piece.id] || piece.defaultPos}
+										rotation={getPieceRotation(piece.id, pieceOwners[piece.id], isPiecePromoted(piece.id))}
+										count={getHandPieceCount(piece.id)}
+										selectedId={selectedPiece}
+										isPromoted={isPiecePromoted(piece.id)}
+										onSelect={handleSelect}
+										onDragEnd={handleDragEnd}
+										parentGroupRef={boardGroupRef}
+										draggable={isPieceDraggable(piece.id)}
+									/>
+								))}
 
-						{/* === 後手の駒 === */}
-						{GOTE_PIECES_CONFIG.map(piece => isPrimaryHandPiece(piece.id) && (
-							<DraggablePiece
-								key={piece.id}
-								pieceId={piece.id}
-								modelPath={piece.model}
-								initialPosition={piecePositions[piece.id] || piece.defaultPos}
-								rotation={getPieceRotation(piece.id, pieceOwners[piece.id], isPiecePromoted(piece.id))}
-								count={getHandPieceCount(piece.id)}
-								selectedId={selectedPiece}
-								isPromoted={isPiecePromoted(piece.id)}
-								onSelect={handleSelect}
-								onDragEnd={handleDragEnd}
-								parentGroupRef={boardGroupRef}
-								draggable={isPieceDraggable(piece.id)}
-							/>
-						))}
-					</group>
+								{/* === 後手の駒 === */}
+								{GOTE_PIECES_CONFIG.map(piece => isPrimaryHandPiece(piece.id) && (
+									<DraggablePiece
+										key={piece.id}
+										pieceId={piece.id}
+										modelPath={piece.model}
+										initialPosition={piecePositions[piece.id] || piece.defaultPos}
+										rotation={getPieceRotation(piece.id, pieceOwners[piece.id], isPiecePromoted(piece.id))}
+										count={getHandPieceCount(piece.id)}
+										selectedId={selectedPiece}
+										isPromoted={isPiecePromoted(piece.id)}
+										onSelect={handleSelect}
+										onDragEnd={handleDragEnd}
+										parentGroupRef={boardGroupRef}
+										draggable={isPieceDraggable(piece.id)}
+									/>
+								))}
+							</group>
 
-					<Environment preset="sunset" />
+							<Environment preset="sunset" />
+						</>
+					)}
 				</Suspense>
 			</Canvas>
 

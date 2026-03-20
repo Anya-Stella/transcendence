@@ -62,6 +62,12 @@ io.on("connection", (socket: Socket) => {
 				userId: p.userId,
 			})),
 		});
+
+		// Explicitly tell THIS player which side they are
+		const playerIndex = room.players.findIndex(p => p.socketId === socket.id);
+		if (playerIndex !== -1) {
+			socket.emit("setSide", { side: playerIndex === 0 ? "sente" : "gote" });
+		}
 	});
 
 	// --- roomState (query) ---
@@ -148,6 +154,34 @@ io.on("connection", (socket: Socket) => {
 			});
 		}
 	);
+
+	// --- resign_match ---
+	socket.on("resign_match", (data: { roomId: string }) => {
+		console.log(`[WS] resign_match received for room: ${data.roomId} from ${socket.id}`);
+		const room = rooms.get(data.roomId);
+		if (!room) {
+			console.log(`[WS] Room ${data.roomId} not found for resignation`);
+			return;
+		}
+
+		const playerIdx = room.players.findIndex((p) => p.socketId === socket.id);
+		if (playerIdx === -1) {
+			console.log(`[WS] Player ${socket.id} not found in room ${data.roomId} players list`);
+			// Debug: show current players
+			console.log("[WS] Current players in room:", room.players.map(p => p.socketId));
+			return;
+		}
+
+		const winner = playerIdx === 0 ? "gote" : "sente";
+		const winnerName = playerIdx === 0 ? "後手" : "先手";
+
+		console.log(`[WS] Player index ${playerIdx} resigned. Winner: ${winner} (${winnerName})`);
+
+		io.to(data.roomId).emit("match_ended", {
+			winner: winner,
+			message: `${playerIdx === 0 ? "先手" : "後手"}が投了しました。${winnerName}の勝ちです。`,
+		});
+	});
 
 	// --- disconnect ---
 	socket.on("disconnect", () => {

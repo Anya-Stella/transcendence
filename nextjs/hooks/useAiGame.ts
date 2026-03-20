@@ -196,7 +196,17 @@ export function useAiGame(
 	};
 
 	const handleEndMatch = () => {
-		router.push("/result");
+		// すでに終了している場合は何もしない
+		if (gameResult.isOver) {
+			return;
+		}
+
+		// 対局中の場合は投了（負け）として扱い、内部状態を更新
+		setGameResult({
+			isOver: true,
+			winner: mySide === "sente" ? "gote" : "sente",
+			message: "投了しました"
+		});
 	};
 
 	return {
@@ -219,6 +229,7 @@ export function useAiGame(
 		aiThinking,
 		lastMove,
 		isCheck,
+		gameResult,
 		gameOver: gameResult.message,
 	};
 }

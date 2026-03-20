@@ -36,32 +36,11 @@ export function useGameLogic(mySide: "sente" | "gote") {
 		state.selectedHandPiece
 	);
 
-	// ========= 詰み判定 =========
-	useEffect(() => {
-		if (state.gameResult.isOver) return;
-
-		const canMove = hasLegalMoves(
-			state.board as (PieceInfo | null)[][],
-			state.turn,
-			state.senteHand,
-			state.goteHand
-		);
-
-		if (!canMove) {
-			const winner = state.turn === "sente" ? "gote" : "sente";
-			const winnerDisplay = winner === mySide ? "あなた" : "相手";
-			dispatch({
-				type: "SET_GAME_OVER",
-				payload: { winner, message: `詰みです！${winnerDisplay}の勝ちです。` },
-			});
-		}
-	}, [state.turn, state.board, state.senteHand, state.goteHand, mySide, state.gameResult.isOver]);
-
 	// ========= 王手判定 =========
 	const isCheck = useMemo(() => {
 		if (state.gameResult.isOver) return false;
 		const boardObj = boardFromPieces(
-			state.board as (PieceInfo | null)[][],
+			state.board as any,
 			state.turn,
 			state.senteHand,
 			state.goteHand
@@ -77,6 +56,37 @@ export function useGameLogic(mySide: "sente" | "gote") {
 		
 		return (oppAttacks & myKing) !== 0;
 	}, [state.board, state.turn, state.senteHand, state.goteHand, state.gameResult.isOver]);
+
+	// ========= 詰み判定 =========
+	useEffect(() => {
+		if (state.gameResult.isOver) return;
+
+		// 合法手があるか確認
+		const canMove = hasLegalMoves(
+			state.board as any,
+			state.turn,
+			state.senteHand,
+			state.goteHand
+		);
+
+		// 王手がかかっているか確認
+		// 一般的な将棋では詰み＝王手がかかっていて合法手がない状態
+		if (!canMove) {
+			const winner = state.turn === "sente" ? "gote" : "sente";
+			const isWin = winner === mySide;
+			
+			const mainMessage = isCheck ? "詰みです！" : "合法手がありません。";
+			const resultMessage = isWin ? "あなたの勝ちです！" : "あなたの負けです。";
+			
+			dispatch({
+				type: "SET_GAME_OVER",
+				payload: { 
+					winner, 
+					message: `${mainMessage}${resultMessage}` 
+				},
+			});
+		}
+	}, [state.turn, state.board, state.senteHand, state.goteHand, state.gameResult.isOver, isCheck]);
 
 	// ========= Actions wrapper =========
 	const applyMove = (
@@ -105,8 +115,12 @@ export function useGameLogic(mySide: "sente" | "gote") {
 	});
 
 	const setGameResult = ((result: { isOver: boolean; winner: "sente" | "gote" | "draw" | null; message: string | null }) => {
+		console.log("[Logic] setGameResult called:", result);
 		if (result.isOver && result.winner) {
+			console.log("[Logic] Dispatching SET_GAME_OVER");
 			dispatch({ type: "SET_GAME_OVER", payload: { winner: result.winner, message: result.message || "" } });
+		} else {
+			console.log("[Logic] setGameResult skipped due to missing winner or isOver false");
 		}
 	});
 
