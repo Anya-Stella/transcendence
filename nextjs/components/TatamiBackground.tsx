@@ -28,6 +28,15 @@ const LOADER_PIECES = [
 	"/models/ousyo_NoTen.glb"
 ];
 
+function LoadingEventTrigger({ onLoaded, isPreparing }: { onLoaded?: () => void, isPreparing: boolean }) {
+	useEffect(() => {
+		if (!isPreparing) {
+			onLoaded?.();
+		}
+	}, [onLoaded, isPreparing]);
+	return null;
+}
+
 function ShogiLoader() {
 	const { progress } = useProgress();
 	const modelPath = "/models/hisya.glb";
@@ -54,48 +63,49 @@ function ShogiLoader() {
 				rotation={[0, 0, 0]}
 			/>
 
-			<Html center portal={undefined} distanceFactor={6} position={[0, -5, 0]}>
+			<Html fullscreen>
 				<div style={{
+					position: "absolute",
+					inset: 0,
 					display: "flex",
 					flexDirection: "column",
 					alignItems: "center",
-					gap: "40px",
-					padding: "50px 80px",
-					background: "rgba(20, 15, 10, 0.8)",
-					backdropFilter: "blur(12px)",
-					borderRadius: "40px",
-					border: "1px solid rgba(212, 175, 55, 0.3)",
-					boxShadow: "0 25px 60px rgba(0,0,0,0.7)",
-					color: "#f5e6c8",
-					width: "600px",
-					zIndex: 1000,
-					marginTop: "1000px" // 駒の下に配置
+					justifyContent: "flex-end",
+					padding: "10vh 10vw",
+					background: "radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.4) 100%)",
+					pointerEvents: "none",
+					zIndex: 1000
 				}}>
+					{/* 進行中のテキストメッセージ（オプション） */}
+					<div style={{
+						fontSize: "1.5rem",
+						color: "rgba(245, 230, 200, 0.6)",
+						fontWeight: 700,
+						letterSpacing: "0.2em",
+						marginBottom: "24px",
+						textShadow: "0 0 10px rgba(0,0,0,0.5)"
+					}}>
+						LOADING MODELS... {progress.toFixed(0)}%
+					</div>
+
+					{/* 画面横幅いっぱいのバー */}
 					<div style={{
 						width: "100%",
-						height: "20px",
-						background: "rgba(255, 255, 255, 0.05)",
-						borderRadius: "10px",
+						height: "32px",
+						background: "rgba(255, 255, 255, 0.03)",
+						borderRadius: "16px",
 						overflow: "hidden",
-						border: "1px solid rgba(212, 175, 55, 0.1)"
+						border: "2px solid rgba(232, 131, 74, 0.2)",
+						backdropFilter: "blur(8px)",
+						boxShadow: "0 0 30px rgba(0,0,0,0.3)"
 					}}>
 						<div style={{
 							width: `${progress}%`,
 							height: "100%",
-							background: "linear-gradient(90deg, #d4af37, #f5e6c8)",
-							boxShadow: "0 0 20px rgba(212, 175, 55, 0.6)",
-							transition: "width 0.3s ease-out"
+							background: "linear-gradient(90deg, #e8834a, #fce0a2)",
+							boxShadow: "0 0 40px rgba(232, 131, 74, 0.8)",
+							transition: "width 0.4s cubic-bezier(0.1, 0, 0.2, 1)"
 						}} />
-					</div>
-					<div style={{
-						fontSize: "3.1rem",
-						opacity: 0.95,
-						fontWeight: 900,
-						letterSpacing: "0.15em",
-						fontFamily: "monospace",
-						textShadow: "0 0 15px rgba(212, 175, 55, 0.3)"
-					}}>
-						{progress.toFixed(0)}%
 					</div>
 				</div>
 			</Html>
@@ -558,10 +568,12 @@ export default function TatamiBackground({
 	playerColor,
 	lastExternalMove,
 	isGameOver = false,
-	isPreparing = false
+	isPreparing = false,
+	onLoaded
 }: {
 	onTurnChange?: (turn: Color) => void;
 	onBoardMove?: (move: Move) => void;
+	onLoaded?: () => void;
 	externalTurn?: Color;
 	playerColor?: Color;
 	lastExternalMove?: Move;
@@ -933,6 +945,7 @@ export default function TatamiBackground({
 					shadow-bias={-0.001}
 				/>
 				<Suspense fallback={<ShogiLoader />}>
+					<LoadingEventTrigger onLoaded={onLoaded} isPreparing={isPreparing} />
 					{isPreparing ? (
 						<ShogiLoader />
 					) : (

@@ -86,7 +86,7 @@ export function useGameLogic(mySide: "sente" | "gote") {
 				},
 			});
 		}
-	}, [state.turn, state.board, state.senteHand, state.goteHand, state.gameResult.isOver, isCheck]);
+	}, [state.turn, state.board, state.senteHand, state.goteHand, state.gameResult.isOver, isCheck, mySide]);
 
 	// ========= Actions wrapper =========
 	const applyMove = (

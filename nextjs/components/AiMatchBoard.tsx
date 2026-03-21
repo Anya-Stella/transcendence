@@ -32,6 +32,7 @@ interface AiMatchBoardProps {
 function AiMatchBoard({ mySide = "sente", aiDepth = 4, isPreparing = false }: AiMatchBoardProps) {
 	const router = useRouter();
 	const [user, setUser] = useState<{ name: string } | null>(null);
+	const [isLoaded, setIsLoaded] = useState(false);
 
 	const {
 		board,
@@ -96,6 +97,7 @@ function AiMatchBoard({ mySide = "sente", aiDepth = 4, isPreparing = false }: Ai
 				lastExternalMove={lastMove || undefined}
 				isGameOver={!!gameOver}
 				isPreparing={isPreparing}
+				onLoaded={() => setIsLoaded(true)}
 				onBoardMove={(move) => {
 					if (move.type === "move") {
 						executeMove(move.from, move.to, move.promote ?? false);
@@ -108,7 +110,7 @@ function AiMatchBoard({ mySide = "sente", aiDepth = 4, isPreparing = false }: Ai
 				}}
 			/>
 
-			{!isPreparing && (
+			{!isPreparing && isLoaded && (
 				<>
 					{/* ヘッダー */}
 					<header className="wafuu-header">
@@ -256,22 +258,25 @@ function AiMatchBoard({ mySide = "sente", aiDepth = 4, isPreparing = false }: Ai
 										padding: "18px 48px",
 										fontSize: "1.25rem",
 										fontWeight: 900,
-										background: "rgba(232, 131, 74, 0.9)",
-										border: "none",
-										color: "black",
+										background: "rgba(255, 255, 255, 0.15)",
+										border: "1px solid rgba(255, 255, 255, 0.3)",
+										color: "#ffffff",
 										borderRadius: "40px",
 										cursor: "pointer",
-										boxShadow: "0 10px 25px rgba(0,0,0,0.4), 0 0 15px rgba(232, 131, 74, 0.3)",
+										backdropFilter: "blur(12px)",
+										boxShadow: "0 10px 25px rgba(0,0,0,0.3), inset 0 0 10px rgba(255, 255, 255, 0.1)",
 										letterSpacing: "0.2em",
 										transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)"
 									}}
 									onMouseOver={(e) => {
 										e.currentTarget.style.transform = "scale(1.05) translateY(-2px)";
-										e.currentTarget.style.background = "#f5e6c8";
+										e.currentTarget.style.background = "rgba(255, 255, 255, 0.25)";
+										e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.5)";
 									}}
 									onMouseOut={(e) => {
 										e.currentTarget.style.transform = "scale(1)";
-										e.currentTarget.style.background = "rgba(232, 131, 74, 0.9)";
+										e.currentTarget.style.background = "rgba(255, 255, 255, 0.15)";
+										e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.3)";
 									}}
 								>
 									結果を確認する
@@ -413,8 +418,12 @@ function AiMatchBoard({ mySide = "sente", aiDepth = 4, isPreparing = false }: Ai
 									background: "rgba(20, 15, 10, 0.95)",
 									padding: "60px 80px",
 									borderRadius: "32px",
-									border: "2px solid rgba(232, 131, 74, 0.4)",
-									boxShadow: "0 0 60px rgba(232, 131, 74, 0.2)",
+									border: `2px solid ${gameResult.winner === mySide 
+										? "rgba(212, 175, 55, 0.4)" 
+										: "rgba(150, 150, 150, 0.2)"}`,
+									boxShadow: `0 0 60px ${gameResult.winner === mySide 
+										? "rgba(212, 175, 55, 0.2)" 
+										: "rgba(0, 0, 0, 0.3)"}`,
 									textAlign: "center",
 									minWidth: "400px",
 									animation: "resultPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)"
@@ -432,9 +441,9 @@ function AiMatchBoard({ mySide = "sente", aiDepth = 4, isPreparing = false }: Ai
 										fontSize: "4.5rem",
 										fontWeight: 900,
 										letterSpacing: "0.2em",
-										color: gameResult.winner === mySide ? "#e8834a" : "#888",
+										color: gameResult.winner === mySide ? "#d4af37" : "#888",
 										textShadow: gameResult.winner === mySide
-											? "0 0 40px rgba(232, 131, 74, 0.6)"
+											? "0 0 40px rgba(212, 175, 55, 0.6)"
 											: "0 0 20px rgba(255, 255, 255, 0.1)",
 										margin: "0 0 24px",
 										fontFamily: "'M PLUS Rounded 1c', sans-serif"
@@ -465,13 +474,17 @@ function AiMatchBoard({ mySide = "sente", aiDepth = 4, isPreparing = false }: Ai
 										href="/home"
 										style={{
 											padding: "16px 32px",
-											background: "rgba(232, 131, 74, 0.9)",
+											background: gameResult.winner === mySide 
+												? "rgba(212, 175, 55, 0.9)" 
+												: "rgba(100, 100, 100, 0.8)",
 											color: "#000",
 											borderRadius: "16px",
 											fontWeight: 900,
 											fontSize: "1.1rem",
 											textDecoration: "none",
-											boxShadow: "0 4px 15px rgba(232, 131, 74, 0.4)",
+											boxShadow: `0 4px 15px ${gameResult.winner === mySide 
+												? "rgba(212, 175, 55, 0.4)" 
+												: "rgba(0, 0, 0, 0.2)"}`,
 											transition: "all 0.2s"
 										}}
 									>
