@@ -6,16 +6,17 @@ import Link from "next/link";
 import { io, Socket } from "socket.io-client";
 
 interface Player {
-	socketId: string;
-	userId?: string;
+    socketId: string;
+    userId?: string;
+    side?: "b" | "w";
 }
 
 interface RoomState {
-	roomId: string;
-	hostSocketId: string;
-	hostUserId?: string;
-	playerCount: number;
-	players: Player[];
+    roomId: string;
+    hostSocketId: string;
+    hostUserId?: string;
+    players: Player[];
+    sfen?: string;
 }
 
 export default function RoomPage() {
@@ -48,7 +49,7 @@ export default function RoomPage() {
 
 		s.on("connect", () => {
 			setMySocketId(s.id ?? null);
-			s.emit("joinRoom", { roomId, userId });
+			s.emit("joinRoom", { roomId, userId ,isPlayer: true});
 		});
 
 		s.on("roomState", (state: RoomState) => {
@@ -69,7 +70,7 @@ export default function RoomPage() {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [roomId, userId]);
 
-	const playerCount = roomState?.playerCount ?? (isHost ? 1 : 0);
+	const playerCount = roomState?.players?.length ?? (isHost ? 1 : 0);
 	const amIHost = mySocketId ? roomState?.hostSocketId === mySocketId : isHost;
 
 	const handleCopy = async () => {

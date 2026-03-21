@@ -6,46 +6,67 @@ import { io, Socket } from "socket.io-client";
 import MatchBoard from "@/components/MatchBoard";
 
 export default function OnlineMatchPage() {
-	const params = useParams();
-	const roomId = params.roomId as string;
-	const [socket, setSocket] = useState<Socket | null>(null);
-	const [wsStatus, setWsStatus] = useState<"connected" | "disconnected" | "connecting">("connecting");
-	const [mySide, setMySide] = useState<"sente" | "gote">("sente");
+    const params = useParams();
+    const roomId = params.roomId as string;
+    const [socket, setSocket] = useState<Socket | null>(null);
+    const [wsStatus, setWsStatus] = useState<"connected" | "disconnected" | "connecting">("connecting");
+    const [mySide, setMySide] = useState<"sente" | "gote" | "spectator">("spectator"); // 観戦者状態も追加
+    const [userId, setUserId] = useState<string | null>(null);
 
-	useEffect(() => {
-		const s = io("http://localhost:3001", {
-			transports: ["websocket"],
-		});
+    useEffect(() => {
+        fetch("/api/me")
+            .then((res) => res.json())
+            .then((data) => {
+                if (data.user) setUserId(data.user.id);
+            })
+            .catch(() => { });
+    }, []);
 
-		s.on("connect", () => {
-			setWsStatus("connected");
-			// Join room for move sync
-			s.emit("joinRoom", {roomId: roomId,isPlayer: true});
-		});
+    useEffect(() => {
+        if (!userId && wsStatus === "connecting") return;
 
-		s.on("disconnect", () => {
-			setWsStatus("disconnected");
-		});
+        const s = io("http://localhost:3001", {
+            transports: ["websocket"],
+        });
 
-		// Determine side based on room state
-		s.on("roomState", (state: { players: { socketId: string, side: "b" | "w" }[] }) => {
-			const me = state.players.find((p) => p.socketId === s.id);
-			if (me) {setMySide(me.side === "b" ? "sente" : "gote");}
-		});
+        s.on("connect", () => {
+            setWsStatus("connected");
+            s.emit("joinRoom", {
+                roomId: roomId,
+                isPlayer: true,
+                userId: userId
+            });
+        });
 
-		setSocket(s);
+        s.on("disconnect", () => {
+            setWsStatus("disconnected");
+        });
 
-		return () => {
-			s.disconnect();
-		};
-	}, [roomId]);
+        s.on("roomState", (state: { players: { socketId: string, userId?: string, side: "b" | "w" }[] }) => {
+            const me = state.players.find((p) => 
+                (userId && p.userId === userId) || p.socketId === s.id
+            );
 
-	return (
-		<MatchBoard
-			roomId={roomId}
-			socket={socket}
-			wsStatus={wsStatus}
-			mySide={mySide}
-		/>
-	);
+            if (me) {
+                setMySide(me.side === "b" ? "sente" : "gote");
+            } else {
+                setMySide("spectator");
+            }
+        });
+
+        setSocket(s);
+
+        return () => {
+            s.disconnect();
+        };
+    }, [roomId, userId]);
+
+    return (
+        <MatchBoard
+            roomId={roomId}
+            socket={socket}
+            wsStatus={wsStatus}
+            mySide={mySide}
+        />
+    );
 }

@@ -32,14 +32,13 @@ const io = new Server(httpServer, {
 io.on("connection", (socket: Socket) => {
 	console.log(`[WS] Client connected: ${socket.id}`);
 
-	socket.on("joinRoom", (data: { roomId: string;isPlayer: boolean, userId?: string }) => {
+	socket.on("joinRoom", (data: { roomId: string;isPlayer:boolean, userId?: string }) => {
 		const { roomId,isPlayer, userId } = data;
 		console.log(`[WS] joinRoom: ${roomId} by ${socket.id} (user: ${userId})`);
 
 		let room = rooms.get(roomId);
 
 		if (!room) {
-			// First player becomes host
 			room = {
 				hostSocketId: socket.id,
 				hostUserId: userId,
@@ -62,7 +61,10 @@ io.on("connection", (socket: Socket) => {
 				if (room.players.length === 2) {
                 room.status = "playing";
            		}
-			}
+			} else {
+                if (!room.spectators.includes(socket.id))
+                    room.spectators.push(socket.id);
+            }
         }else {
             console.log(`[WS] Spectator joined: ${socket.id}`);
             if (!room.spectators.includes(socket.id)) {
