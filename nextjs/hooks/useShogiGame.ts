@@ -91,7 +91,6 @@ export function useShogiGame(
 		const handleSyncState = (data: { sfen: string }) => {
 			const syncedBoard = sfenToUIBoard(data.sfen);
 			syncBoardState(syncedBoard); 
-			console.log(syncedBoard.turn);
 		};
 
 		socket.on("syncState", handleSyncState);
@@ -169,15 +168,20 @@ export function useShogiGame(
 		}
 	);
 
-	const handleEndMatch = (() => {
-		if(mySide === "spectator")
+	const handleEndMatch = async () => {
+		if (mySide === "spectator") {
 			router.push("/home");
-		else
-		{
+		} else {
+			const resultStatus = gameResult.winner === mySide ? "win" : "lose";
+
+			fetch("/api/result", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ result: resultStatus }), 
+			});
 			router.push("/result" + (roomId ? `?roomId=${roomId}` : ""));
 		}
-		
-	});
+	};
 
 	return {
 		board,

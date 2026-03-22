@@ -41,7 +41,6 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 		handleEndMatch,
 		gameOver
 	} = useShogiGame(socket, roomId, mySide, wsStatus);
-	console.log("myside: ",mySide,", isMyturn: ",isMyTurn);
 
 	// WS接続ステータス
 	const statusBadgeClass =
