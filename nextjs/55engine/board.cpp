@@ -355,6 +355,34 @@ bool Board::isKingAttackedAfter(Move m)
     return (oppAttacks & myKing) != 0;
 }
 
+bool Board::isUchifuzume(Move m)
+{
+    if (m.from != -1 || m.drop_type != PAWN)
+        return false;
+
+    Board nextBoard = *this;
+    nextBoard.makeMove(m);
+
+    Color opponent = nextBoard.sideToMove;
+    Bitboard myColor = Color(1 - opponent);
+    Bitboard oppKing = nextBoard.colorBB[opponent] & nextBoard.pieceBB[KING];
+    
+    if (!oppKing) return false;
+
+    Bitboard myAttacks = nextBoard.getAttacks(Color(myColor), nextBoard.colorBB[BLACK] | nextBoard.colorBB[WHITE]);
+    if (!(myAttacks & oppKing))
+        return false;
+
+    std::vector<Move> oppMoves;
+    nextBoard.generatePseudoLegalMoves(oppMoves);
+    for (const Move &resp : oppMoves) {
+        if (nextBoard.isPseudoLegal(resp) && !nextBoard.isKingAttackedAfter(resp)) {
+            return false;
+        }
+    }
+    return true;
+}
+
 std::string Board::moveToString(const Move &m) const
 {
     if (m.from == -1)
@@ -493,7 +521,7 @@ void Board::generateLegalMoves(std::vector<Move> &legalMoves)
     generatePseudoLegalMoves(pseudoMoves);
     for (const Move &m : pseudoMoves)
     {
-        if (isPseudoLegal(m) && !isKingAttackedAfter(m))
+        if (isPseudoLegal(m) && !isKingAttackedAfter(m) && !isUchifuzume(m))
         {
             legalMoves.push_back(m);
         }

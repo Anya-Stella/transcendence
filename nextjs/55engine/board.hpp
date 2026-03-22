@@ -19,6 +19,7 @@ public:
     bool isPseudoLegal(Move m);
     void makeMove(Move m);
     bool isKingAttackedAfter(Move m);
+    bool isUchifuzume(Move m);
     std::string moveToString(const Move &m) const;
     void generatePseudoLegalMoves(std::vector<Move> &moves);
     void generateLegalMoves(std::vector<Move> &legalMoves);
