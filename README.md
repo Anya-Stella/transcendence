@@ -8,7 +8,7 @@
 |----------|------|
 | フロントエンド | Next.js 14 (App Router) + TypeScript |
 | データベース | PostgreSQL 16 + Prisma ORM |
-| 認証 | JWT (httpOnly Cookie) + argon2 |
+| 認証 | Auth.js（JWT ベース / httpOnly Cookie）+ argon2 |
 | WebSocket | Socket.IO |
 | インフラ | Docker Compose (nginx / nextjs / ws-server / postgres) |
 
@@ -85,6 +85,18 @@ http://localhost:8080
 | `POSTGRES_PASSWORD` | DB パスワード | `torassen_secret` |
 | `POSTGRES_DB` | DB 名 | `torassen` |
 | `DATABASE_URL` | Prisma 接続文字列 | `postgresql://torassen:torassen_secret@postgres:5432/torassen` |
+| `AUTH_SECRET` | Auth.js 用の秘密鍵。十分に長いランダム文字列を指定 | `openssl rand -base64 32` の出力を使用 |
+| `AUTH_URL` | Auth.js が認識するアプリケーションの公開 URL | `http://localhost:8080` |
+| `AUTH_TRUST_HOST` | 逆プロキシ経由でのアクセスを許可するフラグ | `true` |
+| `AUTH_GITHUB_ID` | GitHub OAuth クライアント ID（例）※利用するプロバイダに応じて設定 | `xxxxxxxxxxxxxxxxxxxx` |
+| `AUTH_GITHUB_SECRET` | GitHub OAuth クライアント Secret（例）※利用するプロバイダに応じて設定 | `yyyyyyyyyyyyyyyyyyyy` |
+開発環境では、以下のようにして `AUTH_SECRET` を生成し `.env` に設定してください：
+```bash
+openssl rand -base64 32
+```
+`AUTH_URL` には、ブラウザからアクセスする URL（ローカルでは `http://localhost:8080`）を指定してください。  
+OAuth プロバイダを利用しない場合は、`AUTH_GITHUB_ID` / `AUTH_GITHUB_SECRET` などのプロバイダ固有の変数は不要です。
+
 
 ## 🗄 DB 初期化
 

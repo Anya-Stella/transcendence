@@ -30,7 +30,7 @@ export default function RoomPage() {
 	const [socket, setSocket] = useState<Socket | null>(null);
 	const [roomState, setRoomState] = useState<RoomState | null>(null);
 	const [mySocketId, setMySocketId] = useState<string | null>(null);
-	const userId = session?.user?.id ?? null;
+	const userId = (session?.user as { id?: string } | undefined)?.id ?? null;
 
 	// WebSocket接続
 	useEffect(() => {
