@@ -10,7 +10,7 @@ export async function GET() {
 	}
 
 	try {
-		const userId = session.user.id;
+		const userId = (session.user as { id?: string | null }).id;
 		if (!userId) {
 			return NextResponse.json({ error: "ユーザーIDが不明です" }, { status: 400 });
 		}
