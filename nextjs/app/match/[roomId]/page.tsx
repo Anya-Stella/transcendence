@@ -13,27 +13,21 @@ export default function OnlineMatchPage() {
 	const [mySide, setMySide] = useState<"sente" | "gote" | null>(null);
 
 	useEffect(() => {
-		const s = io("http://localhost:3001", {
+		// Use current host for WebSocket connection
+		const host = typeof window !== "undefined" ? window.location.hostname : "localhost";
+		const wsUrl = `http://${host}:3001`;
+		
+		const s = io(wsUrl, {
 			transports: ["websocket"],
 		});
 
-		// Handshake and side logic
-		const checkSide = (players: { socketId: string }[]) => {
-			if (!s.id) return false;
-			const idx = players.findIndex(p => p.socketId === s.id);
-			if (idx === 0) {
-				setMySide("sente");
-				return true;
-			} else if (idx === 1) {
-				setMySide("gote");
-				return true;
-			}
-			return false;
-		};
-
-		s.on("roomState", (state: { players: { socketId: string }[] }) => {
+		// Consolidated room state handler
+		s.on("roomState", (state: { players: { socketId: string, side?: "b" | "w" }[] }) => {
 			console.log("[WS] Room state update:", state);
-			checkSide(state.players);
+			const me = state.players.find((p) => p.socketId === s.id);
+			if (me && me.side) {
+				setMySide(me.side === "b" ? "sente" : "gote");
+			}
 		});
 
 		s.on("setSide", (data: { side: "sente" | "gote" }) => {

@@ -1,6 +1,5 @@
 import { useState, useCallback, useRef } from "react";
-import {PROMOTE_MAP,DEMOTE_MAP} from "@/utils/shogiConstants";
-import { PieceData } from "@/lib/shogi/types";
+import {PROMOTE_MAP,DEMOTE_MAP, PieceData} from "@torassen/shogi-logic";
 
 function deepCopyBoard(board: PieceData[][]): PieceData[][] {
 	return board.map((row) => row.map((cell) => (cell ? { ...cell } : null)));

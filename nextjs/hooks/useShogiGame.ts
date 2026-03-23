@@ -2,8 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Socket } from "socket.io-client";
 import { useGameLogic } from "./useGameLogic";
-import { Pos } from "@/lib/shogi/types";
-import { PieceType, Move } from "@torassen/shogi-logic";
+import { Pos, UIBoard, sfenToUIBoard, PieceType, type Move } from "@torassen/shogi-logic";
 
 const KANJI_TO_PIECE_TYPE: Record<string, PieceType> = {
 	"歩": PieceType.PAWN,
@@ -43,6 +42,7 @@ export function useShogiGame(
 		gameResult,
 		setGameResult,
 		isCheck,
+		syncBoardState,
 	} = useGameLogic(mySide);
 
 	// ========= アクション (WebSocket付き) =========
@@ -76,8 +76,8 @@ export function useShogiGame(
 		if (!socket) return;
 
 		const handleMoveMade = (data: {
-			from?: { row: number; col: number };
-			to: { row: number; col: number };
+			from?: Pos;
+			to: Pos;
 			promote?: boolean;
 			drop?: string;
 		}) => {
@@ -93,7 +93,7 @@ export function useShogiGame(
 
 		const handleMatchEnded = (data: { winner: string | null; message: string }) => {
 			console.log("[WS] match_ended received:", data);
-			
+
 			// 自分の勝敗に合わせてメッセージを書き換える（または追記する）
 			let displayMessage = data.message;
 			if (data.winner) {
@@ -119,6 +119,23 @@ export function useShogiGame(
 			socket.off("match_ended", handleMatchEnded);
 		};
 	}, [socket, applyMove, applyDrop, mySide, setGameResult]);
+
+	useEffect(() => {
+		if (!socket || !roomId) return;
+
+		socket.emit("getGameState", { roomId });
+
+		const handleSyncState = (data: { sfen: string }) => {
+			const syncedBoard = sfenToUIBoard(data.sfen);
+			syncBoardState(syncedBoard);
+			console.log(syncedBoard.turn);
+		};
+
+		socket.on("syncState", handleSyncState);
+		return () => {
+			socket.off("syncState", handleSyncState);
+		};
+	}, [socket, roomId, syncBoardState]);
 
 	// ========= クリックハンドラ =========
 

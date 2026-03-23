@@ -1,87 +1,115 @@
-// ============================================================
-// @torassen/shogi-logic — 5×5 Mini Shogi (虎戦) shared types
-// ============================================================
+// 5×5 Shogi types – ported from 55engine/types.hpp
+export type Bitboard = number; // uint32 (only lower 25 bits used)
 
-/** 手番 */
+// const enum は実行時に参照できない場合があるため、
+// ブラウザでの実行時エラー (PieceType.PAWN が undefined) を防ぐため通常の enum を使用します。
+
 export enum Color {
-	BLACK = 0, // 先手 (下手)
-	WHITE = 1, // 後手 (上手)
+  BLACK = 0, // 先手
+  WHITE = 1, // 後手
 }
 
-/** 駒種 (成りなし) */
+export enum PType {
+  PAWN = 0,
+  SILVER = 1,
+  GOLD = 2,
+  BISHOP = 3,
+  ROOK = 4,
+  KING = 5,
+  PRO_PAWN = 6,
+  PRO_SILVER = 7,
+  PRO_BISHOP = 8,
+  PRO_ROOK = 9,
+  PTYPE_MAX = 10,
+}
+
+// 互換性のための enum 定義
 export enum PieceType {
-	PAWN = 0,   // 歩
-	SILVER = 1, // 銀
-	GOLD = 2,   // 金
-	BISHOP = 3, // 角
-	ROOK = 4,   // 飛
-	KING = 5,   // 玉
+  PAWN = PType.PAWN,
+  SILVER = PType.SILVER,
+  GOLD = PType.GOLD,
+  BISHOP = PType.BISHOP,
+  ROOK = PType.ROOK,
+  KING = PType.KING,
 }
 
-/** 駒種 (成り込み) */
 export enum PromotedPieceType {
-	PRO_PAWN = 6,   // と金
-	PRO_SILVER = 7, // 成銀
-	PRO_BISHOP = 8, // 馬
-	PRO_ROOK = 9,   // 龍
+  PRO_PAWN = PType.PRO_PAWN,
+  PRO_SILVER = PType.PRO_SILVER,
+  PRO_BISHOP = PType.PRO_BISHOP,
+  PRO_ROOK = PType.PRO_ROOK,
 }
 
-/** 全駒種の union */
-export type AnyPieceType = PieceType | PromotedPieceType;
+export type Piece = {
+  color: Color;
+  pieceType: PType | PieceType | PromotedPieceType;
+};
 
-/** 盤上の 1 マスに置ける駒情報 */
-export interface Piece {
-	color: Color;
-	pieceType: AnyPieceType;
-}
-
-/** 盤面座標 (0-indexed, row=段 col=筋) */
-export interface Square {
-	row: number; // 0..4
-	col: number; // 0..4
-}
-
-/** 指し手 — 盤上移動 */
-export interface BoardMove {
-	type: "move";
-	from: Square;
-	to: Square;
-	promote: boolean;
-}
-
-/** 指し手 — 持ち駒を打つ */
-export interface DropMove {
-	type: "drop";
-	pieceType: PieceType; // 打てるのは成りなし駒のみ
-	to: Square;
-}
-
-/** 指し手の union */
-export type Move = BoardMove | DropMove;
-
-/** 持ち駒の数量 (駒種 → 枚数) */
 export type Hand = Record<number, number>;
 
-/** 盤面全体の状態 */
-export interface BoardState {
-	/** 5×5 の盤面。board[row][col] が null なら空きマス */
-	board: (Piece | null)[][];
-	/** 各手番の持ち駒 */
-	hands: [Hand, Hand]; // hands[Color.BLACK], hands[Color.WHITE]
-	/** 現在の手番 */
-	sideToMove: Color;
-	/** 手数 */
-	moveCount: number;
+export type BoardState = {
+  board: (Piece | null)[][];
+  hands: [Hand, Hand];
+  sideToMove: Color;
+  moveCount: number;
+};
+
+export type BitMove = {
+  from: number;
+  to: number;
+  dropType: PType;
+  promote: boolean;
 }
 
-/** ゲーム結果 */
-export enum GameResult {
-	/** 先手勝ち */
-	BLACK_WIN = "BLACK_WIN",
-	/** 後手勝ち */
-	WHITE_WIN = "WHITE_WIN",
-	/** 引き分け */
-	DRAW = "DRAW",
-	/** まだ終わっていない */
-	IN_PROGRESS = "IN_PROGRESS",
+export type PieceData = {
+  kanji: string;
+  side: "sente" | "gote";
+} | null;
+
+export type UIBoard = {
+  board: PieceData[][],
+  senteHand: HandPieces;
+  goteHand: HandPieces;
+  turn: "sente" | "gote",
+};
+
+export type Move = {
+  to: Pos;
+} & (
+  | { type: "move"; from: Pos; promote: boolean }
+  | { type: "drop"; pieceType: PType | PieceType; promote?: boolean }
+);
+
+
+
+
+
+export type Drop = {
+  to: Pos,
+  kanji: string,
 }
+
+export type Pos = {
+  row: number,
+  col: number,
+};
+
+export type Square = Pos;
+
+
+export type HandPieces = Record<string, number>;
+
+export type GameState = {
+  board: PieceData[][];
+  senteHand: HandPieces;
+  goteHand: HandPieces;
+  turn: "sente" | "gote";
+  selected: Pos | null;
+  selectedHandPiece: string | null;
+  promoteDialog: { from: Pos; to: Pos } | null;
+  gameResult: {
+    isOver: boolean;
+    winner: "sente" | "gote" | "draw" | null;
+    message: string | null;
+  };
+};

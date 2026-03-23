@@ -1,10 +1,19 @@
 import { useCallback, useReducer, useEffect, useMemo } from "react";
-import { INITIAL_BOARD, INITIAL_HAND } from "@/utils/shogiConstants";
 import { useLegalMoves } from "./useLegalMoves";
-import { hasLegalMoves, boardFromPieces, type PieceInfo } from "@/lib/shogi/board";
-import { Color, PType } from "@/lib/shogi/types"; // For check detection
 import { gameReducer, GameAction } from "./reducers/gameReducer";
-import { PieceData, GameState, Pos } from "@/lib/shogi/types";
+import {
+	PieceData,
+	GameState,
+	Pos,
+	UIBoard,
+	INITIAL_BOARD,
+	INITIAL_HAND,
+	hasLegalMoves,
+	boardFromPieces,
+	Color,
+	PType,
+	type PieceInfo
+} from "@torassen/shogi-logic";
 
 export function useGameLogic(mySide: "sente" | "gote") {
 	function deepCopyBoard(board: PieceData[][]): PieceData[][] {
@@ -48,12 +57,12 @@ export function useGameLogic(mySide: "sente" | "gote") {
 		const currentSTM = boardObj.sideToMove;
 		const opponent = (1 - currentSTM) as Color;
 		const occ = boardObj.colorBB[0] | boardObj.colorBB[1];
-		
+
 		// 相手の攻撃範囲を取得
 		const oppAttacks = boardObj.getAttacks(opponent, occ);
 		// 自分の玉の位置
 		const myKing = boardObj.colorBB[currentSTM] & boardObj.pieceBB[PType.KING];
-		
+
 		return (oppAttacks & myKing) !== 0;
 	}, [state.board, state.turn, state.senteHand, state.goteHand, state.gameResult.isOver]);
 
@@ -74,15 +83,15 @@ export function useGameLogic(mySide: "sente" | "gote") {
 		if (!canMove) {
 			const winner = state.turn === "sente" ? "gote" : "sente";
 			const isWin = winner === mySide;
-			
+
 			const mainMessage = isCheck ? "詰みです！" : "合法手がありません。";
 			const resultMessage = isWin ? "あなたの勝ちです！" : "あなたの負けです。";
-			
+
 			dispatch({
 				type: "SET_GAME_OVER",
-				payload: { 
-					winner, 
-					message: `${mainMessage}${resultMessage}` 
+				payload: {
+					winner,
+					message: `${mainMessage}${resultMessage}`
 				},
 			});
 		}
@@ -124,6 +133,10 @@ export function useGameLogic(mySide: "sente" | "gote") {
 		}
 	});
 
+	const syncBoardState = (syncedBoard: UIBoard) => {
+		dispatch({ type: "SYNC_STATE", payload: syncedBoard });
+	};
+
 	return {
 		// State
 		...state,
@@ -136,6 +149,7 @@ export function useGameLogic(mySide: "sente" | "gote") {
 		setGameResult,
 		applyMove,
 		applyDrop,
+		syncBoardState,
 
 		// Check status
 		isCheck,

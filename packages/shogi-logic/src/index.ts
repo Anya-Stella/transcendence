@@ -1,54 +1,46 @@
-// ============================================================
-// @torassen/shogi-logic — Public API barrel
-// ============================================================
-
-// Types
-export {
-	Color,
-	PieceType,
-	PromotedPieceType,
-	GameResult,
-} from "./types";
-
 export type {
-	AnyPieceType,
-	Piece,
-	Square,
-	BoardMove,
-	DropMove,
-	Move,
-	Hand,
-	BoardState,
-} from "./types";
+    Bitboard,
+    BitMove,
+    PieceData,
+    UIBoard,
+    Move,
+    Drop,
+    Pos,
+    Square,
+    HandPieces,
+    GameState,
+    Piece,
+    BoardState,
+    Hand,
+} from "./types"
 
-// Constants
 export {
-	BOARD_SIZE,
-	INITIAL_SFEN,
-	PROMOTION_MAP,
-	UNPROMOTE_MAP,
-	PIECE_DISPLAY_NAMES,
-	PIECE_TO_SFEN,
-	emptyHand,
-	createInitialBoard,
-} from "./constants";
+    Color,
+    PType,
+    PieceType,
+    PromotedPieceType,
+} from "./types"
 
-// Board utilities
 export {
-	isInBounds,
-	squareEquals,
-	cloneBoardState,
-	opponentColor,
-	applyMove,
-	findKing,
-} from "./board";
+    USI_TO_DROP_KANJI,
+    PROMOTE_MAP,
+    DEMOTE_MAP,
+    INITIAL_BOARD,
+    INITIAL_HAND,
+} from "./shogiConstants"
 
-// Legal move logic
 export {
-	isSquareAttackedBy,
-	isInCheck,
-	generateLegalMoves,
-	isLegalMove,
-	isCheckmate,
-	isStalemate,
-} from "./legal-moves";
+    apply,
+    hasLegalMoves,
+    getLegalMovesForPiece,
+    getLegalDrops,
+    generateLegalMoves,
+    isLegalMove,
+    applyMove,
+    type LegalTarget,
+    type PieceInfo,
+    boardFromPieces
+} from "./board"
+
+export { sfenToUIBoard } from "./sfenToUIBoard"
+export { createInitialBoard, UNPROMOTE_MAP } from "./constants"

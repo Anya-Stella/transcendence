@@ -18,7 +18,8 @@ export default function HomePage() {
 		fetch("/api/me")
 			.then((res) => res.json())
 			.then((data) => {
-				if (data.user) setUser(data.user);
+				if (data.user) 	setUser(data.user);
+				
 			})
 			.catch(() => { });
 	}, []);
@@ -82,6 +83,16 @@ export default function HomePage() {
 							<div className="wafuu-menu-title">観戦する</div>
 							<div className="wafuu-menu-desc">
 								他のプレイヤーの対局を見よう
+							</div>
+						</div>
+						<span className="wafuu-menu-arrow">→</span>
+					</Link>
+
+					<Link href="/friends" className="wafuu-menu-item">
+						<div className="wafuu-menu-text">
+							<div className="wafuu-menu-title">フレンド</div>
+							<div className="wafuu-menu-desc">
+								友達を探して追加・管理しよう
 							</div>
 						</div>
 						<span className="wafuu-menu-arrow">→</span>

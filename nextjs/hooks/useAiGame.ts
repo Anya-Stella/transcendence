@@ -1,10 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { boardFromPieces, type PieceInfo } from "@/lib/shogi/board";
 import { useGameLogic } from "./useGameLogic";
-import { USI_TO_DROP_KANJI } from "@/utils/shogiConstants";
-import { Pos } from "@/lib/shogi/types";
-import { PieceType, Move } from "@torassen/shogi-logic";
+import { boardFromPieces, type PieceInfo ,USI_TO_DROP_KANJI, Pos, PieceType, type Move } from "@torassen/shogi-logic";
 
 const KANJI_TO_PIECE_TYPE: Record<string, PieceType> = {
 	"歩": PieceType.PAWN,
@@ -123,7 +120,7 @@ export function useAiGame(
 		} finally {
 			setAiThinking(false);
 		}
-	}, [aiDepth, aiSide, applyMove, applyDrop]);
+	}, [aiDepth, aiSide, applyMove, applyDrop, mySide, setGameResult]);
 
 	// AIの手番になったら自動で思考開始
 	useEffect(() => {

@@ -12,8 +12,15 @@ COPY nextjs/55engine/ ./
 RUN make clean || true && make
 
 # ---- Shared Package Build ----
+# FROM base AS shared-builder
+# WORKDIR /shared
+# COPY packages/shogi-logic/package.json ./
+# COPY packages/shogi-logic/tsconfig.json ./
+# COPY packages/shogi-logic/src/ ./src/
+# RUN npm install
+# RUN npm run build
 FROM base AS shared-builder
-WORKDIR /shared
+WORKDIR /app/packages/shogi-logic
 COPY packages/shogi-logic/package.json ./
 COPY packages/shogi-logic/tsconfig.json ./
 COPY packages/shogi-logic/src/ ./src/
@@ -28,12 +35,23 @@ RUN node -e "const p=require('./package.json'); delete p.dependencies['@torassen
 RUN npm install
 
 # ---- Builder ----
+# FROM base AS builder
+# WORKDIR /app
+# COPY --from=deps /app/node_modules ./node_modules
+# COPY --from=shared-builder /shared ./node_modules/@torassen/shogi-logic
+# COPY nextjs/ .
+
+# RUN npx prisma generate
+# RUN npm run build
+
 FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
-COPY --from=shared-builder /shared ./node_modules/@torassen/shogi-logic
+RUN mkdir -p ./node_modules/@torassen/shogi-logic
+COPY --from=shared-builder /app/packages/shogi-logic/package.json ./node_modules/@torassen/shogi-logic/
+COPY --from=shared-builder /app/packages/shogi-logic/dist ./node_modules/@torassen/shogi-logic/dist
+COPY --from=shared-builder /app/packages/shogi-logic/src ./node_modules/@torassen/shogi-logic/src
 COPY nextjs/ .
-
 RUN npx prisma generate
 RUN npm run build
 

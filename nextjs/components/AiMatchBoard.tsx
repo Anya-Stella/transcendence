@@ -4,9 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAiGame } from "@/hooks/useAiGame";
-import { DEMOTE_MAP } from "@/utils/shogiConstants";
-import { PieceData, HandPieces, Pos } from "@/lib/shogi/types";
-import { Color, PieceType } from "@torassen/shogi-logic";
+import { DEMOTE_MAP, PieceData, HandPieces, Pos, Color, PieceType } from "@torassen/shogi-logic";
 import TatamiBackground from "@/components/TatamiBackground";
 
 const PIECE_TYPE_TO_KANJI: Record<number, string> = {
@@ -298,7 +296,6 @@ function AiMatchBoard({ mySide = "sente", aiDepth = 4, isPreparing = false }: Ai
 								gap: "12px"
 							}}
 						>
-							{/* 名前とバッジのカプセル（ゆとり重視） */}
 							<div style={{
 								display: "flex",
 								alignItems: "center",
@@ -330,7 +327,6 @@ function AiMatchBoard({ mySide = "sente", aiDepth = 4, isPreparing = false }: Ai
 								gap: "12px"
 							}}
 						>
-							{/* 名前とバッジのカプセル（ゆとり重視） */}
 							<div style={{
 								display: "flex",
 								alignItems: "center",
@@ -418,11 +414,11 @@ function AiMatchBoard({ mySide = "sente", aiDepth = 4, isPreparing = false }: Ai
 									background: "rgba(20, 15, 10, 0.95)",
 									padding: "60px 80px",
 									borderRadius: "32px",
-									border: `2px solid ${gameResult.winner === mySide 
-										? "rgba(212, 175, 55, 0.4)" 
+									border: `2px solid ${gameResult.winner === mySide
+										? "rgba(212, 175, 55, 0.4)"
 										: "rgba(150, 150, 150, 0.2)"}`,
-									boxShadow: `0 0 60px ${gameResult.winner === mySide 
-										? "rgba(212, 175, 55, 0.2)" 
+									boxShadow: `0 0 60px ${gameResult.winner === mySide
+										? "rgba(212, 175, 55, 0.2)"
 										: "rgba(0, 0, 0, 0.3)"}`,
 									textAlign: "center",
 									minWidth: "400px",
@@ -474,16 +470,16 @@ function AiMatchBoard({ mySide = "sente", aiDepth = 4, isPreparing = false }: Ai
 										href="/home"
 										style={{
 											padding: "16px 32px",
-											background: gameResult.winner === mySide 
-												? "rgba(212, 175, 55, 0.9)" 
+											background: gameResult.winner === mySide
+												? "rgba(212, 175, 55, 0.9)"
 												: "rgba(100, 100, 100, 0.8)",
 											color: "#000",
 											borderRadius: "16px",
 											fontWeight: 900,
 											fontSize: "1.1rem",
 											textDecoration: "none",
-											boxShadow: `0 4px 15px ${gameResult.winner === mySide 
-												? "rgba(212, 175, 55, 0.4)" 
+											boxShadow: `0 4px 15px ${gameResult.winner === mySide
+												? "rgba(212, 175, 55, 0.4)"
 												: "rgba(0, 0, 0, 0.2)"}`,
 											transition: "all 0.2s"
 										}}

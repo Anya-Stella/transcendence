@@ -5,9 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Socket } from "socket.io-client";
 import { useShogiGame } from "@/hooks/useShogiGame";
-import { DEMOTE_MAP } from "@/utils/shogiConstants";
-import { PieceData, HandPieces, Pos } from "@/lib/shogi/types";
-import { Color, PieceType } from "@torassen/shogi-logic";
+import { DEMOTE_MAP, PieceData, HandPieces, Pos, Color, PieceType } from "@torassen/shogi-logic";
 import TatamiBackground from "@/components/TatamiBackground";
 
 const PIECE_TYPE_TO_KANJI: Record<number, string> = {
