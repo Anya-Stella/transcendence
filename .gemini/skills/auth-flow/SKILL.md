@@ -1,6 +1,6 @@
 ---
 name: auth-flow
-description: 認証・認可フローの全体像。JWT、Cookie、middleware、OAuth の仕様を定義。
+description: 認証・認可フローの全体像。Auth.js（NextAuth）ベースの OAuth / Credentials、Cookie、middleware の仕様を定義。
 ---
 
 # 認証フロー
@@ -12,40 +12,56 @@ description: 認証・認可フローの全体像。JWT、Cookie、middleware、
 ```
 [ブラウザ]
     │
-    ├── メール/パスワード認証
-    │   POST /api/auth/signup  → JWT発行 → Cookie設定 → /home へ
-    │   POST /api/auth/login   → JWT検証 → Cookie設定 → /home へ
+    ├── メール/パスワード認証（Credentials Provider）
+    │   フロント: Auth.js の signIn("credentials") を呼び出し
+    │   → /api/auth/callback/credentials
+    │   → Auth.js がユーザ検証・セッション用 JWT 発行
+    │   → セッション Cookie 設定
+    │   → /home へリダイレクト
     │
-    ├── OAuth認証（予定）
-    │   GET /api/auth/42       → 42 OAuth → コールバック → JWT発行
-    │   GET /api/auth/google   → Google OAuth → コールバック → JWT発行
+    ├── OAuth 認証（42 / Google など）
+    │   GET /api/auth/signin?callbackUrl=/home
+    │   → プロバイダ選択（42 / Google）
+    │   → /api/auth/callback/{provider}
+    │   → Auth.js がプロバイダからプロフィール取得・ユーザ紐付け
+    │   → セッション用 JWT 発行 & Cookie 設定
+    │   → /home へリダイレクト
     │
     ├── ログアウト
-    │   POST /api/auth/logout  → Cookie削除 → /login へ
+    │   フロント: Auth.js の signOut() を呼び出し
+    │   → /api/auth/signout
+    │   → Auth.js がセッション Cookie 削除
+    │   → /login へリダイレクト（または指定の callbackUrl）
     │
     └── 認証チェック（自動）
-        middleware.ts → Cookie から JWT 取得 → 検証 → 通過 or リダイレクト
+        middleware.ts → Auth.js の auth() / getToken() 等でセッション取得
+        → セッションがあれば通過 / なければ /login へリダイレクト
 ```
 
-## 2. JWT 仕様
+## 2. Auth.js セッション / JWT 仕様
 
 | 項目 | 値 |
 |------|-----|
-| ライブラリ | `jose` |
-| アルゴリズム | HS256 |
-| 有効期限 | 24時間 |
-| ペイロード | `{ userId: string }` |
+| ライブラリ | Auth.js（NextAuth.js） |
+| セッション方式 | JWT セッション（`session.strategy = "jwt"` を想定） |
+| 有効期限 | Auth.js の `session.maxAge`（例: 30 日） |
+| ペイロードのイメージ | `{ sub: userId, email, name, image, ... }` |
+| 署名鍵 | Auth.js の設定（環境変数 / オプション）で管理 |
 
-## 3. Cookie 仕様
+※ アプリ側で `jose` を直接使って JWT を発行・検証するフローは廃止し、Auth.js のセッション管理に統一する。
+
+## 3. Cookie 仕様（Auth.js）
 
 | 項目 | 値 |
 |------|-----|
-| Cookie名 | `torassen_token` |
-| `httpOnly` | `true` |
-| `secure` | `true`（本番のみ） |
-| `sameSite` | `lax` |
+| Cookie 名 | Auth.js が管理するセッション Cookie（例: `next-auth.session-token` / `__Secure-next-auth.session-token`） |
+| `httpOnly` | `true`（JS から直接参照不可） |
+| `secure` | `true`（本番のみ、自動的に有効） |
+| `sameSite` | `lax`（Auth.js デフォルト） |
 | `path` | `/` |
-| `maxAge` | 86400（24時間） |
+| `maxAge` | `session.maxAge` に基づく（例: 30 日） |
+
+クライアントコードは Cookie 名や署名処理に依存せず、Auth.js のクライアント API（`useSession`, `signIn`, `signOut` など）を利用する。
 
 ## 4. middleware のルート保護
 
