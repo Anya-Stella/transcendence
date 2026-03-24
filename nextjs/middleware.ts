@@ -1,69 +1,34 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
-import { jwtVerify } from "jose";
+import NextAuth from "next-auth";
+import authConfig from "./auth.config";
 
-const JWT_SECRET = new TextEncoder().encode(
-	process.env.JWT_SECRET || "fallback-secret-do-not-use-in-prod"
-);
+const { auth } = NextAuth(authConfig);
 
-const COOKIE_NAME = "torassen_token";
+export default auth((req) => {
+  const { nextUrl } = req;
+  const isAuthenticated = !!req.auth?.user;
 
-// Pages that require authentication
-const PROTECTED_PATHS = ["/home", "/online", "/room", "/match", "/spectate", "/result"];
+  const isPublicPage = nextUrl.pathname.startsWith("/login");
+  const isApiAuthRoute = nextUrl.pathname.startsWith("/api/auth");
+  const isRoot = nextUrl.pathname === "/";
 
-// Pages only for unauthenticated users
-const AUTH_PAGES = ["/login"];
+  if (isApiAuthRoute) return;
 
-export async function middleware(request: NextRequest) {
-	const { pathname } = request.nextUrl;
-	const token = request.cookies.get(COOKIE_NAME)?.value;
+  if (isRoot) {
+    return Response.redirect(new URL(isAuthenticated ? "/home" : "/login", nextUrl));
+  }
 
-	let isAuthenticated = false;
-	if (token) {
-		try {
-			await jwtVerify(token, JWT_SECRET);
-			isAuthenticated = true;
-		} catch {
-			// Invalid token
-		}
-	}
+  if (isPublicPage) {
+    if (isAuthenticated) {
+      return Response.redirect(new URL("/home", nextUrl));
+    }
+    return;
+  }
 
-	// Redirect root to appropriate page
-	if (pathname === "/") {
-		const url = request.nextUrl.clone();
-		url.pathname = isAuthenticated ? "/home" : "/login";
-		return NextResponse.redirect(url);
-	}
-
-	// Redirect authenticated users away from login
-	if (AUTH_PAGES.some((p) => pathname.startsWith(p)) && isAuthenticated) {
-		const url = request.nextUrl.clone();
-		url.pathname = "/home";
-		return NextResponse.redirect(url);
-	}
-
-	// Redirect unauthenticated users to login
-	if (
-		PROTECTED_PATHS.some((p) => pathname.startsWith(p)) &&
-		!isAuthenticated
-	) {
-		const url = request.nextUrl.clone();
-		url.pathname = "/login";
-		return NextResponse.redirect(url);
-	}
-
-	return NextResponse.next();
-}
+  if (!isAuthenticated) {
+    return Response.redirect(new URL("/login", nextUrl));
+  }
+});
 
 export const config = {
-	matcher: [
-		"/",
-		"/login",
-		"/home",
-		"/online",
-		"/room/:path*",
-		"/match/:path*",
-		"/spectate/:path*",
-		"/result",
-	],
+  matcher: ["/((?!api|_next/static|_next/image|images|favicon.ico).*)", "/"],
 };

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getAuthFromCookie } from "@/lib/auth";
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 
 // フレンド申請の承認
@@ -7,14 +7,17 @@ export async function PUT(
 	req: Request,
 	{ params }: { params: { id: string } }
 ) {
-	const auth = await getAuthFromCookie();
-	if (!auth) {
+	const session = await auth();
+	if (!session?.user) {
 		return NextResponse.json({ error: "未認証" }, { status: 401 });
 	}
 
 	try {
 		const friendshipId = params.id;
-		const userId = auth.userId;
+		const userId = session.user.id;
+		if (!userId) {
+			return NextResponse.json({ error: "ユーザーIDが不明です" }, { status: 400 });
+		}
 
 		const friendship = await prisma.friendship.findUnique({
 			where: { id: friendshipId },
@@ -50,14 +53,17 @@ export async function DELETE(
 	req: Request,
 	{ params }: { params: { id: string } }
 ) {
-	const auth = await getAuthFromCookie();
-	if (!auth) {
+	const session = await auth();
+	if (!session?.user) {
 		return NextResponse.json({ error: "未認証" }, { status: 401 });
 	}
 
 	try {
 		const friendshipId = params.id;
-		const userId = auth.userId;
+		const userId = session.user.id;
+		if (!userId) {
+			return NextResponse.json({ error: "ユーザーIDが不明です" }, { status: 400 });
+		}
 
 		const friendship = await prisma.friendship.findUnique({
 			where: { id: friendshipId },

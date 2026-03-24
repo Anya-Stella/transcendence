@@ -1,12 +1,15 @@
 // 5×5 Shogi types – ported from 55engine/types.hpp
 export type Bitboard = number; // uint32 (only lower 25 bits used)
 
-export const enum Color {
+// const enum は実行時に参照できない場合があるため、
+// ブラウザでの実行時エラー (PieceType.PAWN が undefined) を防ぐため通常の enum を使用します。
+
+export enum Color {
   BLACK = 0, // 先手
   WHITE = 1, // 後手
 }
 
-export const enum PType {
+export enum PType {
   PAWN = 0,
   SILVER = 1,
   GOLD = 2,
@@ -20,6 +23,37 @@ export const enum PType {
   PTYPE_MAX = 10,
 }
 
+// 互換性のための enum 定義
+export enum PieceType {
+  PAWN = PType.PAWN,
+  SILVER = PType.SILVER,
+  GOLD = PType.GOLD,
+  BISHOP = PType.BISHOP,
+  ROOK = PType.ROOK,
+  KING = PType.KING,
+}
+
+export enum PromotedPieceType {
+  PRO_PAWN = PType.PRO_PAWN,
+  PRO_SILVER = PType.PRO_SILVER,
+  PRO_BISHOP = PType.PRO_BISHOP,
+  PRO_ROOK = PType.PRO_ROOK,
+}
+
+export type Piece = {
+  color: Color;
+  pieceType: PType | PieceType | PromotedPieceType;
+};
+
+export type Hand = Record<number, number>;
+
+export type BoardState = {
+  board: (Piece | null)[][];
+  hands: [Hand, Hand];
+  sideToMove: Color;
+  moveCount: number;
+};
+
 export type BitMove = {
   from: number;
   to: number;
@@ -28,9 +62,9 @@ export type BitMove = {
 }
 
 export type PieceData = {
-	kanji: string;
-	side: "sente" | "gote";
-}|null;
+  kanji: string;
+  side: "sente" | "gote";
+} | null;
 
 export type UIBoard = {
   board: PieceData[][],
@@ -40,20 +74,28 @@ export type UIBoard = {
 };
 
 export type Move = {
-  from: Pos,
-  to: Pos,
-  promote: boolean,
-}
+  to: Pos;
+} & (
+  | { type: "move"; from: Pos; promote: boolean }
+  | { type: "drop"; pieceType: PType | PieceType; promote?: boolean }
+);
+
+
+
+
 
 export type Drop = {
-  to:Pos,
+  to: Pos,
   kanji: string,
 }
 
 export type Pos = {
   row: number,
-  col:number,
+  col: number,
 };
+
+export type Square = Pos;
+
 
 export type HandPieces = Record<string, number>;
 

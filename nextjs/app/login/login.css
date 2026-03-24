@@ -215,3 +215,64 @@
         font-size: 1.8rem;
     }
 }
+
+/* --- OAuth セパレーター --- */
+.oauth-separator {
+    display: flex;
+    align-items: center;
+    margin: 24px 0;
+    color: rgba(245, 230, 200, 0.3);
+    font-size: 0.8rem;
+}
+
+.oauth-separator::before,
+.oauth-separator::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: rgba(212, 175, 55, 0.15);
+}
+
+.oauth-separator span {
+    padding: 0 12px;
+}
+
+/* --- OAuth ボタン --- */
+.oauth-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.oauth-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+.github-btn {
+    background: #24292e;
+    color: #ffffff;
+}
+
+.github-btn:hover {
+    background: #33393f;
+    border-color: rgba(212, 175, 55, 0.4);
+}
+
+.google-btn {
+    background: #ffffff;
+    color: #1a1a1a;
+}
+
+.google-btn:hover {
+    background: #f1f1f1;
+    border-color: rgba(212, 175, 55, 0.4);
+}

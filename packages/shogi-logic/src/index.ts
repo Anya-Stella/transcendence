@@ -1,18 +1,27 @@
 export type {
     Bitboard,
-    Color,
-    PType,
     BitMove,
     PieceData,
     UIBoard,
     Move,
     Drop,
     Pos,
+    Square,
     HandPieces,
     GameState,
+    Piece,
+    BoardState,
+    Hand,
 } from "./types"
 
-export  {
+export {
+    Color,
+    PType,
+    PieceType,
+    PromotedPieceType,
+} from "./types"
+
+export {
     USI_TO_DROP_KANJI,
     PROMOTE_MAP,
     DEMOTE_MAP,
@@ -24,10 +33,14 @@ export {
     apply,
     hasLegalMoves,
     getLegalMovesForPiece,
-	getLegalDrops,
-	type LegalTarget,
-	type PieceInfo,
+    getLegalDrops,
+    generateLegalMoves,
+    isLegalMove,
+    applyMove,
+    type LegalTarget,
+    type PieceInfo,
     boardFromPieces
 } from "./board"
 
 export { sfenToUIBoard } from "./sfenToUIBoard"
+export { createInitialBoard, UNPROMOTE_MAP } from "./constants"

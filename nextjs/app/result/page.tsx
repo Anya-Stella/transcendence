@@ -15,10 +15,10 @@ export default function ResultPage() {
 function ResultContent() {
 	const searchParams = useSearchParams();
 	const roomId = searchParams.get("roomId");
+	const winParam = searchParams.get("win");
+	const reason = searchParams.get("reason") || "対局が終了しました";
 
-	// ダミーの結果データ
-	const isWin = true;
-	const reason = "王を取りました";
+	const isWin = winParam === "true";
 
 	return (
 		<div className="wafuu-page">
@@ -31,29 +31,37 @@ function ResultContent() {
 			{/* ヘッダー */}
 			<header className="wafuu-header">
 				<Link href="/home" className="wafuu-header-logo">
-					将棋ゲーム
+					将棋
 				</Link>
 			</header>
 
 			{/* コンテンツ */}
 			<div className="wafuu-content">
-				<div className="wafuu-card" style={{ textAlign: "center" }}>
+				<div
+					className="wafuu-card"
+					style={{
+						textAlign: "center",
+						animation: "fadeIn 0.8s ease-out",
+						boxShadow: isWin ? "0 0 40px rgba(212, 175, 55, 0.2)" : "0 0 30px rgba(0,0,0,0.4)"
+					}}
+				>
 					{/* 結果アイコン */}
-					<div style={{ fontSize: "4rem", marginBottom: "8px" }}>
-						{isWin ? "🎉" : "😢"}
+					<div style={{ fontSize: "5rem", marginBottom: "16px", animation: "resultPop 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275)" }}>
+						{isWin ? "🏆" : "🎻"}
 					</div>
 
 					{/* 結果テキスト */}
 					<h2
 						style={{
-							fontSize: "2rem",
-							fontWeight: 800,
-							letterSpacing: "0.15em",
-							color: isWin ? "#d4af37" : "#ff6b6b",
+							fontSize: "3.5rem",
+							fontWeight: 900,
+							letterSpacing: "0.3em",
+							color: isWin ? "#d4af37" : "#888",
 							textShadow: isWin
-								? "0 0 20px rgba(212, 175, 55, 0.5)"
-								: "0 0 20px rgba(255, 107, 107, 0.3)",
-							margin: "0 0 8px",
+								? "0 0 30px rgba(212, 175, 55, 0.5)"
+								: "0 0 20px rgba(0, 0, 0, 0.5)",
+							margin: "0 0 16px",
+							marginLeft: "0.3em" // letterSpacing adjustment
 						}}
 					>
 						{isWin ? "勝利" : "敗北"}
@@ -61,9 +69,10 @@ function ResultContent() {
 
 					<p
 						style={{
-							color: "rgba(245, 230, 200, 0.6)",
-							fontSize: "0.9rem",
-							margin: "0 0 28px",
+							color: "rgba(245, 230, 200, 0.7)",
+							fontSize: "1.1rem",
+							margin: "0 0 40px",
+							fontWeight: 500
 						}}
 					>
 						{reason}

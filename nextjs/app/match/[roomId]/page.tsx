@@ -6,67 +6,75 @@ import { io, Socket } from "socket.io-client";
 import MatchBoard from "@/components/MatchBoard";
 
 export default function OnlineMatchPage() {
-    const params = useParams();
-    const roomId = params.roomId as string;
-    const [socket, setSocket] = useState<Socket | null>(null);
-    const [wsStatus, setWsStatus] = useState<"connected" | "disconnected" | "connecting">("connecting");
-    const [mySide, setMySide] = useState<"sente" | "gote" | "spectator">("spectator"); // 観戦者状態も追加
-    const [userId, setUserId] = useState<string | null>(null);
+	const params = useParams();
+	const roomId = params.roomId as string;
+	const [socket, setSocket] = useState<Socket | null>(null);
+	const [wsStatus, setWsStatus] = useState<"connected" | "disconnected" | "connecting">("connecting");
+	const [mySide, setMySide] = useState<"sente" | "gote" | "spectator">("spectator");
+	const [userId, setUserId] = useState<string | null>(null);
 
-    useEffect(() => {
-        fetch("/api/me")
-            .then((res) => res.json())
-            .then((data) => {
-                if (data.user) setUserId(data.user.id);
-            })
-            .catch(() => { });
-    }, []);
+	useEffect(() => {
+		fetch("/api/me")
+			.then((res) => res.json())
+			.then((data) => {
+				if (data.user) setUserId(data.user.id);
+			})
+			.catch(() => { });
+	}, []);
 
-    useEffect(() => {
-        if (!userId && wsStatus === "connecting") return;
+	useEffect(() => {
+		const host = typeof window !== "undefined" ? window.location.hostname : "localhost";
+		const wsUrl = `http://${host}:3001`;
 
-        const s = io("http://localhost:3001", {
-            transports: ["websocket"],
-        });
+		const s = io(wsUrl, {
+			transports: ["websocket"],
+		});
 
-        s.on("connect", () => {
-            setWsStatus("connected");
-            s.emit("joinRoom", {
-                roomId: roomId,
-                isPlayer: true,
-                userId: userId
-            });
-        });
+		s.on("connect", () => {
+			console.log("[WS] Connected. ID:", s.id);
+			setWsStatus("connected");
+			s.emit("joinRoom", {
+				roomId: roomId,
+				isPlayer: true,
+				userId: userId
+			});
+		});
 
-        s.on("disconnect", () => {
-            setWsStatus("disconnected");
-        });
+		s.on("disconnect", () => {
+			setWsStatus("disconnected");
+		});
 
-        s.on("roomState", (state: { players: { socketId: string, userId?: string, side: "b" | "w" }[] }) => {
-            const me = state.players.find((p) => 
-                (userId && p.userId === userId) || p.socketId === s.id
-            );
+		s.on("setSide", (data: { side: "sente" | "gote" }) => {
+			console.log("[WS] Server setSide:", data.side);
+			setMySide(data.side);
+		});
 
-            if (me) {
-                setMySide(me.side === "b" ? "sente" : "gote");
-            } else {
-                setMySide("spectator");
-            }
-        });
+		s.on("roomState", (state: { players: { socketId: string, userId?: string, side: "b" | "w" }[] }) => {
+			console.log("[WS] Room state update:", state);
+			const me = state.players.find((p) =>
+				(userId && p.userId === userId) || p.socketId === s.id
+			);
+			if (me) {
+				setMySide(me.side === "b" ? "sente" : "gote");
+			} else {
+				setMySide("spectator");
+			}
+		});
 
-        setSocket(s);
+		setSocket(s);
 
-        return () => {
-            s.disconnect();
-        };
-    }, [roomId, userId]);
+		return () => {
+			s.disconnect();
+		};
+	}, [roomId, userId]);
 
-    return (
-        <MatchBoard
-            roomId={roomId}
-            socket={socket}
-            wsStatus={wsStatus}
-            mySide={mySide}
-        />
-    );
+	return (
+		<MatchBoard
+			roomId={roomId}
+			socket={socket}
+			wsStatus={wsStatus}
+			mySide={mySide}
+			isPreparing={wsStatus === "connecting"}
+		/>
+	);
 }
