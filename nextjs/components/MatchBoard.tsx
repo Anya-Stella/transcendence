@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Socket } from "socket.io-client";
 import { useShogiGame } from "@/hooks/useShogiGame";
-import { DEMOTE_MAP, PieceData, HandPieces, Pos, Color, PieceType } from "@torassen/shogi-logic";
+import { DEMOTE_MAP, PieceData, HandPieces, Color, PieceType } from "@torassen/shogi-logic";
 import TatamiBackground from "@/components/TatamiBackground";
 
 const PIECE_TYPE_TO_KANJI: Record<number, string> = {
@@ -18,7 +18,7 @@ const PIECE_TYPE_TO_KANJI: Record<number, string> = {
 };
 
 function PieceComponent({ piece, isPromoted }: { piece: PieceData; isPromoted?: boolean }) {
-	// 2Dの駒を非表示にする
+	// 2Dの駒を非表示にする（TatamiBackgroundで表示するため）
 	return null;
 }
 
@@ -26,7 +26,7 @@ interface MatchBoardProps {
 	roomId?: string;
 	socket?: Socket | null;
 	wsStatus?: "connected" | "disconnected" | "connecting";
-	mySide?: "sente" | "gote";
+	mySide?: "sente" | "gote" | "spectator";
 	isPreparing?: boolean;
 }
 
@@ -110,6 +110,7 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 				isPreparing={isPreparing}
 				onLoaded={() => setIsLoaded(true)}
 				onBoardMove={(move) => {
+					if (mySide === "spectator") return;
 					if (move.type === "move") {
 						executeMove(move.from, move.to, move.promote ?? false);
 					} else if (move.type === "drop") {
@@ -141,7 +142,7 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 								className="wafuu-header-btn"
 								onClick={handleLogout}
 							>
-								退出
+								ログアウト
 							</button>
 						</div>
 					</header>
@@ -245,6 +246,11 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 									<span style={{ fontSize: "1.2rem", color: "#f5e6c8", fontWeight: 800 }}> {gameOver}</span>
 								</div>
 							)}
+							{roomId && !gameOver && (
+								<span style={{ color: "rgba(245, 230, 200, 0.6)", fontSize: "0.9rem", fontWeight: 700 }}>
+									{mySide === "spectator" ? "（観戦中）" : (isMyTurn ? "（あなたの番です）" : "（相手の番です）")}
+								</span>
+							)}
 						</div>
 
 						{/* 対局終了通知 */}
@@ -296,7 +302,7 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 							</div>
 						)}
 
-						{/* Gote player info + hand (右上) */}
+						{/* Gote player info (右上) */}
 						<div
 							style={{
 								position: "fixed",
@@ -321,12 +327,12 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 								backdropFilter: "blur(12px)",
 								boxShadow: "0 4px 15px rgba(0,0,0,0.4)"
 							}}>
-								<span style={{ color: "#f5e6c8", fontSize: "0.95rem", fontWeight: 600, letterSpacing: "0.02em" }}>{mySide === "gote" ? "あなた" : "対戦相手"}</span>
+								<span style={{ color: "#f5e6c8", fontSize: "0.95rem", fontWeight: 600, letterSpacing: "0.02em" }}>{mySide === "gote" ? "あなた" : "後手"}</span>
 								<span className="board-player-badge badge-gote" style={{ fontSize: "0.75rem", padding: "2px 8px", borderRadius: "12px", fontWeight: 700 }}>後手</span>
 							</div>
 						</div>
 
-						{/* Sente player info + hand (左下) */}
+						{/* Sente player info (左下) */}
 						<div
 							style={{
 								position: "fixed",
@@ -352,36 +358,43 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 								boxShadow: "0 4px 15px rgba(0,0,0,0.4)"
 							}}>
 								<span className="board-player-badge badge-sente" style={{ fontSize: "0.75rem", padding: "2px 8px", borderRadius: "12px", fontWeight: 700 }}>先手</span>
-								<span style={{ color: "#f5e6c8", fontSize: "0.95rem", fontWeight: 600, letterSpacing: "0.02em" }}>{mySide === "sente" ? "あなた" : "対戦相手"}</span>
+								<span style={{ color: "#f5e6c8", fontSize: "0.95rem", fontWeight: 600, letterSpacing: "0.02em" }}>{mySide === "sente" ? "あなた" : "先手"}</span>
 							</div>
 						</div>
 
-						{/* 投了ボタン (右下) */}
-						{!gameOver && (
-							<button
-								style={{
-									position: "fixed",
-									bottom: "24px",
-									right: "24px",
-									padding: "12px 24px",
-									fontSize: "0.95rem",
-									fontWeight: 700,
-									border: "2px solid rgba(220, 60, 60, 0.6)",
-									borderRadius: "12px",
-									color: "#fff",
-									background: "rgba(180, 40, 40, 0.7)",
-									backdropFilter: "blur(8px)",
-									cursor: "pointer",
-									zIndex: 50,
-									boxShadow: "0 4px 16px rgba(180, 40, 40, 0.3)",
-									transition: "all 0.2s ease",
-									pointerEvents: "auto"
-								}}
-								onClick={handleEndMatch}
-							>
-								投了する
-							</button>
-						)}
+						{/* 下部のボタン (右下) */}
+						<div
+							style={{
+								position: "fixed",
+								bottom: "24px",
+								right: "24px",
+								display: "flex",
+								gap: "12px",
+								zIndex: 50,
+								pointerEvents: "auto"
+							}}
+						>
+							{!gameOver && (
+								<button
+									style={{
+										padding: "12px 24px",
+										fontSize: "0.95rem",
+										fontWeight: 700,
+										border: "2px solid rgba(220, 60, 60, 0.6)",
+										borderRadius: "12px",
+										color: "#fff",
+										background: "rgba(180, 40, 40, 0.7)",
+										backdropFilter: "blur(8px)",
+										cursor: "pointer",
+										boxShadow: "0 4px 16px rgba(180, 40, 40, 0.3)",
+										transition: "all 0.2s ease"
+									}}
+									onClick={handleEndMatch}
+								>
+									{mySide === "spectator" ? "退出する" : "投了する"}
+								</button>
+							)}
+						</div>
 					</div>
 
 					{/* Promotion dialog */}
@@ -406,6 +419,7 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 							</div>
 						</div>
 					)}
+
 					{/* Result Overlay */}
 					{showResultOverlay && (
 						<div
@@ -458,7 +472,7 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 										fontFamily: "'M PLUS Rounded 1c', sans-serif"
 									}}
 								>
-									{gameResult.winner === mySide ? "勝利" : "敗北"}
+									{gameResult.winner === mySide ? "勝利" : (gameResult.winner === null ? "引き分け" : "敗北")}
 								</h2>
 
 								<p
@@ -527,4 +541,3 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 
 export default MatchBoard;
 export { MatchBoard };
-export type { PieceData };

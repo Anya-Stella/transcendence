@@ -16,7 +16,7 @@ const KANJI_TO_PIECE_TYPE: Record<string, PieceType> = {
 export function useShogiGame(
 	socket: Socket | null | undefined,
 	roomId: string | undefined,
-	mySide: "sente" | "gote",
+	mySide: "sente" | "gote" | "spectator",
 	wsStatus: "connected" | "disconnected" | "connecting"
 ) {
 	const router = useRouter();
@@ -48,7 +48,7 @@ export function useShogiGame(
 	// ========= アクション (WebSocket付き) =========
 
 	const executeMove = useCallback(
-		(from: { row: number; col: number }, to: { row: number; col: number }, promote: boolean) => {
+		(from: Pos, to: Pos, promote: boolean) => {
 			applyMove(from, to, promote);
 
 			if (socket && roomId) {
@@ -59,7 +59,7 @@ export function useShogiGame(
 	);
 
 	const executeDrop = useCallback(
-		(kanji: string, to: { row: number; col: number }) => {
+		(kanji: string, to: Pos) => {
 			const side = turn;
 			applyDrop(kanji, to, side);
 
@@ -94,12 +94,11 @@ export function useShogiGame(
 		const handleMatchEnded = (data: { winner: string | null; message: string }) => {
 			console.log("[WS] match_ended received:", data);
 
-			// 自分の勝敗に合わせてメッセージを書き換える（または追記する）
+			// 自分の勝敗に合わせてメッセージを書き換える
 			let displayMessage = data.message;
 			if (data.winner) {
 				const isWin = data.winner === mySide;
 				displayMessage = isWin ? "あなたの勝ちです！" : "あなたの負けです。";
-				// 元のメッセージ（投了など）を括弧で残す
 				if (data.message.includes("投了")) {
 					displayMessage += ` (${data.message})`;
 				}
@@ -128,7 +127,6 @@ export function useShogiGame(
 		const handleSyncState = (data: { sfen: string }) => {
 			const syncedBoard = sfenToUIBoard(data.sfen);
 			syncBoardState(syncedBoard);
-			console.log(syncedBoard.turn);
 		};
 
 		socket.on("syncState", handleSyncState);
@@ -139,80 +137,80 @@ export function useShogiGame(
 
 	// ========= クリックハンドラ =========
 
-	const handleCellClick = (
-		(pos: Pos) => {
-			if (roomId && wsStatus !== "connected") return;
-			if (roomId && !isMyTurn) return;
-			if (promoteDialog) return;
-			if (gameResult.isOver) return;
+	const handleCellClick = (pos: Pos) => {
+		if (roomId && wsStatus !== "connected") return;
+		if (roomId && !isMyTurn) return;
+		if (promoteDialog) return;
+		if (gameResult.isOver) return;
 
-			const cell = board[pos.row][pos.col];
+		const cell = board[pos.row][pos.col];
 
-			// 持ち駒選択中
-			if (selectedHandPiece) {
-				if (isLegalDropTarget(pos)) {
-					executeDrop(selectedHandPiece, pos);
-				} else if (cell && cell.side === mySide) {
-					setSelectedHandPiece(null);
-					setSelected(pos);
-				} else {
-					setSelectedHandPiece(null);
-				}
-				return;
-			}
-
-			// 盤上の駒選択中
-			if (selected) {
-				if (cell && cell.side === mySide) {
-					setSelected(pos);
-					return;
-				}
-
-				const targetInfo = getLegalTargetInfo(pos);
-				if (targetInfo) {
-					const from = { row: selected.row, col: selected.col };
-					const to = pos;
-
-					if (targetInfo.canPromote) {
-						setPromoteDialog({ from, to });
-					} else if (targetInfo.mustPromote) {
-						executeMove(from, to, true);
-					} else {
-						executeMove(from, to, targetInfo.promote);
-					}
-				} else {
-					setSelected(null);
-				}
+		// 持ち駒選択中
+		if (selectedHandPiece) {
+			if (isLegalDropTarget(pos)) {
+				executeDrop(selectedHandPiece, pos);
+			} else if (cell && cell.side === mySide) {
+				setSelectedHandPiece(null);
+				setSelected(pos);
 			} else {
-				// 自分の手番の駒を選択
-				if (cell && cell.side === turn) {
-					setSelected(pos);
-					setSelectedHandPiece(null);
-				}
+				setSelectedHandPiece(null);
 			}
-		}
-	);
-
-	const handleHandPieceClick = (
-		(kanji: string) => {
-			if (roomId && wsStatus !== "connected") return;
-			if (roomId && !isMyTurn) return;
-			if (promoteDialog) return;
-			if (turn !== mySide) return;
-			if (gameResult.isOver) return;
-
-			setSelected(null);
-			setSelectedHandPiece(selectedHandPiece === kanji ? null : kanji);
-		}
-	);
-
-	const handleEndMatch = () => {
-		// すでに終了している場合は何もしない（コンポーネント側の状態管理でリザルトを表示するため）
-		if (gameResult.isOver) {
 			return;
 		}
 
-		// 対局中の場合はサーバーに投了（負け）を通知し、ローカル状態を更新
+		// 盤上の駒選択中
+		if (selected) {
+			if (cell && cell.side === mySide) {
+				setSelected(pos);
+				return;
+			}
+
+			const targetInfo = getLegalTargetInfo(pos);
+			if (targetInfo) {
+				const from = { row: selected.row, col: selected.col };
+				const to = pos;
+
+				if (targetInfo.canPromote) {
+					setPromoteDialog({ from, to });
+				} else if (targetInfo.mustPromote) {
+					executeMove(from, to, true);
+				} else {
+					executeMove(from, to, targetInfo.promote);
+				}
+			} else {
+				setSelected(null);
+			}
+		} else {
+			// 自分の手番の駒を選択
+			if (cell && cell.side === turn) {
+				setSelected(pos);
+				setSelectedHandPiece(null);
+			}
+		}
+	};
+
+	const handleHandPieceClick = (kanji: string) => {
+		if (roomId && wsStatus !== "connected") return;
+		if (roomId && !isMyTurn) return;
+		if (promoteDialog) return;
+		if (turn !== mySide) return;
+		if (gameResult.isOver) return;
+
+		setSelected(null);
+		setSelectedHandPiece(selectedHandPiece === kanji ? null : kanji);
+	};
+
+	const handleEndMatch = () => {
+		if (mySide === "spectator") {
+			router.push("/home");
+			return;
+		}
+
+		if (gameResult.isOver) {
+			router.push("/result" + (roomId ? `?roomId=${roomId}` : ""));
+			return;
+		}
+
 		if (roomId && socket) {
 			socket.emit("resign_match", { roomId });
 			setGameResult({
@@ -221,7 +219,6 @@ export function useShogiGame(
 				message: "投了しました"
 			});
 		} else {
-			// ルームIDがないなどの異常系はホームへ
 			router.push("/home");
 		}
 	};

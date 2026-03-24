@@ -15,7 +15,7 @@ import {
 	type PieceInfo
 } from "@torassen/shogi-logic";
 
-export function useGameLogic(mySide: "sente" | "gote") {
+export function useGameLogic(mySide: "sente" | "gote" | "spectator") {
 	function deepCopyBoard(board: PieceData[][]): PieceData[][] {
 		return board.map((row) => row.map((cell) => (cell ? { ...cell } : null)));
 	}
