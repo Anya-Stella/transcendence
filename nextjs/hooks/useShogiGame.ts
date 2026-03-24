@@ -126,7 +126,7 @@ export function useShogiGame(
 
 		const handleSyncState = (data: { sfen: string }) => {
 			const syncedBoard = sfenToUIBoard(data.sfen);
-			syncBoardState(syncedBoard);
+			syncBoardState(syncedBoard); 
 		};
 
 		socket.on("syncState", handleSyncState);
@@ -200,17 +200,21 @@ export function useShogiGame(
 		setSelectedHandPiece(selectedHandPiece === kanji ? null : kanji);
 	};
 
-	const handleEndMatch = () => {
+	const handleEndMatch = async () => {
 		if (mySide === "spectator") {
 			router.push("/home");
-			return;
 		}
-
 		if (gameResult.isOver) {
+      const resultStatus = gameResult.winner === mySide ? "win" : "lose";
+
+			fetch("/api/result", {
+			method: "PUT",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ result: resultStatus }), 
+			});
 			router.push("/result" + (roomId ? `?roomId=${roomId}` : ""));
 			return;
 		}
-
 		if (roomId && socket) {
 			socket.emit("resign_match", { roomId });
 			setGameResult({
