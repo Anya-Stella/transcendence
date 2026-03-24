@@ -175,7 +175,7 @@ export function useShogiGame(
 			const resultStatus = gameResult.winner === mySide ? "win" : "lose";
 
 			fetch("/api/result", {
-			method: "POST",
+			method: "PUT",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ result: resultStatus }), 
 			});
