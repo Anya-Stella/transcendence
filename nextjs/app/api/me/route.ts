@@ -1,20 +1,24 @@
 import { NextResponse } from "next/server";
-import { getAuthFromCookie } from "@/lib/auth";
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
-	const auth = await getAuthFromCookie();
-	if (!auth) {
+	const session = await auth();
+	if (!session?.user) {
 		return NextResponse.json({ error: "未認証" }, { status: 401 });
 	}
 
+	if (!session.user.id) {
+		return NextResponse.json({ error: "ユーザーIDが不明です" }, { status: 400 });
+	}
+
 	const user = await prisma.user.findUnique({
-		where: { id: auth.userId },
+		where: { id: session.user.id },
 		select: {
 			id: true,
 			name: true,
 			email: true,
-			avatarUrl: true,
+			image: true,
 			totalMatches: true,
 			wins: true,
 			losses: true,

@@ -1,33 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-
-interface User {
-	id: string;
-	name: string;
-	email: string;
-}
+import { useSession, signOut } from "next-auth/react";
 
 export default function HomePage() {
 	const router = useRouter();
-	const [user, setUser] = useState<User | null>(null);
-
-	useEffect(() => {
-		fetch("/api/me")
-			.then((res) => res.json())
-			.then((data) => {
-				if (data.user) 	setUser(data.user);
-				
-			})
-			.catch(() => { });
-	}, []);
+	const { data: session } = useSession();
+	const user = session?.user;
 
 	const handleLogout = async () => {
-		await fetch("/api/auth/logout", { method: "POST" });
-		router.push("/login");
-		router.refresh();
+		await signOut({ callbackUrl: "/login" });
 	};
 
 	return (
