@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { getAuthFromCookie } from "@/lib/auth";
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 
 export async function PUT(req: Request) {
-    const auth = await getAuthFromCookie();
-    if (!auth) {
+    const session = await auth();
+    if (!session || !session.user) {
         return NextResponse.json({ error: "未認証" }, { status: 401 });
     }
 
@@ -14,7 +14,7 @@ export async function PUT(req: Request) {
         const { result } = await req.json() as { result: "win" | "lose" };
 
         const user = await prisma.user.update({
-            where: { id: auth.userId },
+            where: { id: session.user.id },
             data: {
                 // resultの値に基づいてインクリメント対象を切り替え
                 wins: result === "win" ? { increment: 1 } : undefined,
