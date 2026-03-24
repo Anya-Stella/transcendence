@@ -8,10 +8,6 @@ export default {
     Google({ allowDangerousEmailAccountLinking: true }),
   ],
   callbacks: {
-    authorized({ auth, request: { nextUrl } }) {
-      const isLoggedIn = !!auth?.user;
-      return true; // Control logic in middleware.ts
-    },
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
@@ -20,7 +16,7 @@ export default {
     },
     async session({ session, token }) {
       if (session.user) {
-        session.user.id = token.id as string;
+        session.user.id = token.id;
       }
       return session;
     },

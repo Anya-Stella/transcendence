@@ -1,6 +1,34 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { Prisma, Match} from "@prisma/client";
+
+// ---- 型定義 ----
+
+type FriendshipWithUsers = Prisma.FriendshipGetPayload<{
+	include: {
+	  requester: { select: { id: true; name: true; image: true } };
+	  addressee: { select: { id: true; name: true; image: true } };
+	};
+  }>;
+type FriendUser = {
+  id: string;
+  name: string | null;
+  image: string | null;
+};
+type FriendEntry = {
+  friendshipId: string;
+  user: FriendUser;
+  createdAt: Date;
+  wins: number;
+  losses: number;
+};
+type FriendRequest = {
+  friendshipId: string;
+  user: FriendUser;
+  createdAt: Date;
+};
+
 
 // フレンドとフレンド申請一覧の取得
 export async function GET() {
@@ -31,11 +59,11 @@ export async function GET() {
 		});
 
 		// 整理して返す
-		const friends: any[] = [];
-		const pendingRequests: any[] = []; // 自分宛の承認待ち
-		const sentRequests: any[] = []; // 自分が送った承認待ち
+		const friends: FriendEntry[] = [];
+		const pendingRequests: FriendRequest[] = []; // 自分宛の承認待ち
+		const sentRequests: FriendRequest[] = []; // 自分が送った承認待ち
 
-		friendships.forEach((f: any) => {
+		friendships.forEach((f : FriendshipWithUsers) => {
 			const isRequester = f.requesterUserId === userId;
 			const otherUser = isRequester ? f.addressee : f.requester;
 
@@ -66,7 +94,7 @@ export async function GET() {
 
 		// フレンドに対する勝敗数を集計する
 		if (friends.length > 0) {
-			const friendIds = friends.map((f: any) => f.user.id);
+			const friendIds = friends.map((f) => f.user.id);
 			const matches = await prisma.match.findMany({
 				where: {
 					OR: [
@@ -77,11 +105,11 @@ export async function GET() {
 				},
 			});
 
-			matches.forEach((match: any) => {
+			matches.forEach((match: Match) => {
 				const isWin = match.winnerUserId === userId;
 				const opponentId = match.blackUserId === userId ? match.whiteUserId : match.blackUserId;
 
-				const friendData = friends.find((f: any) => f.user.id === opponentId);
+				const friendData = friends.find((f) => f.user.id === opponentId);
 				if (friendData) {
 					if (isWin) {
 						friendData.wins += 1;
