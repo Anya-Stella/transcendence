@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { signupSchema } from "@/lib/validations";
-import { setAuthCookie } from "@/lib/auth";
 import argon2 from "argon2";
 
 export async function POST(request: Request) {
@@ -32,9 +31,6 @@ export async function POST(request: Request) {
 		const user = await prisma.user.create({
 			data: { email, name, passwordHash },
 		});
-
-		// Set JWT cookie
-		await setAuthCookie({ userId: user.id, email: user.email! });
 
 		return NextResponse.json(
 			{

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { io, Socket } from "socket.io-client";
+import { useSession } from "next-auth/react";
 
 interface Player {
 	socketId: string;
@@ -22,23 +23,14 @@ export default function RoomPage() {
 	const params = useParams();
 	const searchParams = useSearchParams();
 	const router = useRouter();
+	const { data: session } = useSession();
 	const roomId = params.roomId as string;
 	const isHost = searchParams.get("host") === "true";
 	const [copied, setCopied] = useState(false);
 	const [socket, setSocket] = useState<Socket | null>(null);
 	const [roomState, setRoomState] = useState<RoomState | null>(null);
 	const [mySocketId, setMySocketId] = useState<string | null>(null);
-	const [userId, setUserId] = useState<string | null>(null);
-
-	// ユーザー情報取得
-	useEffect(() => {
-		fetch("/api/me")
-			.then((res) => res.json())
-			.then((data) => {
-				if (data.user) setUserId(data.user.id);
-			})
-			.catch(() => { });
-	}, []);
+	const userId = (session?.user as { id?: string } | undefined)?.id ?? null;
 
 	// WebSocket接続
 	useEffect(() => {

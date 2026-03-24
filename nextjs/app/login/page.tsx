@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import "./login.css";
 
 export default function LoginPage() {
@@ -18,47 +19,57 @@ export default function LoginPage() {
 		setError("");
 		setLoading(true);
 
-		try {
-			const endpoint =
-				mode === "signup" ? "/api/auth/signup" : "/api/auth/login";
-			const body =
-				mode === "signup"
-					? { email, password, name }
-					: { email, password };
-
-			const res = await fetch(endpoint, {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify(body),
-			});
-
-			const data = await res.json();
-
-			if (!res.ok) {
-				setError(data.error || "エラーが発生しました");
+		if (mode === "signup") {
+			// 新規登録は独自のAPIを叩く（Auth.jsはデフォルトで登録画面を持っていないため）
+			try {
+				const res = await fetch("/api/auth/signup", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ email, password, name }),
+				});
+				const data = await res.json();
+				if (!res.ok) {
+					setError(data.error || "エラーが発生しました");
+					setLoading(false);
+					return;
+				}
+				// 登録成功後、そのままログインを試みる
+			} catch {
+				setError("ネットワークエラーが発生しました");
+				setLoading(false);
 				return;
 			}
+		}
 
+		// Auth.js の CredentialsProvider を使ってログイン
+		const result = await signIn("credentials", {
+			email,
+			password,
+			redirect: false,
+		});
+
+		if (result?.error) {
+			setError("ログインに失敗しました。メールアドレスまたはパスワードが正しくありません。");
+			setLoading(false);
+		} else {
 			router.push("/home");
 			router.refresh();
-		} catch {
-			setError("ネットワークエラーが発生しました");
-		} finally {
-			setLoading(false);
 		}
+	};
+
+	const handleOAuthLogin = (provider: "github" | "google") => {
+		signIn(provider, { callbackUrl: "/home" });
 	};
 
 	return (
 		<div className="login-page">
-			{/* 背景 */}
-			<div className="login-bg" />
-
-			{/* コンテンツ */}
+			<div 
+				className="login-bg" 
+				style={{ backgroundImage: "url(/images/login-bg.png)" }}/>
 			<div className="login-content">
 				<h1 className="login-title">将棋ゲーム</h1>
 
 				<div className="login-card">
-					{/* タブ */}
 					<div className="login-tabs">
 						<button
 							className={`login-tab ${mode === "login" ? "login-tab-active" : ""}`}
@@ -74,10 +85,8 @@ export default function LoginPage() {
 						</button>
 					</div>
 
-					{/* エラー */}
 					{error && <div className="login-error">{error}</div>}
 
-					{/* フォーム */}
 					<form className="login-form" onSubmit={handleSubmit}>
 						{mode === "signup" && (
 							<div className="login-field">
@@ -139,6 +148,25 @@ export default function LoginPage() {
 									: "新規登録"}
 						</button>
 					</form>
+
+					<div className="oauth-separator">
+						<span>または</span>
+					</div>
+
+					<div className="oauth-buttons">
+						<button
+							className="oauth-btn github-btn"
+							onClick={() => handleOAuthLogin("github")}
+						>
+							GitHubでログイン
+						</button>
+						<button
+							className="oauth-btn google-btn"
+							onClick={() => handleOAuthLogin("google")}
+						>
+							Googleでログイン
+						</button>
+					</div>
 				</div>
 			</div>
 		</div>
