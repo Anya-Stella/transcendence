@@ -1,5 +1,6 @@
 // 5×5 Shogi Board – ported from 55engine/board.cpp
-import { Color, PType, type BitMove, type Bitboard } from "./types";
+import { Color, PType, type BitMove, type Bitboard, type BoardState, type Piece, type Hand, type Move, type Pos } from "./types";
+
 import {
   popLsb,
   kingAttacks,
@@ -718,36 +719,154 @@ export function hasLegalMoves(
 }
 
 export function apply(currentSfen: string, data: {
-    from?: { row: number; col: number };
-    to: { row: number; col: number };
-    promote?: boolean;
-    drop?: string;
+  from?: { row: number; col: number };
+  to: { row: number; col: number };
+  promote?: boolean;
+  drop?: string;
 }): string {
-    const board = new Board();
-    
-    if (!board.setSfen(currentSfen)) {
-        console.error("Invalid SFEN:", currentSfen);
-        return currentSfen;
-    }
+  const board = new Board();
 
-    if (data.drop) {
-        const pt = KANJI_TO_PTYPE[data.drop];
-        board.makeMove({
-            from: -1,
-            to: data.to.row * 5 + data.to.col,
-            dropType: pt,
-            promote: false,
-        });
-    } else if (data.from) {
-        board.makeMove({
-            from: data.from.row * 5 + data.from.col,
-            to: data.to.row * 5 + data.to.col,
-            dropType: 0, // ダミー
-            promote: data.promote ?? false,
-        });
-    }
+  if (!board.setSfen(currentSfen)) {
+    console.error("Invalid SFEN:", currentSfen);
+    return currentSfen;
+  }
 
-    return board.toSfen();
+  if (data.drop) {
+    const pt = KANJI_TO_PTYPE[data.drop];
+    board.makeMove({
+      from: -1,
+      to: data.to.row * 5 + data.to.col,
+      dropType: pt,
+      promote: false,
+    });
+  } else if (data.from) {
+    board.makeMove({
+      from: data.from.row * 5 + data.from.col,
+      to: data.to.row * 5 + data.to.col,
+      dropType: 0, // ダミー
+      promote: data.promote ?? false,
+    });
+  }
+
+  return board.toSfen();
 }
 
+// ---- BoardState conversion and helpers ----
+
+export function generateLegalMoves(state: BoardState): Move[] {
+  const board = boardFromState(state);
+  return board.generateLegalMoves().map(bm => bitMoveToMove(bm));
+}
+
+export function isLegalMove(state: BoardState, move: Move): boolean {
+  const board = boardFromState(state);
+  const bm = moveToBitMove(move);
+  return board.isPseudoLegal(bm) && !board.isKingAttackedAfter(bm);
+}
+
+export function applyMove(state: BoardState, move: Move): BoardState {
+  const board = boardFromState(state);
+  const bm = moveToBitMove(move);
+  board.makeMove(bm);
+  const nextState = boardToState(board);
+  nextState.moveCount = state.moveCount + 1;
+  return nextState;
+}
+
+export function boardFromState(state: BoardState): Board {
+  const b = new Board();
+  b.sideToMove = state.sideToMove;
+  for (let r = 0; r < 5; r++) {
+    for (let c = 0; c < 5; c++) {
+      const p = state.board[r][c];
+      if (p) {
+        const sq = r * 5 + c;
+        b.colorBB[p.color] |= (1 << sq);
+        b.pieceBB[p.pieceType] |= (1 << sq);
+      }
+    }
+  }
+  for (let color = 0; color < 2; color++) {
+    for (let pt = 0; pt < PType.PTYPE_MAX; pt++) {
+      b.hand[color][pt] = state.hands[color][pt] || 0;
+    }
+  }
+  return b;
+}
+
+export function boardToState(b: Board): BoardState {
+  const board: (Piece | null)[][] = Array.from({ length: 5 }, () => Array.from({ length: 5 }, () => null));
+  for (let r = 0; r < 5; r++) {
+    for (let c = 0; c < 5; c++) {
+      const sq = r * 5 + c;
+      const sqBB = 1 << sq;
+      for (let color = 0; color < 2; color++) {
+        if (b.colorBB[color] & sqBB) {
+          for (let pt = 0; pt < PType.PTYPE_MAX; pt++) {
+            if (b.pieceBB[pt] & sqBB) {
+              board[r][c] = { color: color as Color, pieceType: pt as PType };
+              break;
+            }
+          }
+          break;
+        }
+      }
+    }
+  }
+  const hands: [Hand, Hand] = [{}, {}];
+  for (let color = 0; color < 2; color++) {
+    for (let pt = 0; pt < PType.PTYPE_MAX; pt++) {
+      if (b.hand[color][pt] > 0) {
+        hands[color][pt] = b.hand[color][pt];
+      }
+    }
+  }
+  return {
+    board,
+    hands,
+    sideToMove: b.sideToMove,
+    moveCount: 0,
+  };
+}
+
+function bitMoveToMove(bm: BitMove): Move {
+  const to: Pos = { row: Math.floor(bm.to / 5), col: bm.to % 5 };
+  if (bm.from === -1) {
+    return {
+      to,
+      promote: false,
+      type: "drop",
+      pieceType: bm.dropType,
+    };
+  } else {
+    return {
+      from: { row: Math.floor(bm.from / 5), col: bm.from % 5 },
+      to,
+      promote: bm.promote,
+      type: "move",
+    };
+  }
+}
+
+function moveToBitMove(m: Move): BitMove {
+  const to = m.to.row * 5 + m.to.col;
+  if (m.type === "drop") {
+    return {
+      to,
+      from: -1,
+      dropType: m.pieceType as PType,
+      promote: false,
+    };
+  } else {
+    return {
+      to,
+      from: m.from.row * 5 + m.from.col,
+      dropType: PType.PAWN, // ignored for board moves
+      promote: m.promote,
+    };
+  }
+}
+
+
 export { KANJI_TO_PTYPE, PTYPE_TO_KANJI_SENTE };
+

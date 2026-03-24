@@ -10,27 +10,55 @@ export default function OnlineMatchPage() {
 	const roomId = params.roomId as string;
 	const [socket, setSocket] = useState<Socket | null>(null);
 	const [wsStatus, setWsStatus] = useState<"connected" | "disconnected" | "connecting">("connecting");
-	const [mySide, setMySide] = useState<"sente" | "gote">("sente");
+	const [mySide, setMySide] = useState<"sente" | "gote" | "spectator">("spectator");
+	const [userId, setUserId] = useState<string | null>(null);
 
 	useEffect(() => {
-		const s = io("http://localhost:3001", {
+		fetch("/api/me")
+			.then((res) => res.json())
+			.then((data) => {
+				if (data.user) setUserId(data.user.id);
+			})
+			.catch(() => { });
+	}, []);
+
+	useEffect(() => {
+		const host = typeof window !== "undefined" ? window.location.hostname : "localhost";
+		const wsUrl = `http://${host}:3001`;
+
+		const s = io(wsUrl, {
 			transports: ["websocket"],
 		});
 
 		s.on("connect", () => {
+			console.log("[WS] Connected. ID:", s.id);
 			setWsStatus("connected");
-			// Join room for move sync
-			s.emit("joinRoom", { roomId });
+			s.emit("joinRoom", {
+				roomId: roomId,
+				isPlayer: true,
+				userId: userId
+			});
 		});
 
 		s.on("disconnect", () => {
 			setWsStatus("disconnected");
 		});
 
-		// Determine side based on room state
-		s.on("roomState", (state: { players: { socketId: string, side: "b" | "w" }[] }) => {
-			const me = state.players.find((p) => p.socketId === s.id);
-			if (me) {setMySide(me.side === "b" ? "sente" : "gote");}
+		s.on("setSide", (data: { side: "sente" | "gote" }) => {
+			console.log("[WS] Server setSide:", data.side);
+			setMySide(data.side);
+		});
+
+		s.on("roomState", (state: { players: { socketId: string, userId?: string, side: "b" | "w" }[] }) => {
+			console.log("[WS] Room state update:", state);
+			const me = state.players.find((p) =>
+				(userId && p.userId === userId) || p.socketId === s.id
+			);
+			if (me) {
+				setMySide(me.side === "b" ? "sente" : "gote");
+			} else {
+				setMySide("spectator");
+			}
 		});
 
 		setSocket(s);
@@ -38,7 +66,7 @@ export default function OnlineMatchPage() {
 		return () => {
 			s.disconnect();
 		};
-	}, [roomId]);
+	}, [roomId, userId]);
 
 	return (
 		<MatchBoard
@@ -46,6 +74,7 @@ export default function OnlineMatchPage() {
 			socket={socket}
 			wsStatus={wsStatus}
 			mySide={mySide}
+			isPreparing={wsStatus === "connecting"}
 		/>
 	);
 }
