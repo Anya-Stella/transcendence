@@ -19,7 +19,7 @@ interface MatchBoardProps {
 	roomId?: string;
 	socket?: Socket | null;
 	wsStatus?: "connected" | "disconnected" | "connecting";
-	mySide?: "sente" | "gote";
+	mySide?: "sente" | "gote" | "spectator";
 }
 
 function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente" }: MatchBoardProps) {
@@ -41,6 +41,7 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 		handleEndMatch,
 		gameOver
 	} = useShogiGame(socket, roomId, mySide, wsStatus);
+	console.log("myside: ",mySide,", isMyturn: ",isMyTurn);
 
 	// WS接続ステータス
 	const statusBadgeClass =
@@ -152,7 +153,7 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 					</span>
 					{roomId && !gameOver && (
 						<span className="turn-you">
-							{isMyTurn ? "（あなたの番です）" : "（相手の番です）"}
+							{mySide === "spectator" ? "観戦中" : (isMyTurn ? "（あなたの番です）" : "（相手の番です）")}
 						</span>
 					)}
 					{gameOver && (
@@ -211,7 +212,7 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 					className="btn btn-danger btn-lg mt-24"
 					onClick={handleEndMatch}
 				>
-					🏳️ 投了する
+					{mySide === "spectator" ? "退出" : "🏳️ 投了する"}
 				</button>
 			</div>
 

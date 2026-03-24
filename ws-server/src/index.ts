@@ -8,7 +8,9 @@ interface RoomState {
 	hostSocketId: string;
 	hostUserId?: string;
 	players: { socketId: string; userId?: string,side: "b" | "w" }[];
+	spectators: string[];
 	sfen: string;
+	status: "waiting" | "playing";
 }
 
 const INITIAL_SFEN = "rbsgk/4p/5/P4/KGSBR b - 1";
@@ -30,22 +32,23 @@ const io = new Server(httpServer, {
 io.on("connection", (socket: Socket) => {
 	console.log(`[WS] Client connected: ${socket.id}`);
 
-	socket.on("joinRoom", (data: { roomId: string; userId?: string }) => {
-		const { roomId, userId } = data;
+	socket.on("joinRoom", (data: { roomId: string;isPlayer:boolean, userId?: string }) => {
+		const { roomId,isPlayer, userId } = data;
 		console.log(`[WS] joinRoom: ${roomId} by ${socket.id} (user: ${userId})`);
 
 		let room = rooms.get(roomId);
 
 		if (!room) {
-			// First player becomes host
 			room = {
 				hostSocketId: socket.id,
 				hostUserId: userId,
 				players: [{ socketId: socket.id, userId,side: "b" }],
+				spectators: [],
 				sfen: INITIAL_SFEN,
+				status: "waiting",
 			};
 			rooms.set(roomId, room);
-		} else {
+		} else if(isPlayer){
             const existingPlayerIndex = room.players.findIndex(
                 (p) => p.userId && p.userId === userId
 			);
@@ -55,23 +58,33 @@ io.on("connection", (socket: Socket) => {
                 const occupiedSide = room.players[0].side;
                 const newSide = occupiedSide === "b" ? "w" : "b";
                 room.players.push({ socketId: socket.id, userId, side: newSide });
+				if (room.players.length === 2) {
+                room.status = "playing";
+           		}
+			} else {
+                if (!room.spectators.includes(socket.id))
+                    room.spectators.push(socket.id);
+            }
+        }else {
+            console.log(`[WS] Spectator joined: ${socket.id}`);
+            if (!room.spectators.includes(socket.id)) {
+                room.spectators.push(socket.id);
             }
         }
 
 		socket.join(roomId);
 
-		// Broadcast room state to all players in the room
 		io.to(roomId).emit("roomState", {
-			roomId,
-			hostSocketId: room.hostSocketId,
-			hostUserId: room.hostUserId,
-			playerCount: room.players.length,
-			players: room.players.map((p) => ({
-				socketId: p.socketId,
-				userId: p.userId,
-				side: p.side,
-			})),
-		});
+            roomId,
+            sfen: room.sfen,
+            hostSocketId: room.hostSocketId,
+            hostUserId: room.hostUserId,
+            players: room.players.map((p) => ({
+                socketId: p.socketId,
+                userId: p.userId,
+                side: p.side,
+            })),
+        });
 	});
 
 	socket.on("getRoomState", (data: { roomId: string }) => {
