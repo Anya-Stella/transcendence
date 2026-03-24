@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getAuthFromCookie } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-export async function POST(req: Request) {
+export async function PUT(req: Request) {
     const auth = await getAuthFromCookie();
     if (!auth) {
         return NextResponse.json({ error: "未認証" }, { status: 401 });
