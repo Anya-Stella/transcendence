@@ -1,13 +1,23 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useGameLogic } from "./useGameLogic";
-import { boardFromPieces, type PieceInfo ,USI_TO_DROP_KANJI, Pos} from "@torassen/shogi-logic";
+import { boardFromPieces, type PieceInfo ,USI_TO_DROP_KANJI, Pos, PieceType, type Move } from "@torassen/shogi-logic";
+
+const KANJI_TO_PIECE_TYPE: Record<string, PieceType> = {
+	"歩": PieceType.PAWN,
+	"銀": PieceType.SILVER,
+	"金": PieceType.GOLD,
+	"角": PieceType.BISHOP,
+	"飛": PieceType.ROOK,
+	"玉": PieceType.KING,
+};
 
 export function useAiGame(
 	mySide: "sente" | "gote" = "sente",
 	aiDepth: number = 4
 ) {
 	const router = useRouter();
+	const [lastMove, setLastMove] = useState<Move | null>(null);
 
 	const {
 		board, // 盤面
@@ -28,6 +38,7 @@ export function useAiGame(
 		getLegalTargetInfo, // 移動先が合法かどうか
 		gameResult, // 対局結果
 		setGameResult, // 対局結果を設定する
+		isCheck, // 王手判定
 	} = useGameLogic(mySide);
 
 	const [aiThinking, setAiThinking] = useState(false);
@@ -51,6 +62,13 @@ export function useAiGame(
 			applyMove(from, to, promote);
 		},
 		[applyMove]
+	);
+
+	const executeDrop = useCallback(
+		(kanji: string, to: { row: number; col: number }) => {
+			applyDrop(kanji, to, turn);
+		},
+		[applyDrop, turn]
 	);
 
 	// ========= AI思考 =========
@@ -91,16 +109,18 @@ export function useAiGame(
 				const kanji = USI_TO_DROP_KANJI[parsed.drop];
 				if (kanji) {
 					applyDrop(kanji, parsed.to, aiSide);
+					setLastMove({ type: "drop", pieceType: KANJI_TO_PIECE_TYPE[kanji] || PieceType.PAWN, to: parsed.to });
 				}
 			} else if (parsed.from) {
 				applyMove(parsed.from, parsed.to, parsed.promote ?? false);
+				setLastMove({ type: "move", from: parsed.from, to: parsed.to, promote: parsed.promote ?? false });
 			}
 		} catch (err) {
 			console.error("AI move error:", err);
 		} finally {
 			setAiThinking(false);
 		}
-	}, [aiDepth, aiSide, applyMove, applyDrop]);
+	}, [aiDepth, aiSide, applyMove, applyDrop, mySide, setGameResult]);
 
 	// AIの手番になったら自動で思考開始
 	useEffect(() => {
@@ -115,7 +135,7 @@ export function useAiGame(
 	// ========= クリックハンドラ =========
 
 	const handleCellClick = (
-		(pos:Pos) => {
+		(pos: Pos) => {
 			if (!isMyTurn || aiThinking || gameResult.isOver) return;
 			if (promoteDialog) return;
 
@@ -164,16 +184,26 @@ export function useAiGame(
 	);
 
 	const handleHandPieceClick = (kanji: string) => {
-    if (!isMyTurn || aiThinking || gameResult.isOver) return;
-    if (promoteDialog) return;
-    if (turn !== mySide) return;
+		if (!isMyTurn || aiThinking || gameResult.isOver) return;
+		if (promoteDialog) return;
+		if (turn !== mySide) return;
 
-    setSelected(null);
-    setSelectedHandPiece(selectedHandPiece === kanji ? null : kanji);
+		setSelected(null);
+		setSelectedHandPiece(selectedHandPiece === kanji ? null : kanji);
 	};
 
 	const handleEndMatch = () => {
-		router.push("/result");
+		// すでに終了している場合は何もしない
+		if (gameResult.isOver) {
+			return;
+		}
+
+		// 対局中の場合は投了（負け）として扱い、内部状態を更新
+		setGameResult({
+			isOver: true,
+			winner: mySide === "sente" ? "gote" : "sente",
+			message: "投了しました"
+		});
 	};
 
 	return {
@@ -189,10 +219,14 @@ export function useAiGame(
 		promoteDialog,
 		setPromoteDialog,
 		executeMove,
+		executeDrop,
 		handleCellClick,
 		handleHandPieceClick,
 		handleEndMatch,
 		aiThinking,
+		lastMove,
+		isCheck,
+		gameResult,
 		gameOver: gameResult.message,
 	};
 }

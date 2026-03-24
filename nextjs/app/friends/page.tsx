@@ -20,11 +20,11 @@ interface FriendshipData {
 
 export default function FriendsPage() {
 	const router = useRouter();
-	
+
 	const [friends, setFriends] = useState<FriendshipData[]>([]);
 	const [pendingRequests, setPendingRequests] = useState<FriendshipData[]>([]);
 	const [sentRequests, setSentRequests] = useState<FriendshipData[]>([]);
-	
+
 	const [searchEmail, setSearchEmail] = useState("");
 	const [message, setMessage] = useState({ text: "", type: "" });
 	const [loading, setLoading] = useState(true);
@@ -71,7 +71,7 @@ export default function FriendsPage() {
 			} else {
 				setMessage({ text: "フレンド申請を送信しました！", type: "success" });
 				setSearchEmail("");
-				fetchFriendsData(); // リスト更新
+				fetchFriendsData();
 			}
 		} catch {
 			setMessage({ text: "エラーが発生しました", type: "error" });
@@ -119,7 +119,7 @@ export default function FriendsPage() {
 
 			{/* コンテンツ */}
 			<div className="wafuu-content" style={{ marginTop: "2rem", maxWidth: "800px", margin: "2rem auto", padding: "0 1rem" }}>
-				
+
 				{/* 申請フォームエリア */}
 				<div style={{ background: "var(--secondary)", padding: "1.5rem", borderRadius: "8px", marginBottom: "2rem" }}>
 					<h3 style={{ color: "var(--dark)", marginBottom: "1rem" }}>フレンド追加</h3>
@@ -147,7 +147,7 @@ export default function FriendsPage() {
 					<p style={{ textAlign: "center", color: "white" }}>読み込み中...</p>
 				) : (
 					<div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
-						
+
 						{/* 承認待ち（自分宛） */}
 						{pendingRequests.length > 0 && (
 							<div style={{ background: "rgba(255,255,255,0.9)", padding: "1.5rem", borderRadius: "8px" }}>
