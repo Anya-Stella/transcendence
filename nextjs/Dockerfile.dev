@@ -23,4 +23,10 @@ RUN npx prisma generate
 
 COPY nextjs/ .
 
+COPY nextjs/entrypoint.dev.sh /usr/bin/
+RUN chmod +x /usr/bin/entrypoint.dev.sh
+
+# 起動時に必ず実行されるように設定
+ENTRYPOINT ["entrypoint.dev.sh"]
+
 CMD ["sh", "-c", "npx prisma db seed && npm run dev"]
