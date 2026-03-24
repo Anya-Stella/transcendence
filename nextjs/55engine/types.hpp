@@ -13,7 +13,7 @@ enum Color
 
 enum PType
 {
-    PAWN = 0,
+    PAWN,
     SILVER,
     GOLD,
     BISHOP,

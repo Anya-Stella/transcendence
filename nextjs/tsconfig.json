@@ -9,6 +9,9 @@
 		"skipLibCheck": true,
 		"strict": true,
 		"noEmit": true,
+		"types": [
+			"@react-three/fiber"
+		],
 		"esModuleInterop": true,
 		"module": "esnext",
 		"moduleResolution": "bundler",
@@ -35,6 +38,7 @@
 	},
 	"include": [
 		"next-env.d.ts",
+		"three-elements.d.ts",
 		"**/*.ts",
 		"**/*.tsx",
 		".next/types/**/*.ts"

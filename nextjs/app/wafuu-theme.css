@@ -31,17 +31,19 @@
 	left: 0;
 	width: 100%;
 	height: 100%;
-	background: linear-gradient(
-		180deg,
-		rgba(10, 10, 20, 0.3) 0%,
-		rgba(10, 10, 20, 0.65) 100%
-	);
+	background: linear-gradient(180deg,
+			rgba(10, 10, 20, 0.3) 0%,
+			rgba(10, 10, 20, 0.65) 100%);
 }
 
 /* --- ヘッダー --- */
 .wafuu-header {
-	position: relative;
+	position: fixed;
+	top: 0;
+	left: 0;
+	right: 0;
 	z-index: 10;
+	pointer-events: auto;
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
@@ -343,18 +345,46 @@
 }
 
 @keyframes wafuuPulse {
-	0%, 100% { opacity: 0.5; }
-	50% { opacity: 1; }
+
+	0%,
+	100% {
+		opacity: 0.5;
+	}
+
+	50% {
+		opacity: 1;
+	}
 }
 
 /* --- ユーティリティ --- */
-.wafuu-gap-8 { gap: 8px; }
-.wafuu-gap-12 { gap: 12px; }
-.wafuu-gap-16 { gap: 16px; }
-.wafuu-mt-8 { margin-top: 8px; }
-.wafuu-mt-12 { margin-top: 12px; }
-.wafuu-mt-16 { margin-top: 16px; }
-.wafuu-text-center { text-align: center; }
+.wafuu-gap-8 {
+	gap: 8px;
+}
+
+.wafuu-gap-12 {
+	gap: 12px;
+}
+
+.wafuu-gap-16 {
+	gap: 16px;
+}
+
+.wafuu-mt-8 {
+	margin-top: 8px;
+}
+
+.wafuu-mt-12 {
+	margin-top: 12px;
+}
+
+.wafuu-mt-16 {
+	margin-top: 16px;
+}
+
+.wafuu-text-center {
+	text-align: center;
+}
+
 .wafuu-flex-col {
 	display: flex;
 	flex-direction: column;

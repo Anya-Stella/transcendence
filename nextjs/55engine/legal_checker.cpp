@@ -12,7 +12,7 @@ void run_test(const std::string& sfen, const std::string& move_str, bool expecte
         std::cout << "Test failed: Invalid Move " << move_str << std::endl;
         return;
     }
-    bool is_legal = board.isPseudoLegal(m) && !board.isKingAttackedAfter(m);
+    bool is_legal = board.isPseudoLegal(m) && !board.isKingAttackedAfter(m) && !board.isUchifuzume(m);
     if (is_legal == expected_legal) {
         std::cout << "[OK] " << sfen << " | " << move_str << " -> " << (expected_legal ? "legal" : "illegal") << std::endl;
     } else {
@@ -45,6 +45,10 @@ void run_all_tests() {
     run_test("b4/5/5/5/4K b P 1", "P*2d", true); // Wait, 2d is on the diagonal, so it does block!
     run_test("b4/5/5/5/4K b P 1", "P*3c", true); // Also blocks
     run_test("b4/5/5/5/4K b P 1", "P*5e", false); // Does not block, illegal
+
+    // 打ち歩詰めのチェック
+    run_test("k4/1p3/5/5/4K w p 1", "P*1a", false); // 1a is uchifuzume and thus illegal
+    run_test("k4/1p3/5/5/4K b P 1", "P*2b", true);  // 2b is normal pawn drop, not mate
     
     std::cout << "-----------------------------" << std::endl;
 }
@@ -82,6 +86,11 @@ int main(int argc, char* argv[]) {
 
     if (board.isKingAttackedAfter(m)) {
         std::cout << "illegal (king is attacked after move)" << std::endl;
+        return 0;
+    }
+
+    if (board.isUchifuzume(m)) {
+        std::cout << "illegal (uchifuzume)" << std::endl;
         return 0;
     }
 
