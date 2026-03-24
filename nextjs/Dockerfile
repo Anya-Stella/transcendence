@@ -52,8 +52,10 @@ COPY --from=shared-builder /app/packages/shogi-logic/package.json ./node_modules
 COPY --from=shared-builder /app/packages/shogi-logic/dist ./node_modules/@torassen/shogi-logic/dist
 COPY --from=shared-builder /app/packages/shogi-logic/src ./node_modules/@torassen/shogi-logic/src
 COPY nextjs/ .
+RUN ls /app/node_modules/@torassen/shogi-logic/ && cat /app/node_modules/@torassen/shogi-logic/package.json | grep main
 RUN npx prisma generate
 RUN npm run build
+
 
 # ---- Runner ----
 FROM base AS runner

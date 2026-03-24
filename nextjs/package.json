@@ -16,8 +16,8 @@
     "@torassen/shogi-logic": "*",
     "argon2": "^0.41.1",
     "next": "14.2.29",
-    "next-auth": "^5.0.0",
-    "@auth/prisma-adapter": "^2.0.0",
+    "next-auth": "beta",
+    "@auth/prisma-adapter": "latest",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "socket.io-client": "^4.8.1",
@@ -27,8 +27,9 @@
     "@types/node": "^22.13.10",
     "@types/react": "^19.0.12",
     "@types/react-dom": "^19.0.4",
-    "prisma": "^6.5.0"
-  },
+    "prisma": "^6.5.0",
+    "typescript": "^5.0.0"
+},
   "prisma": {
     "seed": "npx ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
   }
