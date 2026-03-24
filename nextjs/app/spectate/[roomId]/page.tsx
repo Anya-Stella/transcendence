@@ -14,17 +14,17 @@ export default function SpectateRoomPage() {
     const [mySide, setMySide] = useState<"sente" | "gote" | "spectator">("spectator");
 
     useEffect(() => {
-        const s = io("http://localhost:3001", {
+        const s = io({
             transports: ["websocket"],
         });
 
         s.on("connect", () => {
             setWsStatus("connected");
-            s.emit("joinRoom", {roomId: roomId,isPlayer:false});
+            s.emit("joinRoom", { roomId: roomId.toUpperCase(), isPlayer: false });
         });
 
         setMySide("spectator");
-     
+
         s.on("disconnect", () => setWsStatus("disconnected"));
 
         setSocket(s);
@@ -32,11 +32,11 @@ export default function SpectateRoomPage() {
     }, [roomId]);
 
     return (
-		<MatchBoard
-			roomId={roomId}
-			socket={socket}
-			wsStatus={wsStatus}
-			mySide={mySide}
-		/>
-	);
+        <MatchBoard
+            roomId={roomId}
+            socket={socket}
+            wsStatus={wsStatus}
+            mySide={mySide}
+        />
+    );
 }

@@ -3,30 +3,22 @@
 import { useParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { io, Socket } from "socket.io-client";
+import { useSession } from "next-auth/react";
 import MatchBoard from "@/components/MatchBoard";
 
 export default function OnlineMatchPage() {
 	const params = useParams();
 	const roomId = params.roomId as string;
+	const { data: session, status } = useSession();
 	const [socket, setSocket] = useState<Socket | null>(null);
 	const [wsStatus, setWsStatus] = useState<"connected" | "disconnected" | "connecting">("connecting");
 	const [mySide, setMySide] = useState<"sente" | "gote" | "spectator">("spectator");
-	const [userId, setUserId] = useState<string | null>(null);
+	const userId = (session?.user as any)?.id ?? null;
 
 	useEffect(() => {
-		fetch("/api/me")
-			.then((res) => res.json())
-			.then((data) => {
-				if (data.user) setUserId(data.user.id);
-			})
-			.catch(() => { });
-	}, []);
+		if (status === "loading") return;
 
-	useEffect(() => {
-		const host = typeof window !== "undefined" ? window.location.hostname : "localhost";
-		const wsUrl = `http://${host}:3001`;
-
-		const s = io(wsUrl, {
+		const s = io({
 			transports: ["websocket"],
 		});
 
@@ -34,7 +26,7 @@ export default function OnlineMatchPage() {
 			console.log("[WS] Connected. ID:", s.id);
 			setWsStatus("connected");
 			s.emit("joinRoom", {
-				roomId: roomId,
+				roomId: roomId.toUpperCase(),
 				isPlayer: true,
 				userId: userId
 			});
@@ -49,11 +41,17 @@ export default function OnlineMatchPage() {
 			setMySide(data.side);
 		});
 
+		s.on("setSide", (data: { side: "sente" | "gote" }) => {
+			console.log("[WS] Server setSide:", data.side);
+			setMySide(data.side);
+		});
+
 		s.on("roomState", (state: { players: { socketId: string, userId?: string, side: "b" | "w" }[] }) => {
 			console.log("[WS] Room state update:", state);
-			const me = state.players.find((p) =>
-				(userId && p.userId === userId) || p.socketId === s.id
-			);
+			// 自分のSocketIDを最優先で探し、なければUserIDで探す
+			const me = state.players.find((p) => p.socketId === s.id) ||
+				state.players.find((p) => userId && p.userId === userId);
+
 			if (me) {
 				setMySide(me.side === "b" ? "sente" : "gote");
 			} else {

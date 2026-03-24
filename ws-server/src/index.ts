@@ -16,6 +16,7 @@ interface RoomState {
 const INITIAL_SFEN = "rbsgk/4p/5/P4/KGSBR b - 1";
 
 const rooms = new Map<string, RoomState>();
+const matchmakingQueue: { socketId: string, userId?: string }[] = [];
 
 const httpServer = http.createServer((_req, res) => {
 	res.writeHead(200, { "Content-Type": "application/json" });
@@ -32,8 +33,37 @@ const io = new Server(httpServer, {
 io.on("connection", (socket: Socket) => {
 	console.log(`[WS] Client connected: ${socket.id}`);
 
+	// --- Matchmaking ---
+	socket.on("findMatch", (data: { userId?: string }) => {
+		console.log(`[WS] findMatch from ${socket.id} (user: ${data.userId})`);
+		
+		// すでにキューにいるか確認
+		if (matchmakingQueue.find(p => p.socketId === socket.id)) return;
+
+		matchmakingQueue.push({ socketId: socket.id, userId: data.userId });
+
+		if (matchmakingQueue.length >= 2) {
+			const p1 = matchmakingQueue.shift()!;
+			const p2 = matchmakingQueue.shift()!;
+			
+			const roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
+			console.log(`[WS] Match found! Room: ${roomId} for ${p1.socketId} and ${p2.socketId}`);
+
+			// 二人に通知
+			io.to(p1.socketId).emit("matchFound", { roomId });
+			io.to(p2.socketId).emit("matchFound", { roomId, isSecond: true });
+		}
+	});
+
+	socket.on("cancelMatch", () => {
+		const idx = matchmakingQueue.findIndex(p => p.socketId === socket.id);
+		if (idx !== -1) matchmakingQueue.splice(idx, 1);
+	});
+
+	// --- Room Logic ---
 	socket.on("joinRoom", (data: { roomId: string;isPlayer:boolean, userId?: string }) => {
-		const { roomId,isPlayer, userId } = data;
+		const roomId = data.roomId.toUpperCase(); // ルームIDを大文字に統一
+		const { isPlayer, userId } = data;
 		console.log(`[WS] joinRoom: ${roomId} by ${socket.id} (user: ${userId})`);
 
 		let room = rooms.get(roomId);
@@ -49,17 +79,19 @@ io.on("connection", (socket: Socket) => {
 			};
 			rooms.set(roomId, room);
 		} else if(isPlayer){
+            // 開発・ローカルテスト用に、同じuserIdでもsocketIdが違えば別プレイヤーとして扱う
             const existingPlayerIndex = room.players.findIndex(
-                (p) => p.userId && p.userId === userId
+                (p) => p.socketId === socket.id // SocketIDで判定
 			);
+            
             if (existingPlayerIndex !== -1) {
-                room.players[existingPlayerIndex].socketId = socket.id;
+                // すでに入っている
             } else if (room.players.length < 2) {
                 const occupiedSide = room.players[0].side;
                 const newSide = occupiedSide === "b" ? "w" : "b";
                 room.players.push({ socketId: socket.id, userId, side: newSide });
 				if (room.players.length === 2) {
-                room.status = "playing";
+                	room.status = "playing";
            		}
 			} else {
                 if (!room.spectators.includes(socket.id))
@@ -214,6 +246,10 @@ io.on("connection", (socket: Socket) => {
 
 	socket.on("disconnect", () => {
 		console.log(`[WS] Client disconnected: ${socket.id}`);
+
+		// Matchmaking queue cleanup
+		const qIdx = matchmakingQueue.findIndex(p => p.socketId === socket.id);
+		if (qIdx !== -1) matchmakingQueue.splice(qIdx, 1);
 
 		// Clean up rooms
 		for (const [roomId, room] of rooms.entries()) {
