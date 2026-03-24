@@ -1,19 +1,19 @@
 import { NextResponse } from "next/server";
-import { getAuthFromCookie } from "@/lib/auth";
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 
 export async function POST(
     req: Request,
     { params }: { params: { result: "win" | "lose" } }
 ) {
-    const auth = await getAuthFromCookie();
-    if (!auth) {
+    const session = await auth();
+    if (!session?.user?.id) {
         return NextResponse.json({ error: "未認証" }, { status: 401 });
     }
 
     try {
         const user = await prisma.user.update({
-            where: { id: auth.userId },
+            where: { id: session.user.id },
             data: {
                 wins: params.result === "win" ? { increment: 1 } : undefined,
                 losses: params.result === "lose" ? { increment: 1 } : undefined,
@@ -23,9 +23,10 @@ export async function POST(
 
         return NextResponse.json({ user });
     } catch (error) {
+        console.error("Error updating match result:", error);
         return NextResponse.json(
             { error: "戦績の更新に失敗しました" },
-            { status: 404 }
+            { status: 500 }
         );
     }
 }
