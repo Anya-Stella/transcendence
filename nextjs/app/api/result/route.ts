@@ -2,21 +2,23 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 
-export async function POST(
-    req: Request,
-    { params }: { params: { result: "win" | "lose" } }
-) {
+export async function PUT(req: Request) {
     const session = await auth();
     if (!session?.user?.id) {
         return NextResponse.json({ error: "未認証" }, { status: 401 });
     }
 
     try {
+        // リクエストボディから結果を取得
+        // フロントエンド側で JSON.stringify({ result: "win" }) のように送る想定
+        const { result } = await req.json() as { result: "win" | "lose" };
+
         const user = await prisma.user.update({
             where: { id: session.user.id },
             data: {
-                wins: params.result === "win" ? { increment: 1 } : undefined,
-                losses: params.result === "lose" ? { increment: 1 } : undefined,
+                // resultの値に基づいてインクリメント対象を切り替え
+                wins: result === "win" ? { increment: 1 } : undefined,
+                losses: result === "lose" ? { increment: 1 } : undefined,
                 totalMatches: { increment: 1 },
             },
         });
