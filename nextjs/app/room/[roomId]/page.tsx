@@ -7,24 +7,24 @@ import { io, Socket } from "socket.io-client";
 import { useSession } from "next-auth/react";
 
 interface Player {
-	socketId: string;
-	userId?: string;
-	side?: "b" | "w";
+    socketId: string;
+    userId?: string;
+    side?: "b" | "w";
 }
 
 interface RoomState {
-	roomId: string;
-	hostSocketId: string;
-	hostUserId?: string;
-	players: Player[];
-	sfen?: string;
+    roomId: string;
+    hostSocketId: string;
+    hostUserId?: string;
+    players: Player[];
+    sfen?: string;
 }
 
 export default function RoomPage() {
 	const params = useParams();
 	const searchParams = useSearchParams();
 	const router = useRouter();
-	const { data: session, status } = useSession();
+	const { data: session } = useSession();
 	const roomId = params.roomId as string;
 	const isHost = searchParams.get("host") === "true";
 	const [copied, setCopied] = useState(false);
@@ -35,15 +35,13 @@ export default function RoomPage() {
 
 	// WebSocket接続
 	useEffect(() => {
-		if (status === "loading") return; // セッション読み込み中は待機
-
-		const s = io({
+		const s = io("http://localhost:3001", {
 			transports: ["websocket"],
 		});
 
 		s.on("connect", () => {
 			setMySocketId(s.id ?? null);
-			s.emit("joinRoom", { roomId: roomId.toUpperCase(), userId, isPlayer: true });
+			s.emit("joinRoom", { roomId, userId ,isPlayer: true});
 		});
 
 		s.on("roomState", (state: RoomState) => {
@@ -62,8 +60,7 @@ export default function RoomPage() {
 			s.disconnect();
 		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [roomId, userId, status]); // statusを追加
-
+	}, [roomId, userId]);
 
 	const playerCount = roomState?.players?.length ?? (isHost ? 1 : 0);
 	const amIHost = mySocketId ? roomState?.hostSocketId === mySocketId : isHost;
