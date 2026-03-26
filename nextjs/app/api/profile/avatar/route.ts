@@ -13,9 +13,10 @@ export async function PUT(request: Request) {
 
   try {
     const formData = await request.formData();
-    const file = formData.get("file") as File;
-
-    if (!file) {
+    // as File でのキャストは危険（string が来た場合に実行時エラーになる）
+    // instanceof File で型ガードを使って安全に絞り込む
+    const file = formData.get("file");
+    if (!(file instanceof File)) {
       return NextResponse.json({ error: "画像ファイルがありません" }, { status: 400 });
     }
 
