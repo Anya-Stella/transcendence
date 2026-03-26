@@ -201,6 +201,7 @@ export default function FriendsPage() {
 												<span 
 													style={{ fontSize: "0.8rem", cursor: "help" }} 
 													title={isOnline(friend.user.lastSeen) ? "現在オンラインです" : "オフライン・退席中"}
+													aria-label={isOnline(friend.user.lastSeen) ? "オンライン" : "オフライン"}
 												>
 													{isOnline(friend.user.lastSeen) ? "🟢" : "⚪"}
 												</span>
