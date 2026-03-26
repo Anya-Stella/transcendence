@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { isOnline } from "@/lib/utils";
 
 interface UserProfile {
 	id: string;
@@ -29,13 +30,6 @@ export default function FriendsPage() {
 	const [searchEmail, setSearchEmail] = useState("");
 	const [message, setMessage] = useState({ text: "", type: "" });
 	const [loading, setLoading] = useState(true);
-	const isOnline = (lastSeen: string) => {
-		const lastMs = new Date(lastSeen).getTime();
-		const nowMs = new Date().getTime();
-		const diffMinutes = (nowMs - lastMs) / (1000 * 60);
-		return diffMinutes < 2; 
-		};
-
 
 	const fetchFriendsData = async () => {
 		try {
