@@ -35,9 +35,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 		// 2. 画面（useSession）に渡す「最終的な通行証（セッション）」の形を決める処理
 		async session({ session, token }) {
 			if (session.user && token) {
-				// 更新されたトークンの中に書かれている ID や 名前 を、画面用のセッションにコピーして渡す
+				// 更新されたトークンの中に書かれている ID や 名前 や画像 を、画面用のセッションにコピーして渡す
 				session.user.id = token.id as string;
 				session.user.name = token.name as string;
+				session.user.image = token.picture as string;
 			}
 			return session;
 		},

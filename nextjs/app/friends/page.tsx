@@ -158,6 +158,11 @@ export default function FriendsPage() {
 									{pendingRequests.map((req) => (
 										<li key={req.friendshipId} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.5rem 0", borderBottom: "1px solid #eee" }}>
 											<span style={{ color: "#333", fontWeight: "bold", display: "flex", alignItems: "center", gap: "8px" }}>
+												<img 
+													src={req.user.image || "/images/default-avatar.png"} 
+													alt="avatar" 
+													style={{ width: "32px", height: "32px", borderRadius: "50%", objectFit: "cover" }} 
+												/>
 												<span 
 													style={{ fontSize: "0.8rem", cursor: "help" }} 
 													title={isOnline(req.user.lastSeen) ? "現在オンラインです" : "オフライン・退席中"}
@@ -186,6 +191,11 @@ export default function FriendsPage() {
 									{friends.map((friend) => (
 										<li key={friend.friendshipId} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.5rem 0", borderBottom: "1px solid #eee" }}>
 											<span style={{ color: "#333", fontWeight: "bold", display: "flex", alignItems: "center", gap: "8px" }}>
+												<img 
+													src={friend.user.image || "/images/default-avatar.png"} 
+													alt="avatar" 
+													style={{ width: "32px", height: "32px", borderRadius: "50%", objectFit: "cover" }} 
+												/>
 												<span 
 													style={{ fontSize: "0.8rem", cursor: "help" }} 
 													title={isOnline(friend.user.lastSeen) ? "現在オンラインです" : "オフライン・退席中"}
@@ -216,6 +226,11 @@ export default function FriendsPage() {
 									{sentRequests.map((req) => (
 										<li key={req.friendshipId} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.5rem 0", borderBottom: "1px solid #eee" }}>
 											<span style={{ color: "#333", fontWeight: "bold", display: "flex", alignItems: "center", gap: "8px" }}>
+												<img 
+													src={req.user.image || "/images/default-avatar.png"} 
+													alt="avatar" 
+													style={{ width: "32px", height: "32px", borderRadius: "50%", objectFit: "cover" }} 
+												/>
 												<span 
 													style={{ fontSize: "0.8rem", cursor: "help" }} 
 													title={isOnline(req.user.lastSeen) ? "現在オンラインです" : "オフライン・退席中"}

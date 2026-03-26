@@ -65,9 +65,9 @@ export default function ProfilePage() {
 		  });
 		  if (res.ok) {
 			const data = await res.json();
-			setMessage("画像を更新しました！");
-			// 3. 通行証（セッション）も最新の画像URLに即座に更新する（これで画面のすべての画像が一瞬で切り替わります！）
-			await update({ image: data.imageUrl });
+		setMessage("画像を更新しました！");
+		// 3. 通行証（セッション）も最新の画像URLに即座に更新する
+		await update({ image: data.imageUrl });
 		  } else {
 			const errorData = await res.json();
 			setMessage(`エラー: ${errorData.error}`);
@@ -98,7 +98,7 @@ export default function ProfilePage() {
 
 					<div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: "2rem" }}>
 						<img
-							src={session?.user?.image || "/images/icon/default-avatar.png"}
+							src={session?.user?.image || "/images/default-avatar.png"}
 							alt="User Avatar"
 							style={{ width: "120px", height: "120px", borderRadius: "50%", objectFit: "cover", border: "3px solid #ccc" }}
 						/>

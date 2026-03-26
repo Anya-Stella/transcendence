@@ -23,6 +23,8 @@ services:
       context: .
       dockerfile: nextjs/Dockerfile
     restart: unless-stopped
+    volumes:
+      - ./nextjs/public/images/icon:/app/public/images/icon
     env_file: .env
     environment:
       DATABASE_URL: ${DATABASE_URL}

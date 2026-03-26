@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { writeFile } from "fs/promises";
+import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 
 // ★メソッドは「リソースの上書き」を意味する PUT が正解です
@@ -31,21 +31,23 @@ export async function PUT(request: Request) {
     // ゴミ（永遠に使われない古い画像）がサーバーに溜まっていくのを防ぐことができます！
     const filename = `${session.user.id}.png`;
     
+    // 保存先のフォルダを作ります（すでに存在する場合はエラーにならず無視されます）
+    const dirPath = path.join(process.cwd(), "public/images/icon");
+    await mkdir(dirPath, { recursive: true });
+
     // Node.jsの機能を使って、フルパス（保存先）を作ります
-    const filepath = path.join(process.cwd(), "public/images/icon", filename);
+    const filepath = path.join(dirPath, filename);
 
     // バイトデータ（Buffer：0と1の数字の羅列）に変換して、ディスクに保存します
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
     await writeFile(filepath, buffer);
 
-    // ★仕様3：キャッシュバスター（ブラウザのサボり対策）
-    // 【由来】ブラウザは「同じURLなら、前と同じ画像を使い回そう」とする性質があります（キャッシュ機能）。
-    // 画像は上書きされたのに名前が「ユーザーID.png」のままだと、ブラウザに「画像が変わってない」と勘違いされてしまいます。
-    // トリックとして、後ろに「?t=現在の時間」を無意味な文字としてつけることで、
-    // ブラウザに「あ！URLが違う！新しい画像だ！」と認識させ、即座に最新の画像を読み込ませます。
+    // ★仕様3：キャッシュバスター（ブラウザのサボり対策）＋ API経由の画像配信
+    // 本番モードのNext.jsはビルド後にpublicに追加されたファイルを配信できないため、
+    // 画像を配信するための専用APIルート (/api/profile/avatar/[id]) を経由してブラウザに届ける
     const timestamp = Date.now();
-    const imageUrl = `/images/icon/${filename}?t=${timestamp}`;
+    const imageUrl = `/api/profile/avatar/${session.user.id}?t=${timestamp}`;
 
     // DBを新しく作ったURL（キャッシュバスター付き）に書き換えます
     const updatedUser = await prisma.user.update({
@@ -54,8 +56,13 @@ export async function PUT(request: Request) {
     });
 
     return NextResponse.json({ message: "画像をアップロードしました", imageUrl });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Avatar upload error:", error);
-    return NextResponse.json({ error: "アップロードに失敗しました" }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : "不明なエラー";
+    return NextResponse.json({ 
+      error: "アップロードに失敗しました", 
+      details: errorMessage,
+      code: error.code
+    }, { status: 500 });
   }
 }
