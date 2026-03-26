@@ -205,6 +205,7 @@ export default function FriendsPage() {
 												/>
 												<span 
 													style={{ fontSize: "0.8rem", cursor: "help" }} 
+													role="img"
 													title={online ? "現在オンラインです" : "オフライン・退席中"}
 													aria-label={online ? "オンライン" : "オフライン"}
 												>
