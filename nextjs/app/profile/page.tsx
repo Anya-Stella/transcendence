@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, FormEvent, useEffect } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 
@@ -20,13 +20,13 @@ export default function ProfilePage() {
 	}, [session]);
 
 	// 保存ボタンを押したときの処理
-	const handleSubmit = async (e: FormEvent) => {
+	const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
 		e.preventDefault();
 		setIsLoading(true);
 		setMessage("");
 
 		try {
-			// 2. 先ほど作ったAPIに送信する
+			// 2. プロフィール更新API（PUT /api/profile）に送信する
 			const res = await fetch("/api/profile", {
 				method: "PUT",
 				headers: { "Content-Type": "application/json" },
@@ -57,7 +57,7 @@ export default function ProfilePage() {
 		const formData = new FormData();
 		formData.append("file", file);
 		try {
-		  // 2. 先ほど作った画像アップロード専用API（PUT）を叩く
+		  // 2. 画像アップロード専用API（PUT /api/profile/avatar）を叩く
 		  const res = await fetch("/api/profile/avatar", {
 			method: "PUT",
 			// 【超重要】 FormData を送るときは "Content-Type" を書いてはいけません！（ブラウザが自動で特別な境界線付きのヘッダーを作ってくれます）

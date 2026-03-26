@@ -56,13 +56,8 @@ export async function PUT(request: Request) {
     });
 
     return NextResponse.json({ message: "画像をアップロードしました", imageUrl });
-  } catch (error: any) {
-    console.error("Avatar upload error:", error);
-    const errorMessage = error instanceof Error ? error.message : "不明なエラー";
-    return NextResponse.json({ 
-      error: "アップロードに失敗しました", 
-      details: errorMessage,
-      code: error.code
-    }, { status: 500 });
+  } catch (error) {
+    console.error("Avatar upload error:", error); // ← サーバーログには残す
+    return NextResponse.json({ error: "アップロードに失敗しました" }, { status: 500 });
   }
 }
