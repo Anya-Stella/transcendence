@@ -8,6 +8,7 @@ interface UserProfile {
 	id: string;
 	name: string;
 	image: string | null;
+	lastSeen: string;
 }
 
 interface FriendshipData {
@@ -28,6 +29,13 @@ export default function FriendsPage() {
 	const [searchEmail, setSearchEmail] = useState("");
 	const [message, setMessage] = useState({ text: "", type: "" });
 	const [loading, setLoading] = useState(true);
+	const isOnline = (lastSeen: string) => {
+		const lastMs = new Date(lastSeen).getTime();
+		const nowMs = new Date().getTime();
+		const diffMinutes = (nowMs - lastMs) / (1000 * 60);
+		return diffMinutes < 2; 
+		};
+
 
 	const fetchFriendsData = async () => {
 		try {
@@ -155,7 +163,15 @@ export default function FriendsPage() {
 								<ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
 									{pendingRequests.map((req) => (
 										<li key={req.friendshipId} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.5rem 0", borderBottom: "1px solid #eee" }}>
-											<span style={{ color: "#333", fontWeight: "bold" }}>{req.user.name}</span>
+											<span style={{ color: "#333", fontWeight: "bold", display: "flex", alignItems: "center", gap: "8px" }}>
+												<span 
+													style={{ fontSize: "0.8rem", cursor: "help" }} 
+													title={isOnline(req.user.lastSeen) ? "現在オンラインです" : "オフライン・退席中"}
+												>
+													{isOnline(req.user.lastSeen) ? "🟢" : "⚪"}
+												</span>
+												{req.user.name}
+											</span>
 											<div style={{ display: "flex", gap: "10px" }}>
 												<button onClick={() => handleAcceptRequest(req.friendshipId)} style={{ background: "var(--accent)", color: "white", border: "none", padding: "0.5rem 1rem", borderRadius: "4px", cursor: "pointer" }}>承認</button>
 												<button onClick={() => handleRejectOrRemove(req.friendshipId)} style={{ background: "#ccc", color: "#333", border: "none", padding: "0.5rem 1rem", borderRadius: "4px", cursor: "pointer" }}>拒否</button>
@@ -175,7 +191,13 @@ export default function FriendsPage() {
 								<ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
 									{friends.map((friend) => (
 										<li key={friend.friendshipId} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.5rem 0", borderBottom: "1px solid #eee" }}>
-											<span style={{ color: "#333", fontWeight: "bold" }}>
+											<span style={{ color: "#333", fontWeight: "bold", display: "flex", alignItems: "center", gap: "8px" }}>
+												<span 
+													style={{ fontSize: "0.8rem", cursor: "help" }} 
+													title={isOnline(friend.user.lastSeen) ? "現在オンラインです" : "オフライン・退席中"}
+												>
+													{isOnline(friend.user.lastSeen) ? "🟢" : "⚪"}
+												</span>
 												{friend.user.name}
 												{friend.wins !== undefined && friend.losses !== undefined && (
 													<span style={{ fontSize: "0.9em", color: "#666", marginLeft: "10px", fontWeight: "normal" }}>
@@ -199,7 +221,15 @@ export default function FriendsPage() {
 								<ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
 									{sentRequests.map((req) => (
 										<li key={req.friendshipId} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.5rem 0", borderBottom: "1px solid #eee" }}>
-											<span style={{ color: "#333", fontWeight: "bold" }}>{req.user.name}</span>
+											<span style={{ color: "#333", fontWeight: "bold", display: "flex", alignItems: "center", gap: "8px" }}>
+												<span 
+													style={{ fontSize: "0.8rem", cursor: "help" }} 
+													title={isOnline(req.user.lastSeen) ? "現在オンラインです" : "オフライン・退席中"}
+												>
+													{isOnline(req.user.lastSeen) ? "🟢" : "⚪"}
+												</span>
+												{req.user.name}
+											</span>
 											<button onClick={() => handleRejectOrRemove(req.friendshipId)} style={{ background: "#ccc", color: "#333", border: "none", padding: "0.5rem 1rem", borderRadius: "4px", cursor: "pointer" }}>
 												取り消し
 											</button>
