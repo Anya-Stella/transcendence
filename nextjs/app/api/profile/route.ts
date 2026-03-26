@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { signupSchema } from "@/lib/validations";
 
 export async function PUT(request: Request) {
   // 1. 誰からのリクエストか確認（認証）
@@ -12,12 +13,17 @@ export async function PUT(request: Request) {
   try {
     // 2. ブラウザから送られてきたデータ（新しい名前）を受け取る
     const body = await request.json();
-    const { name } = body;
 
-    // 3. DBのユーザー情報を上書き更新する
+    // 3. バリデーション（signupSchema から name のルールだけ再利用）
+    const result = signupSchema.pick({ name: true }).safeParse(body);
+    if (!result.success) {
+      return NextResponse.json({ error: result.error.errors[0].message }, { status: 400 });
+    }
+
+    // 4. DBのユーザー情報を上書き更新する（バリデーション済みの安全な値を使う）
     const updatedUser = await prisma.user.update({
       where: { id: session.user.id },
-      data: { name: name },
+      data: { name: result.data.name },
     });
 
     return NextResponse.json({ message: "名前を更新しました", user: updatedUser });
