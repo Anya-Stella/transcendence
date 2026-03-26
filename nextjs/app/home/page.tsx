@@ -26,7 +26,9 @@ export default function HomePage() {
 				<div className="wafuu-header-logo">将棋ゲーム</div>
 				<div className="wafuu-header-right">
 					{user && (
-						<span className="wafuu-header-username">{user.name}</span>
+						<Link href="/profile" className="wafuu-header-username" style={{ cursor: "pointer", textDecoration: "underline" }}>
+							{user.name}
+						</Link>
 					)}
 					<button
 						className="wafuu-header-btn"
