@@ -21,9 +21,15 @@ export async function PUT(request: Request) {
     }
 
     // 4. DBのユーザー情報を上書き更新する（バリデーション済みの安全な値を使う）
+    // select で返すカラムを限定し、passwordHash などの機密情報が漏れるのを防ぐ
     const updatedUser = await prisma.user.update({
       where: { id: session.user.id },
       data: { name: result.data.name },
+      select: {
+        id: true,
+        name: true,
+        image: true,
+      },
     });
 
     return NextResponse.json({ message: "名前を更新しました", user: updatedUser });
