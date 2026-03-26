@@ -9,7 +9,7 @@ export function Heartbeat() {
 
   useEffect(() => {
     // ログインしていなければ（ゲストなら）、タイマーは動かさない
-    if (!session?.user) return;
+    if (!session?.user?.id) return;
 
     // 最初に画面を開いた瞬間にも、1回だけ「元気だよ！」と送っておく
     fetch("/api/heartbeat", { method: "POST" }).catch(() => {});
@@ -25,7 +25,7 @@ export function Heartbeat() {
     // 【重要】画面からこの部品が取り外された時（ログアウト時など）、タイマーを綺麗に止める（お片付け）
     // これを書かないと、永遠にタイマーが増殖してパソコンが重くなります
     return () => clearInterval(intervalId);
-  }, [session]); // セッション状態が変わった時だけ、この設定をやり直す
+  }, [session?.user?.id]); // ← ログイン状態（ユーザーID）が変わった時だけタイマーをやり直す
 
   // 「透明な部品」なので、画面には一切何も表示させない
   return null;
