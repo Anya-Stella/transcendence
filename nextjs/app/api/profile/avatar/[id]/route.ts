@@ -6,9 +6,9 @@ import path from "path";
 // このAPIルートを通じて動的にファイルを読み込んで返す（画像配信専用API）
 export async function GET(
   _request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
-  const { id } = await params;
+  const { id } = params;
 
   // セキュリティ対策：IDにパス操作文字（../など）が含まれていないかチェック
   if (id.includes("..") || id.includes("/") || id.includes("\\")) {
