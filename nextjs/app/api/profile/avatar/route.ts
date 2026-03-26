@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { validateAvatarFile, isPngMagicBytes } from "@/lib/validations";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 
@@ -20,27 +21,29 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: "画像ファイルがありません" }, { status: 400 });
     }
 
-    // ★仕様1：拡張子の制限（セキュリティと容量の担保）
-    // ファイル名（例: myphoto.PNG）の末尾を取り出し、小文字（.png）にして判定します
-    const ext = path.extname(file.name).toLowerCase();
-    if (ext !== ".png") {
-      return NextResponse.json({ error: "アップロード可能なファイルは PNG (.png) のみです" }, { status: 400 });
+    // ★バリデーション（ファイルサイズ、MIMEタイプ、拡張子を一括チェック）
+    const validationError = validateAvatarFile(file);
+    if (validationError) {
+      return NextResponse.json({ error: validationError }, { status: 400 });
     }
 
-    // ★仕様2：保存するファイル名は「常に ユーザーID.png」に固定する
-    // 【由来】何度アップロードされても、常にパソコンの中の「ユーザーID.png」が上書きされるため、
-    // ゴミ（永遠に使われない古い画像）がサーバーに溜まっていくのを防ぐことができます！
+    // ★マジックバイト検証（ファイルの中身が本当にPNGか確認）
+    // ファイルのバイトデータを先に読み込み、先頭バイトをチェックする
+    const bytes = await file.arrayBuffer();
+    if (!isPngMagicBytes(bytes)) {
+      return NextResponse.json({ error: "ファイルの中身がPNG画像ではありません" }, { status: 400 });
+    }
+
+    // ★保存するファイル名は「常に ユーザーID.png」に固定する
     const filename = `${session.user.id}.png`;
     
     // 保存先のフォルダを作ります（すでに存在する場合はエラーにならず無視されます）
     const dirPath = path.join(process.cwd(), "public/images/icon");
     await mkdir(dirPath, { recursive: true });
 
-    // Node.jsの機能を使って、フルパス（保存先）を作ります
     const filepath = path.join(dirPath, filename);
 
-    // バイトデータ（Buffer：0と1の数字の羅列）に変換して、ディスクに保存します
-    const bytes = await file.arrayBuffer();
+    // バリデーション済みのバイトデータをディスクに保存
     const buffer = Buffer.from(bytes);
     await writeFile(filepath, buffer);
 
