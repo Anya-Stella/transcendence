@@ -9,7 +9,7 @@ interface UserProfile {
 	id: string;
 	name: string;
 	image: string | null;
-	lastSeen: string;
+	lastSeen: string | null;
 }
 
 interface FriendshipData {

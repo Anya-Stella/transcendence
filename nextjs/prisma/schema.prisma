@@ -19,7 +19,7 @@ model User {
   losses          Int      @default(0)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
-  lastSeen        DateTime @default(now())
+  lastSeen        DateTime?
 
   accounts      Account[]
   sessions      Session[]

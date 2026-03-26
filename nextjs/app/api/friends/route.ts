@@ -15,7 +15,7 @@ type FriendUser = {
   id: string;
   name: string | null;
   image: string | null;
-  lastSeen: Date;
+  lastSeen: Date | null;
 };
 type FriendEntry = {
   friendshipId: string;
