@@ -155,7 +155,9 @@ export default function FriendsPage() {
 							<div style={{ background: "rgba(255,255,255,0.9)", padding: "1.5rem", borderRadius: "8px" }}>
 								<h3 style={{ color: "var(--dark)", marginBottom: "1rem" }}>承認待ち（あなた宛て）</h3>
 								<ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-									{pendingRequests.map((req) => (
+									{pendingRequests.map((req) => {
+										const online = isOnline(req.user.lastSeen);
+										return (
 										<li key={req.friendshipId} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.5rem 0", borderBottom: "1px solid #eee" }}>
 											<span style={{ color: "#333", fontWeight: "bold", display: "flex", alignItems: "center", gap: "8px" }}>
 												<img 
@@ -165,11 +167,11 @@ export default function FriendsPage() {
 												/>
 												<span 
 													style={{ fontSize: "0.8rem", cursor: "help" }} 
-													title={isOnline(req.user.lastSeen) ? "現在オンラインです" : "オフライン・退席中"}
+													title={online ? "現在オンラインです" : "オフライン・退席中"}
 													role="img"
-													aria-label={isOnline(req.user.lastSeen) ? "オンライン" : "オフライン"}
+													aria-label={online ? "オンライン" : "オフライン"}
 												>
-													{isOnline(req.user.lastSeen) ? "🟢" : "⚪"}
+													{online ? "🟢" : "⚪"}
 												</span>
 												{req.user.name}
 											</span>
@@ -178,7 +180,8 @@ export default function FriendsPage() {
 												<button onClick={() => handleRejectOrRemove(req.friendshipId)} style={{ background: "#ccc", color: "#333", border: "none", padding: "0.5rem 1rem", borderRadius: "4px", cursor: "pointer" }}>拒否</button>
 											</div>
 										</li>
-									))}
+									);
+									})}
 								</ul>
 							</div>
 						)}
@@ -190,7 +193,9 @@ export default function FriendsPage() {
 								<p style={{ color: "#666" }}>フレンドはまだいません。</p>
 							) : (
 								<ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-									{friends.map((friend) => (
+									{friends.map((friend) => {
+										const online = isOnline(friend.user.lastSeen);
+										return (
 										<li key={friend.friendshipId} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.5rem 0", borderBottom: "1px solid #eee" }}>
 											<span style={{ color: "#333", fontWeight: "bold", display: "flex", alignItems: "center", gap: "8px" }}>
 												<img 
@@ -200,10 +205,10 @@ export default function FriendsPage() {
 												/>
 												<span 
 													style={{ fontSize: "0.8rem", cursor: "help" }} 
-													title={isOnline(friend.user.lastSeen) ? "現在オンラインです" : "オフライン・退席中"}
-													aria-label={isOnline(friend.user.lastSeen) ? "オンライン" : "オフライン"}
+													title={online ? "現在オンラインです" : "オフライン・退席中"}
+													aria-label={online ? "オンライン" : "オフライン"}
 												>
-													{isOnline(friend.user.lastSeen) ? "🟢" : "⚪"}
+													{online ? "🟢" : "⚪"}
 												</span>
 												{friend.user.name}
 												{friend.wins !== undefined && friend.losses !== undefined && (
@@ -216,7 +221,8 @@ export default function FriendsPage() {
 												削除
 											</button>
 										</li>
-									))}
+									);
+									})}
 								</ul>
 							)}
 						</div>
@@ -226,7 +232,9 @@ export default function FriendsPage() {
 							<div style={{ background: "rgba(255,255,255,0.9)", padding: "1.5rem", borderRadius: "8px" }}>
 								<h3 style={{ color: "var(--dark)", marginBottom: "1rem" }}>送信済みの申請</h3>
 								<ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-									{sentRequests.map((req) => (
+									{sentRequests.map((req) => {
+										const online = isOnline(req.user.lastSeen);
+										return (
 										<li key={req.friendshipId} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.5rem 0", borderBottom: "1px solid #eee" }}>
 											<span style={{ color: "#333", fontWeight: "bold", display: "flex", alignItems: "center", gap: "8px" }}>
 												<img 
@@ -236,11 +244,11 @@ export default function FriendsPage() {
 												/>
 												<span 
 													style={{ fontSize: "0.8rem", cursor: "help" }} 
-													title={isOnline(req.user.lastSeen) ? "現在オンラインです" : "オフライン・退席中"}
-													aria-label={isOnline(req.user.lastSeen) ? "オンライン" : "オフライン"}
+													title={online ? "現在オンラインです" : "オフライン・退席中"}
+													aria-label={online ? "オンライン" : "オフライン"}
 													role="img"
 												>
-													{isOnline(req.user.lastSeen) ? "🟢" : "⚪"}
+													{online ? "🟢" : "⚪"}
 												</span>
 												{req.user.name}
 											</span>
@@ -248,7 +256,8 @@ export default function FriendsPage() {
 												取り消し
 											</button>
 										</li>
-									))}
+									);
+									})}
 								</ul>
 							</div>
 						)}
