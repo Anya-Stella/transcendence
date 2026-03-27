@@ -6,6 +6,8 @@ import Link from "next/link";
 import { useAiGame } from "@/hooks/useAiGame";
 import { DEMOTE_MAP, PieceData, HandPieces, Pos, Color, PieceType } from "@torassen/shogi-logic";
 import TatamiBackground from "@/components/TatamiBackground";
+import VictoryAnimation from "@/components/VictoryAnimation";
+import DefeatAnimation from "@/components/DefeatAnimation";
 
 const PIECE_TYPE_TO_KANJI: Record<number, string> = {
 	[PieceType.PAWN]: "歩",
@@ -428,7 +430,7 @@ function AiMatchBoard({ mySide = "sente", aiDepth = 4, isPreparing = false }: Ai
 							>
 								{/* 結果アイコン */}
 								<div style={{ fontSize: "5rem", marginBottom: "20px" }}>
-									{gameResult.winner === mySide ? "🏆" : "🎻"}
+									{gameResult.winner === mySide ? <VictoryAnimation /> : <DefeatAnimation />}
 								</div>
 
 								{/* 結果テキスト */}

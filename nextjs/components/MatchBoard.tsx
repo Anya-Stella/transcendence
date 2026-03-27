@@ -7,6 +7,8 @@ import { Socket } from "socket.io-client";
 import { useShogiGame } from "@/hooks/useShogiGame";
 import { DEMOTE_MAP, PieceData, HandPieces, Color, PieceType } from "@torassen/shogi-logic";
 import TatamiBackground from "@/components/TatamiBackground";
+import VictoryAnimation from "@/components/VictoryAnimation";
+import DefeatAnimation from "@/components/DefeatAnimation";
 
 const PIECE_TYPE_TO_KANJI: Record<number, string> = {
 	[PieceType.PAWN]: "歩",
@@ -327,7 +329,7 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 								backdropFilter: "blur(12px)",
 								boxShadow: "0 4px 15px rgba(0,0,0,0.4)"
 							}}>
-								<span style={{ color: "#f5e6c8", fontSize: "0.95rem", fontWeight: 600, letterSpacing: "0.02em" }}>{mySide === "gote" ? "あなた" : "後手"}</span>
+								<span style={{ color: "#f5e6c8", fontSize: "0.95rem", fontWeight: 600, letterSpacing: "0.02em" }}>{mySide === "gote" ? "あなた" : "対戦相手"}</span>
 								<span className="board-player-badge badge-gote" style={{ fontSize: "0.75rem", padding: "2px 8px", borderRadius: "12px", fontWeight: 700 }}>後手</span>
 							</div>
 						</div>
@@ -358,7 +360,7 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 								boxShadow: "0 4px 15px rgba(0,0,0,0.4)"
 							}}>
 								<span className="board-player-badge badge-sente" style={{ fontSize: "0.75rem", padding: "2px 8px", borderRadius: "12px", fontWeight: 700 }}>先手</span>
-								<span style={{ color: "#f5e6c8", fontSize: "0.95rem", fontWeight: 600, letterSpacing: "0.02em" }}>{mySide === "sente" ? "あなた" : "先手"}</span>
+								<span style={{ color: "#f5e6c8", fontSize: "0.95rem", fontWeight: 600, letterSpacing: "0.02em" }}>{mySide === "sente" ? "あなた" : "対戦相手"}</span>
 							</div>
 						</div>
 
@@ -455,7 +457,7 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 							>
 								{/* 結果アイコン */}
 								<div style={{ fontSize: "5rem", marginBottom: "20px" }}>
-									{gameResult.winner === mySide ? "🏆" : "🎻"}
+									{gameResult.winner === mySide ? <VictoryAnimation /> : <DefeatAnimation />}
 								</div>
 
 								{/* 結果テキスト */}

@@ -3,6 +3,8 @@
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import VictoryAnimation from "@/components/VictoryAnimation";
+import DefeatAnimation from "@/components/DefeatAnimation";
 
 export default function ResultPage() {
 	return (
@@ -47,7 +49,7 @@ function ResultContent() {
 				>
 					{/* 結果アイコン */}
 					<div style={{ fontSize: "5rem", marginBottom: "16px", animation: "resultPop 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275)" }}>
-						{isWin ? "🏆" : "🎻"}
+						{isWin ? <VictoryAnimation /> : <DefeatAnimation />}
 					</div>
 
 					{/* 結果テキスト */}
