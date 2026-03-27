@@ -454,16 +454,18 @@ const BOARD_Z_COORDS = [-6.4, -3.2, 0, 3.2, 6.4];
 const BOARD_Y = 10.0;       // 駒の Y 座標（高さ）
 
 // グリッド座標 → 3D ワールド座標
-function gridToWorld(row: number, col: number): [number, number, number] {
+function gridToWorld(row: number, col: number, isFlipped: boolean = false): [number, number, number] {
+	const r = isFlipped ? 4 - row : row;
+	const c = isFlipped ? 4 - col : col;
 	return [
-		BOARD_X_COORDS[row],
+		BOARD_X_COORDS[r],
 		BOARD_Y,
-		BOARD_Z_COORDS[col]
+		BOARD_Z_COORDS[c]
 	];
 }
 
 // 3D ワールド座標 → 最も近いグリッド座標
-function worldToGrid(x: number, z: number): { row: number; col: number } | null {
+function worldToGrid(x: number, z: number, isFlipped: boolean = false): { row: number; col: number } | null {
 	// 最も近いX座標のインデックスを探す
 	let bestRow = 0;
 	let minXDist = Math.abs(x - BOARD_X_COORDS[0]);
@@ -486,6 +488,9 @@ function worldToGrid(x: number, z: number): { row: number; col: number } | null 
 		}
 	}
 
+	if (isFlipped) {
+		return { row: 4 - bestRow, col: 4 - bestCol };
+	}
 	return { row: bestRow, col: bestCol };
 }
 
@@ -606,6 +611,9 @@ export default function TatamiBackground({
 		return initial;
 	});
 
+	// 盤面の向き：自分が後手(White)の場合は論理的な座標を反転させる
+	const isFlipped = useMemo(() => playerColor === Color.WHITE, [playerColor]);
+
 
 
 
@@ -622,9 +630,9 @@ export default function TatamiBackground({
 		if (capturedPiece) {
 			const capturedId = Object.keys(PIECE_INITIAL_GRID).find(pid => {
 				if (pid === id) return false;
-				const pPos = piecePositions[pid] || gridToWorld(PIECE_INITIAL_GRID[pid].row, PIECE_INITIAL_GRID[pid].col);
+				const pPos = piecePositions[pid] || gridToWorld(PIECE_INITIAL_GRID[pid].row, PIECE_INITIAL_GRID[pid].col, isFlipped);
 				if (checkIsHandPos(pPos)) return false;
-				const pg = worldToGrid(pPos[0], pPos[2]);
+				const pg = worldToGrid(pPos[0], pPos[2], isFlipped);
 				return pg && pg.row === toGrid.row && pg.col === toGrid.col;
 			});
 			if (capturedId) {
@@ -639,14 +647,14 @@ export default function TatamiBackground({
 
 		setPiecePositions(prev => {
 			const nextPosMap = { ...prev };
-			nextPosMap[id] = gridToWorld(toGrid.row, toGrid.col);
+			nextPosMap[id] = gridToWorld(toGrid.row, toGrid.col, isFlipped);
 
 			if (capturedPiece) {
 				const capturedId = Object.keys(PIECE_INITIAL_GRID).find(pid => {
 					if (pid === id) return false;
-					const pPos = prev[pid] || gridToWorld(PIECE_INITIAL_GRID[pid].row, PIECE_INITIAL_GRID[pid].col);
+					const pPos = prev[pid] || gridToWorld(PIECE_INITIAL_GRID[pid].row, PIECE_INITIAL_GRID[pid].col, isFlipped);
 					if (checkIsHandPos(pPos)) return false;
-					const pg = worldToGrid(pPos[0], pPos[2]);
+					const pg = worldToGrid(pPos[0], pPos[2], isFlipped);
 					return pg && pg.row === toGrid.row && pg.col === toGrid.col;
 				});
 
@@ -661,7 +669,7 @@ export default function TatamiBackground({
 		});
 
 		setBoardState(nextState);
-	}, [boardState, piecePositions, pieceOwners]);
+	}, [boardState, piecePositions, pieceOwners, isFlipped]);
 
 	// 駒が操作可能かどうかを判定（自分の手番かつ自分の駒であること）
 	const isPieceDraggable = useCallback((id: string) => {
@@ -710,16 +718,16 @@ export default function TatamiBackground({
 		if (move.type === "move") {
 			// 盤上移動の場合: move.from にある駒を探す
 			targetId = Object.keys(PIECE_INITIAL_GRID).find(id => {
-				const pos = piecePositions[id] || gridToWorld(PIECE_INITIAL_GRID[id].row, PIECE_INITIAL_GRID[id].col);
+				const pos = piecePositions[id] || gridToWorld(PIECE_INITIAL_GRID[id].row, PIECE_INITIAL_GRID[id].col, isFlipped);
 				if (checkIsHandPos(pos)) return false;
-				const grid = worldToGrid(pos[0], pos[2]);
+				const grid = worldToGrid(pos[0], pos[2], isFlipped);
 				return grid && grid.row === move.from.row && grid.col === move.from.col;
 			}) || null;
 		} else if (move.type === "drop") {
 			// 打ち込みの場合: 現在の手番의持ち駒の中から同じ種類かつ駒台にあるものを探す
 			const owner = boardState.sideToMove;
 			targetId = Object.keys(PIECE_INITIAL_GRID).find(id => {
-				const pos = piecePositions[id] || gridToWorld(PIECE_INITIAL_GRID[id].row, PIECE_INITIAL_GRID[id].col);
+				const pos = piecePositions[id] || gridToWorld(PIECE_INITIAL_GRID[id].row, PIECE_INITIAL_GRID[id].col, isFlipped);
 				return checkIsHandPos(pos) && pieceOwners[id] === owner && getBasePieceType(id) === move.pieceType;
 			}) || null;
 		}
@@ -732,14 +740,18 @@ export default function TatamiBackground({
 
 	// 駒の向きを計算するヘルパー
 	const getPieceRotation = (id: string, color: Color, isPromoted: boolean): [number, number, number] => {
-		const isSente = color === Color.BLACK;
 		const isFu = id.includes("fu");
 		let rotation: [number, number, number];
+
+		// 視点が反転している場合、駒の向き（基本向き）も反転させる
+		const visualColor = isFlipped ? (color === Color.BLACK ? Color.WHITE : Color.BLACK) : color;
+		const isVisualSente = visualColor === Color.BLACK;
+
 		// 歩兵(fu.glb)だけモデルの基本向きが違うため調整
 		if (isFu) {
-			rotation = isSente ? [Math.PI / 2, 0, -Math.PI / 2] : [-Math.PI / 2, Math.PI, -Math.PI / 2];
+			rotation = isVisualSente ? [Math.PI / 2, 0, -Math.PI / 2] : [-Math.PI / 2, Math.PI, -Math.PI / 2];
 		} else {
-			rotation = isSente ? [-Math.PI / 2, 0, -Math.PI / 2] : [Math.PI / 2, Math.PI, -Math.PI / 2];
+			rotation = isVisualSente ? [-Math.PI / 2, 0, -Math.PI / 2] : [Math.PI / 2, Math.PI, -Math.PI / 2];
 		}
 
 		// 成っている場合は裏返しにする(X軸180度回転)
@@ -770,28 +782,28 @@ export default function TatamiBackground({
 
 	// その持ち駒の種類の中で、表示されるべき代表駒かどうかを判定（重複表示防止）
 	const isPrimaryHandPiece = useCallback((id: string): boolean => {
-		const pos = piecePositions[id] || gridToWorld(PIECE_INITIAL_GRID[id].row, PIECE_INITIAL_GRID[id].col);
+		const pos = piecePositions[id] || gridToWorld(PIECE_INITIAL_GRID[id].row, PIECE_INITIAL_GRID[id].col, isFlipped);
 		if (!checkIsHandPos(pos)) return true;
 
 		const owner = pieceOwners[id];
 		const type = getBasePieceType(id);
 		// 同じ種類かつ同じ所有者の駒リストを取得
 		const sameTypeIds = Object.keys(PIECE_INITIAL_GRID).filter(pid => {
-			const pPos = piecePositions[pid] || gridToWorld(PIECE_INITIAL_GRID[pid].row, PIECE_INITIAL_GRID[pid].col);
+			const pPos = piecePositions[pid] || gridToWorld(PIECE_INITIAL_GRID[pid].row, PIECE_INITIAL_GRID[pid].col, isFlipped);
 			return checkIsHandPos(pPos) && pieceOwners[pid] === owner && getBasePieceType(pid) === type;
 		});
 		// リストの先頭のIDだけを代表とする
 		return sameTypeIds[0] === id;
-	}, [piecePositions, pieceOwners]);
+	}, [piecePositions, pieceOwners, isFlipped]);
 
 	// 現在の選択駒に対する有効な移動先を計算
 	const validMoveDestinations = useMemo(() => {
 		if (!selectedPiece) return [];
 
 		// 現在のグリッド位置を特定
-		const currentPos = piecePositions[selectedPiece] || gridToWorld(PIECE_INITIAL_GRID[selectedPiece].row, PIECE_INITIAL_GRID[selectedPiece].col);
+		const currentPos = piecePositions[selectedPiece] || gridToWorld(PIECE_INITIAL_GRID[selectedPiece].row, PIECE_INITIAL_GRID[selectedPiece].col, isFlipped);
 		const isHand = checkIsHandPos(currentPos);
-		const fromGrid = worldToGrid(currentPos[0], currentPos[2]);
+		const fromGrid = worldToGrid(currentPos[0], currentPos[2], isFlipped);
 		if (!fromGrid && !isHand) return [];
 
 		// そのマスに現在の手番の駒があるか確認（駒台の場合は所有者を確認）
@@ -813,10 +825,10 @@ export default function TatamiBackground({
 	}, [selectedPiece, boardState, piecePositions, pieceOwners]);
 
 	const handleDragEnd = useCallback((id: string, newPos: [number, number, number]) => {
-		const toGrid = worldToGrid(newPos[0], newPos[2]);
+		const toGrid = worldToGrid(newPos[0], newPos[2], isFlipped);
 		if (!toGrid) return;
 
-		const currentPos = piecePositions[id] || gridToWorld(PIECE_INITIAL_GRID[id].row, PIECE_INITIAL_GRID[id].col);
+		const currentPos = piecePositions[id] || gridToWorld(PIECE_INITIAL_GRID[id].row, PIECE_INITIAL_GRID[id].col, isFlipped);
 		const isFromHand = checkIsHandPos(currentPos);
 
 		let move: Move;
@@ -830,7 +842,7 @@ export default function TatamiBackground({
 			};
 		} else {
 			// 盤上の移動
-			const fromGrid = worldToGrid(currentPos[0], currentPos[2]);
+			const fromGrid = worldToGrid(currentPos[0], currentPos[2], isFlipped);
 			if (fromGrid.row === toGrid.row && fromGrid.col === toGrid.col) return;
 
 			// 成り判定: 敵陣（1段目/5段目）に入る、または敵陣内から移動する場合
@@ -874,9 +886,9 @@ export default function TatamiBackground({
 						if (capturedPiece) {
 							const capturedId = Object.keys(PIECE_INITIAL_GRID).find(pid => {
 								if (pid === id) return false;
-								const pPos = piecePositions[pid] || gridToWorld(PIECE_INITIAL_GRID[pid].row, PIECE_INITIAL_GRID[pid].col);
+								const pPos = piecePositions[pid] || gridToWorld(PIECE_INITIAL_GRID[pid].row, PIECE_INITIAL_GRID[pid].col, isFlipped);
 								if (checkIsHandPos(pPos)) return false;
-								const pg = worldToGrid(pPos[0], pPos[2]);
+								const pg = worldToGrid(pPos[0], pPos[2], isFlipped);
 								return pg && pg.row === toGrid.row && pg.col === toGrid.col;
 							});
 							if (capturedId) {
@@ -887,15 +899,15 @@ export default function TatamiBackground({
 									const coordsMap = winnerColor === Color.BLACK ? SENTE_HAND_COORDS : GOTE_HAND_COORDS;
 									const baseType = UNPROMOTE_MAP[capturedPiece.pieceType] ?? capturedPiece.pieceType;
 									const capturedHandPos = coordsMap[baseType] || [0, 0, 0];
-									return { ...prev, [capturedId]: capturedHandPos, [id]: gridToWorld(toGrid.row, toGrid.col) };
+									return { ...prev, [capturedId]: capturedHandPos, [id]: gridToWorld(toGrid.row, toGrid.col, isFlipped) };
 								});
 							} else {
 								// 駒取りがない場合でも駒を移動先に進める
-								setPiecePositions(prev => ({ ...prev, [id]: gridToWorld(toGrid.row, toGrid.col) }));
+								setPiecePositions(prev => ({ ...prev, [id]: gridToWorld(toGrid.row, toGrid.col, isFlipped) }));
 							}
 						} else {
 							// 駒がない場所への移動
-							setPiecePositions(prev => ({ ...prev, [id]: gridToWorld(toGrid.row, toGrid.col) }));
+							setPiecePositions(prev => ({ ...prev, [id]: gridToWorld(toGrid.row, toGrid.col, isFlipped) }));
 						}
 
 						// それ以外は選択
@@ -956,7 +968,7 @@ export default function TatamiBackground({
 							<group ref={boardGroupRef} position={[0, -0.9, 0]} rotation={[(Math.PI / 180) * 30, Math.PI / 2, 0]}>
 								{/* 背景クリックで選択解除用の透明な平面 */}
 								<mesh position={[0, 9.9, 0]} rotation={[-Math.PI / 2, 0, 0]} onClick={handleBackgroundClick} receiveShadow>
-									<planeGeometry args={[50, 50]} />
+									<planeGeometry args={[70, 70]} />
 									<shadowMaterial transparent opacity={0.4} />
 								</mesh>
 
@@ -964,20 +976,21 @@ export default function TatamiBackground({
 
 								{/* アシストマーク（移動可能な場所の強調） */}
 								{validMoveDestinations.map((dest, idx) => {
-									const pos = gridToWorld(dest.row, dest.col);
+									const pos = gridToWorld(dest.row, dest.col, isFlipped);
 									return <MoveMarker key={`marker-${idx}`} position={pos} />;
 								})}
 
-								{/* 駒台 (Sente: 左上) */}
+								{/* 駒台：視点に合わせて位置を入れ替える */}
+								{/* 自分の駒台 (常に右下) */}
 								<DaiModelContent
-									position={[-12.5, 0, -21]}
+									position={isFlipped ? [-21.2, 0, 12.7] : [-12.5, 0, -21]}
 									rotation={[0, Math.PI, 0]}
 									scale={[1, 1, 1]}
 								/>
 
-								{/* 駒台 (Gote: 右下) */}
+								{/* 相手の駒台 (常に左上) */}
 								<DaiModelContent
-									position={[-21.2, 0, 12.7]}
+									position={isFlipped ? [-12.5, 0, -21] : [-21.2, 0, 12.7]}
 									rotation={[0, Math.PI, 0]}
 									scale={[1, 1, 1]}
 								/>
@@ -988,7 +1001,7 @@ export default function TatamiBackground({
 										key={piece.id}
 										pieceId={piece.id}
 										modelPath={piece.model}
-										initialPosition={piecePositions[piece.id] || piece.defaultPos}
+										initialPosition={piecePositions[piece.id] || gridToWorld(PIECE_INITIAL_GRID[piece.id].row, PIECE_INITIAL_GRID[piece.id].col, isFlipped)}
 										rotation={getPieceRotation(piece.id, pieceOwners[piece.id], isPiecePromoted(piece.id))}
 										count={getHandPieceCount(piece.id)}
 										selectedId={selectedPiece}
@@ -1006,7 +1019,7 @@ export default function TatamiBackground({
 										key={piece.id}
 										pieceId={piece.id}
 										modelPath={piece.model}
-										initialPosition={piecePositions[piece.id] || piece.defaultPos}
+										initialPosition={piecePositions[piece.id] || gridToWorld(PIECE_INITIAL_GRID[piece.id].row, PIECE_INITIAL_GRID[piece.id].col, isFlipped)}
 										rotation={getPieceRotation(piece.id, pieceOwners[piece.id], isPiecePromoted(piece.id))}
 										count={getHandPieceCount(piece.id)}
 										selectedId={selectedPiece}

@@ -304,7 +304,7 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 							</div>
 						)}
 
-						{/* Gote player info (右上) */}
+						{/* 右上 (対戦相手の情報) */}
 						<div
 							style={{
 								position: "fixed",
@@ -329,12 +329,21 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 								backdropFilter: "blur(12px)",
 								boxShadow: "0 4px 15px rgba(0,0,0,0.4)"
 							}}>
-								<span style={{ color: "#f5e6c8", fontSize: "0.95rem", fontWeight: 600, letterSpacing: "0.02em" }}>{mySide === "gote" ? "あなた" : "対戦相手"}</span>
-								<span className="board-player-badge badge-gote" style={{ fontSize: "0.75rem", padding: "2px 8px", borderRadius: "12px", fontWeight: 700 }}>後手</span>
+								{mySide === "sente" ? (
+									<>
+										<span style={{ color: "#f5e6c8", fontSize: "0.95rem", fontWeight: 600, letterSpacing: "0.02em" }}>対戦相手</span>
+										<span className="board-player-badge badge-gote" style={{ fontSize: "0.75rem", padding: "2px 8px", borderRadius: "12px", fontWeight: 700 }}>後手</span>
+									</>
+								) : (
+									<>
+										<span className="board-player-badge badge-sente" style={{ fontSize: "0.75rem", padding: "2px 8px", borderRadius: "12px", fontWeight: 700 }}>先手</span>
+										<span style={{ color: "#f5e6c8", fontSize: "0.95rem", fontWeight: 600, letterSpacing: "0.02em" }}>対戦相手</span>
+									</>
+								)}
 							</div>
 						</div>
 
-						{/* Sente player info (左下) */}
+						{/* 左下 (あなたの情報) */}
 						<div
 							style={{
 								position: "fixed",
@@ -359,8 +368,17 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 								backdropFilter: "blur(12px)",
 								boxShadow: "0 4px 15px rgba(0,0,0,0.4)"
 							}}>
-								<span className="board-player-badge badge-sente" style={{ fontSize: "0.75rem", padding: "2px 8px", borderRadius: "12px", fontWeight: 700 }}>先手</span>
-								<span style={{ color: "#f5e6c8", fontSize: "0.95rem", fontWeight: 600, letterSpacing: "0.02em" }}>{mySide === "sente" ? "あなた" : "対戦相手"}</span>
+								{mySide === "gote" ? (
+									<>
+										<span style={{ color: "#f5e6c8", fontSize: "0.95rem", fontWeight: 600, letterSpacing: "0.02em" }}>あなた</span>
+										<span className="board-player-badge badge-gote" style={{ fontSize: "0.75rem", padding: "2px 8px", borderRadius: "12px", fontWeight: 700 }}>後手</span>
+									</>
+								) : (
+									<>
+										<span className="board-player-badge badge-sente" style={{ fontSize: "0.75rem", padding: "2px 8px", borderRadius: "12px", fontWeight: 700 }}>先手</span>
+										<span style={{ color: "#f5e6c8", fontSize: "0.95rem", fontWeight: 600, letterSpacing: "0.02em" }}>あなた</span>
+									</>
+								)}
 							</div>
 						</div>
 
@@ -466,7 +484,7 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 										fontSize: "4.5rem",
 										fontWeight: 900,
 										letterSpacing: "0.2em",
-										color: gameResult.winner === mySide ? "#d4af37" : "#888",
+										color: gameResult.winner === mySide ? "#d4af37" : (gameResult.winner === null ? "#f5e6c8" : "#888"),
 										textShadow: gameResult.winner === mySide
 											? "0 0 40px rgba(212, 175, 55, 0.6)"
 											: "0 0 20px rgba(255, 255, 255, 0.1)",
@@ -474,7 +492,7 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 										fontFamily: "'M PLUS Rounded 1c', sans-serif"
 									}}
 								>
-									{gameResult.winner === mySide ? "勝利" : (gameResult.winner === null ? "引き分け" : "敗北")}
+									{mySide === "spectator" ? "対局終了" : (gameResult.winner === mySide ? "勝利" : (gameResult.winner === null ? "引き分け" : "敗北"))}
 								</h2>
 
 								<p

@@ -57,7 +57,7 @@ export default function HomePage() {
 						<div className="wafuu-menu-text">
 							<div className="wafuu-menu-title">AI対戦</div>
 							<div className="wafuu-menu-desc">
-								コンピュータと練習しよう（準備中）
+								コンピュータと練習しよう
 							</div>
 						</div>
 						<span className="wafuu-menu-arrow">→</span>

@@ -284,7 +284,7 @@ function AiMatchBoard({ mySide = "sente", aiDepth = 4, isPreparing = false }: Ai
 							</div>
 						)}
 
-						{/* Gote player info + hand (右上) */}
+						{/* 右上 (AI / 対戦相手) */}
 						<div
 							style={{
 								position: "fixed",
@@ -309,13 +309,22 @@ function AiMatchBoard({ mySide = "sente", aiDepth = 4, isPreparing = false }: Ai
 								backdropFilter: "blur(12px)",
 								boxShadow: "0 4px 15px rgba(0,0,0,0.4)"
 							}}>
-								<span style={{ color: "#f5e6c8", fontSize: "0.95rem", fontWeight: 600, letterSpacing: "0.02em" }}>{mySide === "gote" ? "あなた" : "AI 🤖"}</span>
-								<span className="board-player-badge badge-gote" style={{ fontSize: "0.75rem", padding: "2px 8px", borderRadius: "12px", fontWeight: 700 }}>後手</span>
+								{mySide === "sente" ? (
+									<>
+										<span style={{ color: "#f5e6c8", fontSize: "0.95rem", fontWeight: 600, letterSpacing: "0.02em" }}>AI 🤖</span>
+										<span className="board-player-badge badge-gote" style={{ fontSize: "0.75rem", padding: "2px 8px", borderRadius: "12px", fontWeight: 700 }}>後手</span>
+									</>
+								) : (
+									<>
+										<span className="board-player-badge badge-sente" style={{ fontSize: "0.75rem", padding: "2px 8px", borderRadius: "12px", fontWeight: 700 }}>先手</span>
+										<span style={{ color: "#f5e6c8", fontSize: "0.95rem", fontWeight: 600, letterSpacing: "0.02em" }}>AI 🤖</span>
+									</>
+								)}
 							</div>
 						</div>
 
 
-						{/* Sente player info + hand (左下) */}
+						{/* 左下 (あなた) */}
 						<div
 							style={{
 								position: "fixed",
@@ -340,8 +349,17 @@ function AiMatchBoard({ mySide = "sente", aiDepth = 4, isPreparing = false }: Ai
 								backdropFilter: "blur(12px)",
 								boxShadow: "0 4px 15px rgba(0,0,0,0.4)"
 							}}>
-								<span className="board-player-badge badge-sente" style={{ fontSize: "0.75rem", padding: "2px 8px", borderRadius: "12px", fontWeight: 700 }}>先手</span>
-								<span style={{ color: "#f5e6c8", fontSize: "0.95rem", fontWeight: 600, letterSpacing: "0.02em" }}>{mySide === "sente" ? "あなた" : "AI 🤖"}</span>
+								{mySide === "gote" ? (
+									<>
+										<span style={{ color: "#f5e6c8", fontSize: "0.95rem", fontWeight: 600, letterSpacing: "0.02em" }}>あなた</span>
+										<span className="board-player-badge badge-gote" style={{ fontSize: "0.75rem", padding: "2px 8px", borderRadius: "12px", fontWeight: 700 }}>後手</span>
+									</>
+								) : (
+									<>
+										<span className="board-player-badge badge-sente" style={{ fontSize: "0.75rem", padding: "2px 8px", borderRadius: "12px", fontWeight: 700 }}>先手</span>
+										<span style={{ color: "#f5e6c8", fontSize: "0.95rem", fontWeight: 600, letterSpacing: "0.02em" }}>あなた</span>
+									</>
+								)}
 							</div>
 						</div>
 
