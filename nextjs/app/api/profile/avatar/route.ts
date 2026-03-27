@@ -54,7 +54,7 @@ export async function PUT(request: Request) {
     const imageUrl = `/api/profile/avatar/${session.user.id}?t=${timestamp}`;
 
     // DBを新しく作ったURL（キャッシュバスター付き）に書き換えます
-    const updatedUser = await prisma.user.update({
+    await prisma.user.update({
       where: { id: session.user.id },
       data: { image: imageUrl },
     });
