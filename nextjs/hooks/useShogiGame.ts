@@ -126,7 +126,7 @@ export function useShogiGame(
 
 		const handleSyncState = (data: { sfen: string }) => {
 			const syncedBoard = sfenToUIBoard(data.sfen);
-			syncBoardState(syncedBoard); 
+			syncBoardState(syncedBoard);
 		};
 
 		socket.on("syncState", handleSyncState);
@@ -205,21 +205,18 @@ export function useShogiGame(
 			router.push("/home");
 		}
 		if (gameResult.isOver) {
-      const resultStatus = gameResult.winner === mySide ? "win" : "lose";
-
-			fetch("/api/result", {
-			method: "PUT",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({ result: resultStatus }), 
-			});
-			router.push("/result" + (roomId ? `?roomId=${roomId}` : ""));
+			const isWin = gameResult.winner === mySide;
+			const winParam = isWin ? "true" : "false";
+			const reasonPara = encodeURIComponent(gameResult.message || "対局終了");
+			router.push(`/result?win=${winParam}&reason=${reasonPara}${roomId ? `&roomId=${roomId}` : ""}`);
 			return;
 		}
 		if (roomId && socket) {
+			const winner = (mySide === "sente" ? "gote" : "sente") as "sente" | "gote";
 			socket.emit("resign_match", { roomId });
 			setGameResult({
 				isOver: true,
-				winner: mySide === "sente" ? "gote" : "sente",
+				winner: winner,
 				message: "投了しました"
 			});
 		} else {

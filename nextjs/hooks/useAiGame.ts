@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useGameLogic } from "./useGameLogic";
-import { boardFromPieces, type PieceInfo ,USI_TO_DROP_KANJI, Pos, PieceType, type Move } from "@torassen/shogi-logic";
+import { boardFromPieces, type PieceInfo, USI_TO_DROP_KANJI, Pos, PieceType, type Move } from "@torassen/shogi-logic";
 
 const KANJI_TO_PIECE_TYPE: Record<string, PieceType> = {
 	"歩": PieceType.PAWN,
@@ -193,12 +193,14 @@ export function useAiGame(
 	};
 
 	const handleEndMatch = () => {
-		// すでに終了している場合は何もしない
 		if (gameResult.isOver) {
+			const isWin = gameResult.winner === mySide;
+			const winParam = isWin ? "true" : "false";
+			const reasonPara = encodeURIComponent(gameResult.message || "対局終了");
+			router.push(`/result?win=${winParam}&reason=${reasonPara}`);
 			return;
 		}
 
-		// 対局中の場合は投了（負け）として扱い、内部状態を更新
 		setGameResult({
 			isOver: true,
 			winner: mySide === "sente" ? "gote" : "sente",
