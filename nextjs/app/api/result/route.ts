@@ -21,6 +21,13 @@ export async function PUT(req: Request) {
                 losses: result === "lose" ? { increment: 1 } : undefined,
                 totalMatches: { increment: 1 },
             },
+            select: {
+                id: true,
+                name: true,
+                totalMatches: true,
+                wins: true,
+                losses: true,
+            },
         });
 
         return NextResponse.json({ user });

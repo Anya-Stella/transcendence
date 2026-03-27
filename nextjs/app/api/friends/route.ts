@@ -7,14 +7,15 @@ import { Prisma, Match} from "@prisma/client";
 
 type FriendshipWithUsers = Prisma.FriendshipGetPayload<{
 	include: {
-	  requester: { select: { id: true; name: true; image: true } };
-	  addressee: { select: { id: true; name: true; image: true } };
+	  requester: { select: { id: true; name: true; image: true; lastSeen:true } };
+	  addressee: { select: { id: true; name: true; image: true; lastSeen:true } };
 	};
   }>;
 type FriendUser = {
   id: string;
   name: string | null;
   image: string | null;
+  lastSeen: Date | null;
 };
 type FriendEntry = {
   friendshipId: string;
@@ -50,10 +51,10 @@ export async function GET() {
 			},
 			include: {
 				requester: {
-					select: { id: true, name: true, image: true },
+					select: { id: true, name: true, image: true, lastSeen: true },
 				},
 				addressee: {
-					select: { id: true, name: true, image: true },
+					select: { id: true, name: true, image: true, lastSeen: true },
 				},
 			},
 		});

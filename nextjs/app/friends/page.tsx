@@ -3,11 +3,13 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { isOnline } from "@/lib/utils";
 
 interface UserProfile {
 	id: string;
 	name: string;
 	image: string | null;
+	lastSeen: string | null;
 }
 
 interface FriendshipData {
@@ -153,15 +155,33 @@ export default function FriendsPage() {
 							<div style={{ background: "rgba(255,255,255,0.9)", padding: "1.5rem", borderRadius: "8px" }}>
 								<h3 style={{ color: "var(--dark)", marginBottom: "1rem" }}>承認待ち（あなた宛て）</h3>
 								<ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-									{pendingRequests.map((req) => (
+									{pendingRequests.map((req) => {
+										const online = isOnline(req.user.lastSeen);
+										return (
 										<li key={req.friendshipId} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.5rem 0", borderBottom: "1px solid #eee" }}>
-											<span style={{ color: "#333", fontWeight: "bold" }}>{req.user.name}</span>
+											<span style={{ color: "#333", fontWeight: "bold", display: "flex", alignItems: "center", gap: "8px" }}>
+												<img 
+													src={req.user.image || "/images/default-avatar.png"} 
+													alt="avatar" 
+													style={{ width: "32px", height: "32px", borderRadius: "50%", objectFit: "cover" }} 
+												/>
+												<span 
+													style={{ fontSize: "0.8rem", cursor: "help" }} 
+													title={online ? "現在オンラインです" : "オフライン・退席中"}
+													role="img"
+													aria-label={online ? "オンライン" : "オフライン"}
+												>
+													{online ? "🟢" : "⚪"}
+												</span>
+												{req.user.name}
+											</span>
 											<div style={{ display: "flex", gap: "10px" }}>
 												<button onClick={() => handleAcceptRequest(req.friendshipId)} style={{ background: "var(--accent)", color: "white", border: "none", padding: "0.5rem 1rem", borderRadius: "4px", cursor: "pointer" }}>承認</button>
 												<button onClick={() => handleRejectOrRemove(req.friendshipId)} style={{ background: "#ccc", color: "#333", border: "none", padding: "0.5rem 1rem", borderRadius: "4px", cursor: "pointer" }}>拒否</button>
 											</div>
 										</li>
-									))}
+									);
+									})}
 								</ul>
 							</div>
 						)}
@@ -173,9 +193,24 @@ export default function FriendsPage() {
 								<p style={{ color: "#666" }}>フレンドはまだいません。</p>
 							) : (
 								<ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-									{friends.map((friend) => (
+									{friends.map((friend) => {
+										const online = isOnline(friend.user.lastSeen);
+										return (
 										<li key={friend.friendshipId} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.5rem 0", borderBottom: "1px solid #eee" }}>
-											<span style={{ color: "#333", fontWeight: "bold" }}>
+											<span style={{ color: "#333", fontWeight: "bold", display: "flex", alignItems: "center", gap: "8px" }}>
+												<img 
+													src={friend.user.image || "/images/default-avatar.png"} 
+													alt="avatar" 
+													style={{ width: "32px", height: "32px", borderRadius: "50%", objectFit: "cover" }} 
+												/>
+												<span 
+													style={{ fontSize: "0.8rem", cursor: "help" }} 
+													role="img"
+													title={online ? "現在オンラインです" : "オフライン・退席中"}
+													aria-label={online ? "オンライン" : "オフライン"}
+												>
+													{online ? "🟢" : "⚪"}
+												</span>
 												{friend.user.name}
 												{friend.wins !== undefined && friend.losses !== undefined && (
 													<span style={{ fontSize: "0.9em", color: "#666", marginLeft: "10px", fontWeight: "normal" }}>
@@ -187,7 +222,8 @@ export default function FriendsPage() {
 												削除
 											</button>
 										</li>
-									))}
+									);
+									})}
 								</ul>
 							)}
 						</div>
@@ -197,14 +233,32 @@ export default function FriendsPage() {
 							<div style={{ background: "rgba(255,255,255,0.9)", padding: "1.5rem", borderRadius: "8px" }}>
 								<h3 style={{ color: "var(--dark)", marginBottom: "1rem" }}>送信済みの申請</h3>
 								<ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-									{sentRequests.map((req) => (
+									{sentRequests.map((req) => {
+										const online = isOnline(req.user.lastSeen);
+										return (
 										<li key={req.friendshipId} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.5rem 0", borderBottom: "1px solid #eee" }}>
-											<span style={{ color: "#333", fontWeight: "bold" }}>{req.user.name}</span>
+											<span style={{ color: "#333", fontWeight: "bold", display: "flex", alignItems: "center", gap: "8px" }}>
+												<img 
+													src={req.user.image || "/images/default-avatar.png"} 
+													alt="avatar" 
+													style={{ width: "32px", height: "32px", borderRadius: "50%", objectFit: "cover" }} 
+												/>
+												<span 
+													style={{ fontSize: "0.8rem", cursor: "help" }} 
+													title={online ? "現在オンラインです" : "オフライン・退席中"}
+													aria-label={online ? "オンライン" : "オフライン"}
+													role="img"
+												>
+													{online ? "🟢" : "⚪"}
+												</span>
+												{req.user.name}
+											</span>
 											<button onClick={() => handleRejectOrRemove(req.friendshipId)} style={{ background: "#ccc", color: "#333", border: "none", padding: "0.5rem 1rem", borderRadius: "4px", cursor: "pointer" }}>
 												取り消し
 											</button>
 										</li>
-									))}
+									);
+									})}
 								</ul>
 							</div>
 						)}

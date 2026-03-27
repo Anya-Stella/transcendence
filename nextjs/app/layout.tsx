@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Heartbeat } from "@/components/Heartbeat";
 import Providers from "./providers";
 import "./globals.css";
 import "./wafuu-theme.css";
@@ -15,7 +16,10 @@ export default function RootLayout({
 	return (
 		<html lang="ja">
 			<body>
-				<Providers>{children}</Providers>
+				<Providers>
+					<Heartbeat />
+					{children}
+				</Providers>
 			</body>
 		</html>
 	);

@@ -7,3 +7,4 @@ dist/
 *.o
 engine
 legal_checker
+nextjs/public/images/icon/*.png
