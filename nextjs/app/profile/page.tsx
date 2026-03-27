@@ -10,7 +10,7 @@ export default function ProfilePage() {
 
 	const [name, setName] = useState("");
 	const [isLoading, setIsLoading] = useState(false);
-	const [message, setMessage] = useState("");
+	const [message, setMessage] = useState({ text: "", type: "" });
 
 	// セッションが読み込まれたら、現在の名前を入力フォームの初期値にセットする
 	useEffect(() => {
@@ -23,7 +23,7 @@ export default function ProfilePage() {
 	const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
 		e.preventDefault();
 		setIsLoading(true);
-		setMessage("");
+		setMessage({ text: "", type: "" });
 
 		try {
 			// 2. プロフィール更新API（PUT /api/profile）に送信する
@@ -34,15 +34,15 @@ export default function ProfilePage() {
 			});
 
 			if (res.ok) {
-				setMessage("更新しました！");
+				setMessage({ text: "更新しました！", type: "success" });
 				// 3. Auth.js のセッション情報も最新に更新（これで右上の名前もすぐ置き換わります）
 				await update({ name });
 			} else {
 				const errorData = await res.json();
-				setMessage(`エラー: ${errorData.error}`);
+				setMessage({ text: `エラー: ${errorData.error}`, type: "error" });
 			}
 		} catch (error) {
-			setMessage("通信エラーが発生しました");
+			setMessage({ text: "通信エラーが発生しました", type: "error" });
 		} finally {
 			setIsLoading(false);
 		}
@@ -52,7 +52,7 @@ export default function ProfilePage() {
 		const file = e.target.files?.[0]; // 選択されたファイルを取り出す
 		if (!file) return;
 		setIsLoading(true);
-		setMessage("アップロード中...");
+		setMessage({ text: "アップロード中...", type: "" });
 		// 1. ファイル送信専用の「梱包箱」にファイルを詰める
 		const formData = new FormData();
 		formData.append("file", file);
@@ -65,15 +65,15 @@ export default function ProfilePage() {
 		  });
 		  if (res.ok) {
 			const data = await res.json();
-		setMessage("画像を更新しました！");
-		// 3. 通行証（セッション）も最新の画像URLに即座に更新する
-		await update({ image: data.imageUrl });
+			setMessage({ text: "画像を更新しました！", type: "success" });
+			// 3. 通行証（セッション）も最新の画像URLに即座に更新する
+			await update({ image: data.imageUrl });
 		  } else {
 			const errorData = await res.json();
-			setMessage(`エラー: ${errorData.error}`);
+			setMessage({ text: `エラー: ${errorData.error}`, type: "error" });
 		  }
 		} catch (error) {
-		  setMessage("通信エラーが発生しました");
+		  setMessage({ text: "通信エラーが発生しました", type: "error" });
 		} finally {
 		  setIsLoading(false);
 		}
@@ -81,75 +81,108 @@ export default function ProfilePage() {
 
 	return (
 		<div className="wafuu-page">
-			<div className="wafuu-bg" style={{ backgroundImage: "url(/images/home-bg.png)" }} />
+			{/* 背景 */}
+			<div
+				className="wafuu-bg"
+				style={{ backgroundImage: "url(/images/home-bg.png)" }}
+			/>
 
+			{/* ヘッダー */}
 			<header className="wafuu-header">
-				<div className="wafuu-header-logo">プロフィール設定</div>
+				<Link href="/home" className="wafuu-header-logo">
+					将棋ゲーム
+				</Link>
 				<div className="wafuu-header-right">
-					<Link href="/home" className="wafuu-header-btn" style={{ textDecoration: "none" }}>
-						ホームに戻る
+					<span className="wafuu-header-username">プロフィール設定</span>
+					<Link href="/home" className="wafuu-header-btn">
+						戻る
 					</Link>
 				</div>
 			</header>
 
-			<div className="wafuu-content" style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "80vh" }}>
-				<div className="wafuu-menu" style={{ width: "100%", maxWidth: "600px", padding: "2rem", backgroundColor: "rgba(255, 255, 255, 0.9)", borderRadius: "8px" }}>
-					<h2 style={{ textAlign: "center", marginBottom: "2rem", color: "#333" }}>ユーザー情報</h2>
+			{/* コンテンツ */}
+			<div className="wafuu-content" style={{ justifyContent: "flex-start", paddingTop: "80px" }}>
+				<div 
+					className="wafuu-flex-col wafuu-gap-16" 
+					style={{ width: "100%", maxWidth: "500px", alignItems: "center" }}
+				>
+					<h2 className="wafuu-heading">プレイヤー設定</h2>
 
-					<div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: "2rem" }}>
-						<img
-							src={session?.user?.image || "/images/default-avatar.png"}
-							alt="User Avatar"
-							style={{ width: "120px", height: "120px", borderRadius: "50%", objectFit: "cover", border: "3px solid #ccc" }}
-						/>
-						<div style={{ marginTop: "1rem" }}>
-              				<label 
-                				htmlFor="avatar-upload" 
-                				style={{ cursor: isLoading ? "wait" : "pointer", padding: "0.5rem 1rem", backgroundColor: "#fff", border: "1px solid #ccc", borderRadius: "4px", fontSize: "0.9rem", color: "#333" }}
-              				>
-                				画像を変更 (PNGのみ)
-              				</label>
-              				<input
-                			  id="avatar-upload"
-                			  type="file"
-                			  accept="image/png"
-                			  onChange={handleImageUpload}
-                			  disabled={isLoading}
-                			  style={{ display: "none" }}
-              				/>
-            			</div>
-					</div>
-
-					{/* 入力フォーム */}
-					<form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-						<div>
-							<label htmlFor="name" style={{ display: "block", marginBottom: "0.5rem", color: "#333", fontWeight: "bold" }}>プレイヤー名</label>
-							<input
-								id="name"
-								type="text"
-								value={name}
-								onChange={(e) => setName(e.target.value)}
-								required
-								style={{ width: "100%", padding: "0.75rem", borderRadius: "4px", border: "1px solid #ccc", color: "#000", fontSize: "1rem" }}
+					<div className="wafuu-card" style={{ maxWidth: "100%", textAlign: "center" }}>
+						{/* アバター表示 */}
+						<div style={{ position: "relative", marginBottom: "2rem", display: "inline-block" }}>
+							<img
+								src={session?.user?.image || "/images/default-avatar.png"}
+								alt="User Avatar"
+								style={{ 
+									width: "120px", 
+									height: "120px", 
+									borderRadius: "50%", 
+									objectFit: "cover", 
+									border: "3px solid rgba(212, 175, 55, 0.4)",
+									boxShadow: "0 0 20px rgba(0, 0, 0, 0.5)"
+								}}
 							/>
+							<div style={{ marginTop: "1rem" }}>
+								<label 
+									htmlFor="avatar-upload" 
+									className="wafuu-header-btn"
+									style={{ 
+										cursor: isLoading ? "wait" : "pointer",
+										display: "inline-block"
+									}}
+								>
+									画像を変更 (PNGのみ)
+								</label>
+								<input
+									id="avatar-upload"
+									type="file"
+									accept="image/png"
+									onChange={handleImageUpload}
+									disabled={isLoading}
+									style={{ display: "none" }}
+								/>
+							</div>
 						</div>
 
-						<button
-							type="submit"
-							disabled={isLoading}
-							style={{ padding: "0.75rem", backgroundColor: "#333", color: "white", border: "none", borderRadius: "4px", cursor: isLoading ? "wait" : "pointer", fontSize: "1rem" }}
-						>
-							{isLoading ? "保存中..." : "保存する"}
-						</button>
+						{/* 入力フォーム */}
+						<form onSubmit={handleSubmit} className="wafuu-flex-col wafuu-gap-16">
+							<div style={{ textAlign: "left" }}>
+								<label htmlFor="name" className="wafuu-label">プレイヤー名</label>
+								<input
+									id="name"
+									className="wafuu-input"
+									type="text"
+									value={name}
+									onChange={(e) => setName(e.target.value)}
+									required
+									autoComplete="off"
+									style={{ textAlign: "center", fontSize: "1.1rem" }}
+								/>
+							</div>
 
-						{/* 結果メッセージの表示 */}
-						{message && (
-							<p style={{ textAlign: "center", color: message.includes("エラー") ? "#d32f2f" : "#2e7d32", fontWeight: "bold" }}>
-								{message}
-							</p>
-						)}
-					</form>
+							<button
+								type="submit"
+								disabled={isLoading}
+								className="wafuu-btn-primary"
+							>
+								{isLoading ? "保存中..." : "保存する"}
+							</button>
 
+							{/* 結果メッセージの表示 */}
+							{message.text && (
+								<div className={message.type === "error" ? "wafuu-error" : "wafuu-badge wafuu-badge-success"} style={{ width: "100%", textAlign: "center", marginTop: "10px" }}>
+									{message.text}
+								</div>
+							)}
+						</form>
+					</div>
+
+					<div className="wafuu-mt-16" style={{ width: "100%" }}>
+						<Link href="/home" className="wafuu-btn-outline">
+							ホームに戻る
+						</Link>
+					</div>
 				</div>
 			</div>
 		</div>
