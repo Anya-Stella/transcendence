@@ -4,12 +4,13 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAiGame } from "@/hooks/useAiGame";
-import { PieceData, Color, PieceType } from "@torassen/shogi-logic";
+import { PieceData, Color, PieceType, Move } from "@torassen/shogi-logic";
 import TatamiBackground from "@/components/TatamiBackground";
-import VictoryAnimation from "@/components/VictoryAnimation";
-import DefeatAnimation from "@/components/DefeatAnimation";
+import VictoryAnimation from "@/components/Overlay/VictoryAnimation";
+import DefeatAnimation from "@/components/Overlay/DefeatAnimation";
 import { uiBoardToBoardState } from "./MatchBoard";
 import { useUser } from "@/hooks/useUser";
+import Overlay from "./Overlay/OteOverlay";
 
 const PIECE_TYPE_TO_KANJI: Record<number, string> = {
 	[PieceType.PAWN]: "歩",
@@ -86,7 +87,7 @@ function AiMatchBoard({ mySide = "sente", aiDepth = 4, isPreparing = false }: Ai
 				isGameOver={!!gameOver}
 				isPreparing={isPreparing}
 				onLoaded={() => setIsLoaded(true)}
-				onBoardMove={(move) => {
+				onBoardMove={(move: Move) => {
 					if (move.type === "move") {
 						executeMove(move.from, move.to, move.promote ?? false);
 					} else if (move.type === "drop") {
@@ -122,34 +123,7 @@ function AiMatchBoard({ mySide = "sente", aiDepth = 4, isPreparing = false }: Ai
 					{/* コンテンツ */}
 					<div className="wafuu-content" style={{ flex: 1, padding: 0, overflow: "hidden", pointerEvents: "none" }}>
 						{/* 王手！ オーバーレイ (盤面中央) */}
-						{showCheckOverlay && (
-							<div
-								className="wafuu-pulse"
-								style={{
-									position: "fixed",
-									top: "50%",
-									left: "50%",
-									transform: "translate(-50%, -50%)",
-									zIndex: 100,
-									pointerEvents: "none",
-									textAlign: "center"
-								}}
-							>
-								<span
-									style={{
-										fontSize: "8rem",
-										fontWeight: 900,
-										color: "#000000",
-										textShadow: "0 0 15px rgba(255, 255, 255, 0.6), 0 0 30px rgba(255, 255, 255, 0.3)",
-										letterSpacing: "0.4em",
-										whiteSpace: "nowrap",
-										filter: "drop-shadow(0 0 10px rgba(0,0,0,0.8))"
-									}}
-								>
-									王手
-								</span>
-							</div>
-						)}
+						{showCheckOverlay && <Overlay/>}
 						{/* ターン表示 (中央上部) */}
 						<div
 							style={{

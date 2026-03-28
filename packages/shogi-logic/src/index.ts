@@ -43,4 +43,22 @@ export {
 } from "./board"
 
 export { sfenToUIBoard } from "./sfenToUIBoard"
-export { createInitialBoard, UNPROMOTE_MAP } from "./constants"
+export { gridToWorld, worldToGrid } from "./grid-world"
+export { checkIsHandPos } from "./checkIsHandPos"
+export { isPromotedPieceType, getBasePieceType } from "./pieceType"
+export { getGridFromBoardState } from "./getGridFromBoardState"
+export { getPieceRotation } from "./getPieceRotation"
+
+export { 
+    createInitialBoard,
+    UNPROMOTE_MAP,
+    PIECE_INITIAL_GRID,
+    SENTE_HAND_COORDS,
+    GOTE_HAND_COORDS,
+    SENTE_PIECES_CONFIG,
+    GOTE_PIECES_CONFIG,
+    BOARD_SIZE,
+    BOARD_X_COORDS,
+    BOARD_Y,
+    BOARD_Z_COORDS
+} from "./constants"

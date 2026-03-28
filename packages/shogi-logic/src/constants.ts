@@ -2,7 +2,7 @@
 // @torassen/shogi-logic — 5×5 Mini Shogi constants
 // ============================================================
 
-import { Color, PieceType, PromotedPieceType, type Piece, type BoardState, type Hand } from "./types";
+import { Color, PieceType, PromotedPieceType, type Piece, type BoardState, type Hand, Square } from "./types";
 
 /** 盤面サイズ */
 export const BOARD_SIZE = 5;
@@ -77,6 +77,56 @@ export function emptyHand(): Hand {
 	};
 }
 
+export const PIECE_INITIAL_GRID: Record<string, Square> = {
+	"sente-ou": { row: 4, col: 0 },
+	"sente-kin": { row: 4, col: 1 },
+	"sente-gin": { row: 4, col: 2 },
+	"sente-kaku": { row: 4, col: 3 },
+	"sente-hisya": { row: 4, col: 4 },
+	"sente-fu": { row: 3, col: 0 },
+	"gote-ou": { row: 0, col: 4 },
+	"gote-kin": { row: 0, col: 3 },
+	"gote-gin": { row: 0, col: 2 },
+	"gote-kaku": { row: 0, col: 1 },
+	"gote-hisya": { row: 0, col: 0 },
+	"gote-fu": { row: 1, col: 4 },
+};
+
+// 駒台の座標定義
+export const SENTE_HAND_COORDS: Partial<Record<PieceType, [number, number, number]>> = {
+	[PieceType.PAWN]: [-3, 10.0, 10.2],
+	[PieceType.ROOK]: [-3, 10.0, 13.2],
+	[PieceType.BISHOP]: [-3, 10.0, 16.2],
+	[PieceType.SILVER]: [-7.1, 10.0, 10.2],
+	[PieceType.GOLD]: [-7.1, 10.0, 13.2],
+};
+
+export const GOTE_HAND_COORDS: Partial<Record<PieceType, [number, number, number]>> = {
+	[PieceType.PAWN]: [-2.7, 10.0, -10.2],
+	[PieceType.ROOK]: [-2.7, 10.0, -13.2],
+	[PieceType.BISHOP]: [-2.7, 10.0, -16.2],
+	[PieceType.SILVER]: [1.5, 10.0, -10.2],
+	[PieceType.GOLD]: [1.5, 10.0, -13.2],
+};
+
+export const SENTE_PIECES_CONFIG = [
+	{ id: "sente-ou", model: "/models/ousyo.glb", defaultPos: [-9.1, 10.0, -6.4] as [number, number, number] },
+	{ id: "sente-kin", model: "/models/kin.glb", defaultPos: [-9.1, 10.0, -3.2] as [number, number, number] },
+	{ id: "sente-gin", model: "/models/gin.glb", defaultPos: [-9.1, 10.0, 0.0] as [number, number, number] },
+	{ id: "sente-kaku", model: "/models/kaku.glb", defaultPos: [-9.1, 10.0, 3.2] as [number, number, number] },
+	{ id: "sente-hisya", model: "/models/hisya.glb", defaultPos: [-9.1, 10.0, 6.4] as [number, number, number] },
+	{ id: "sente-fu", model: "/models/fu.glb", defaultPos: [-6, 10.0, -6.4] as [number, number, number] },
+];
+
+export const GOTE_PIECES_CONFIG = [
+	{ id: "gote-ou", model: "/models/ousyo_NoTen.glb", defaultPos: [3.9, 10.0, 6.4] as [number, number, number] },
+	{ id: "gote-kin", model: "/models/kin.glb", defaultPos: [3.9, 10.0, 3.2] as [number, number, number] },
+	{ id: "gote-gin", model: "/models/gin.glb", defaultPos: [3.9, 10.0, 0] as [number, number, number] },
+	{ id: "gote-kaku", model: "/models/kaku.glb", defaultPos: [3.9, 10.0, -3.2] as [number, number, number] },
+	{ id: "gote-hisya", model: "/models/hisya.glb", defaultPos: [3.9, 10.0, -6.4] as [number, number, number] },
+	{ id: "gote-fu", model: "/models/fu.glb", defaultPos: [0.6, 10.0, 6.4] as [number, number, number] },
+];
+
 /** 初期盤面を生成 */
 export function createInitialBoard(): BoardState {
 	const board: (Piece | null)[][] = Array.from({ length: BOARD_SIZE }, () =>
@@ -112,3 +162,10 @@ export function createInitialBoard(): BoardState {
 		moveCount: 1,
 	};
 }
+
+// 盤面のグリッド座標定義（5×5）
+// Row 0 (後手側: X=3.9) → Row 4 (先手側: X=-9.1)
+// Col 0 (左: Z=-6.4) → Col 4 (右: Z=6.4)
+export const BOARD_X_COORDS = [3.9, 0.6, -2.7, -6.0, -9.1];
+export const BOARD_Z_COORDS = [-6.4, -3.2, 0, 3.2, 6.4];
+export const BOARD_Y = 10.0;       // 駒の Y 座標（高さ）

@@ -20,7 +20,7 @@ down-prod:
 
 # 未使用イメージの削除
 rmi:
-	docker image prune -a
+	docker image prune -a -f
 
 studio:
 	docker compose -f docker-compose.dev.yml exec nextjs npx prisma studio
