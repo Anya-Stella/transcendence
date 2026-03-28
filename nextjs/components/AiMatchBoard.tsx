@@ -4,10 +4,12 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAiGame } from "@/hooks/useAiGame";
-import { DEMOTE_MAP, PieceData, HandPieces, Pos, Color, PieceType } from "@torassen/shogi-logic";
+import { PieceData, Color, PieceType } from "@torassen/shogi-logic";
 import TatamiBackground from "@/components/TatamiBackground";
 import VictoryAnimation from "@/components/VictoryAnimation";
 import DefeatAnimation from "@/components/DefeatAnimation";
+import { uiBoardToBoardState } from "./MatchBoard";
+import { useUser } from "@/hooks/useUser";
 
 const PIECE_TYPE_TO_KANJI: Record<number, string> = {
 	[PieceType.PAWN]: "歩",
@@ -31,7 +33,7 @@ interface AiMatchBoardProps {
 
 function AiMatchBoard({ mySide = "sente", aiDepth = 4, isPreparing = false }: AiMatchBoardProps) {
 	const router = useRouter();
-	const [user, setUser] = useState<{ name: string } | null>(null);
+	const user = useUser();
 	const [isLoaded, setIsLoaded] = useState(false);
 
 	const {
@@ -39,17 +41,10 @@ function AiMatchBoard({ mySide = "sente", aiDepth = 4, isPreparing = false }: Ai
 		turn,
 		senteHand,
 		goteHand,
-		selected,
-		selectedHandPiece,
-		isMyTurn,
-		isLegalTarget,
-		isLegalDropTarget,
 		promoteDialog,
 		setPromoteDialog,
 		executeMove,
 		executeDrop,
-		handleCellClick,
-		handleHandPieceClick,
 		handleEndMatch,
 		aiThinking,
 		lastMove,
@@ -57,6 +52,8 @@ function AiMatchBoard({ mySide = "sente", aiDepth = 4, isPreparing = false }: Ai
 		gameResult,
 		gameOver
 	} = useAiGame(mySide as "sente" | "gote", aiDepth);
+
+	let state = uiBoardToBoardState({board: board,senteHand:senteHand,goteHand:goteHand,turn:turn});
 
 	const [showCheckOverlay, setShowCheckOverlay] = useState(false);
 	const [showResultOverlay, setShowResultOverlay] = useState(false);
@@ -72,16 +69,6 @@ function AiMatchBoard({ mySide = "sente", aiDepth = 4, isPreparing = false }: Ai
 		}
 	}, [isCheck]);
 
-	// ユーザー情報取得
-	useEffect(() => {
-		fetch("/api/me")
-			.then((res) => res.json())
-			.then((data) => {
-				if (data.user) setUser(data.user);
-			})
-			.catch(() => { });
-	}, []);
-
 	const handleLogout = async () => {
 		await fetch("/api/auth/logout", { method: "POST" });
 		router.push("/login");
@@ -92,6 +79,7 @@ function AiMatchBoard({ mySide = "sente", aiDepth = 4, isPreparing = false }: Ai
 		<div className="wafuu-page">
 			{/* 背景 */}
 			<TatamiBackground
+				state={state}
 				playerColor={mySide === "sente" ? Color.BLACK : Color.WHITE}
 				externalTurn={turn === "sente" ? Color.BLACK : Color.WHITE}
 				lastExternalMove={lastMove || undefined}
@@ -120,7 +108,7 @@ function AiMatchBoard({ mySide = "sente", aiDepth = 4, isPreparing = false }: Ai
 						<div className="wafuu-header-right">
 							<span style={{ color: "rgba(245, 230, 200, 0.4)", fontSize: "0.8rem", marginRight: "8px" }}>AI対戦</span>
 							{user && (
-								<span className="wafuu-header-username">{user.name}</span>
+								<span className="wafuu-header-username">{user}</span>
 							)}
 							<button
 								className="wafuu-header-btn"

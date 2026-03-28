@@ -1,16 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Socket } from "socket.io-client";
 import { useShogiGame } from "@/hooks/useShogiGame";
-import { DEMOTE_MAP, PieceData, HandPieces, Color, PieceType } from "@torassen/shogi-logic";
+import { DEMOTE_MAP, PieceData, HandPieces, Color, PieceType, PType, Hand, Piece, UIBoard, BoardState } from "@torassen/shogi-logic";
 import TatamiBackground from "@/components/TatamiBackground";
 import VictoryAnimation from "@/components/VictoryAnimation";
 import DefeatAnimation from "@/components/DefeatAnimation";
+import { useUser } from "@/hooks/useUser";
 
-const PIECE_TYPE_TO_KANJI: Record<number, string> = {
+export const PIECE_TYPE_TO_KANJI: Record<number, string> = {
 	[PieceType.PAWN]: "歩",
 	[PieceType.SILVER]: "銀",
 	[PieceType.GOLD]: "金",
@@ -19,9 +20,49 @@ const PIECE_TYPE_TO_KANJI: Record<number, string> = {
 	[PieceType.KING]: "玉",
 };
 
-function PieceComponent({ piece, isPromoted }: { piece: PieceData; isPromoted?: boolean }) {
-	// 2Dの駒を非表示にする（TatamiBackgroundで表示するため）
-	return null;
+export const KANJI_TO_PTYPE: Record<string, PType> = {
+  "歩": PType.PAWN,
+  "銀": PType.SILVER,
+  "金": PType.GOLD,
+  "角": PType.BISHOP,
+  "飛": PType.ROOK,
+  "玉": PType.KING,
+  "王": PType.KING,
+  "と": PType.PRO_PAWN,
+  "全": PType.PRO_SILVER,
+  "馬": PType.PRO_BISHOP,
+  "龍": PType.PRO_ROOK,
+};
+
+export function uiBoardToBoardState(uiBoard: UIBoard, moveCount: number = 0): BoardState {
+  // 1. 盤面（board）の変換
+  const board: (Piece | null)[][] = uiBoard.board.map((row) =>
+    row.map((cell) => {
+      if (!cell) return null;
+
+      const pieceType = KANJI_TO_PTYPE[cell.kanji];
+      // 対応する駒種がない場合はエラー回避のため null を返す
+      if (pieceType === undefined) return null;
+
+      return {
+        color: cell.side === "sente" ? Color.BLACK : Color.WHITE,
+        pieceType: pieceType,
+      };
+    })
+  );
+
+  const hands: [Hand, Hand] = [
+    { ...uiBoard.senteHand },
+    { ...uiBoard.goteHand },
+  ];
+  const sideToMove = uiBoard.turn === "sente" ? Color.BLACK : Color.WHITE;
+
+  return {
+    board,
+    hands,
+    sideToMove,
+    moveCount,
+  };
 }
 
 interface MatchBoardProps {
@@ -32,9 +73,11 @@ interface MatchBoardProps {
 	isPreparing?: boolean;
 }
 
+
+
 function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente", isPreparing = false }: MatchBoardProps) {
 	const router = useRouter();
-	const [user, setUser] = useState<{ name: string } | null>(null);
+	const user = useUser();
 	const [isLoaded, setIsLoaded] = useState(false);
 
 	const {
@@ -42,23 +85,21 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 		turn,
 		senteHand,
 		goteHand,
-		selected,
-		selectedHandPiece,
 		isMyTurn,
-		isLegalTarget,
-		isLegalDropTarget,
 		promoteDialog,
 		setPromoteDialog,
 		executeMove,
 		executeDrop,
-		handleCellClick,
-		handleHandPieceClick,
 		handleEndMatch,
 		lastMove,
 		isCheck,
 		gameResult,
 		gameOver
 	} = useShogiGame(socket, roomId, mySide, wsStatus);
+
+	const state = useMemo(() => {
+    return uiBoardToBoardState({ board, senteHand, goteHand, turn });
+	}, [board, senteHand, goteHand, turn]);
 
 	const [showCheckOverlay, setShowCheckOverlay] = useState(false);
 	const [showResultOverlay, setShowResultOverlay] = useState(false);
@@ -73,16 +114,6 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 			setShowCheckOverlay(false);
 		}
 	}, [isCheck]);
-
-	// ユーザー情報取得
-	useEffect(() => {
-		fetch("/api/me")
-			.then((res) => res.json())
-			.then((data) => {
-				if (data.user) setUser(data.user);
-			})
-			.catch(() => { });
-	}, []);
 
 	const handleLogout = async () => {
 		await fetch("/api/auth/logout", { method: "POST" });
@@ -105,6 +136,7 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 		<div className="wafuu-page">
 			{/* 背景 */}
 			<TatamiBackground
+				state={state}
 				playerColor={mySide === "sente" ? Color.BLACK : Color.WHITE}
 				externalTurn={turn === "sente" ? Color.BLACK : Color.WHITE}
 				lastExternalMove={lastMove || undefined}
@@ -138,7 +170,7 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 								</span>
 							)}
 							{user && (
-								<span className="wafuu-header-username">{user.name}</span>
+								<span className="wafuu-header-username">{user}</span>
 							)}
 							<button
 								className="wafuu-header-btn"

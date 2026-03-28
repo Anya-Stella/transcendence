@@ -92,7 +92,7 @@ export function useShogiGame(
 		};
 
 		const handleMatchEnded = (data: { winner: string | null; message: string }) => {
-			console.log("[WS] match_ended received:", data);
+			// console.log("[WS] match_ended received:", data);
 
 			// 自分の勝敗に合わせてメッセージを書き換える
 			let displayMessage = data.message;
@@ -127,13 +127,14 @@ export function useShogiGame(
 		const handleSyncState = (data: { sfen: string }) => {
 			const syncedBoard = sfenToUIBoard(data.sfen);
 			syncBoardState(syncedBoard);
+			console.log(data.sfen);
 		};
 
 		socket.on("syncState", handleSyncState);
 		return () => {
 			socket.off("syncState", handleSyncState);
 		};
-	}, [socket, roomId, syncBoardState]);
+	}, [socket, roomId]);
 
 	// ========= クリックハンドラ =========
 

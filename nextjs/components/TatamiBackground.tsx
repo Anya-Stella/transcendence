@@ -515,6 +515,42 @@ function getBasePieceType(id: string): PieceType {
 	return PieceType.KING;
 }
 
+export const getGridFromBoardState = (state: BoardState): Record<string, Square> => {
+    const gridMap: Record<string, Square> = {};
+    for (let row = 0; row < 5; row++) {
+        for (let col = 0; col < 5; col++) {
+            const piece = state.board[row][col];
+            if (piece) {
+                const id = generatePieceId(piece.color, piece.pieceType, gridMap);
+                gridMap[id] = { row, col };
+            }
+        }
+    }
+    return gridMap;
+};
+const generatePieceId = (color: Color, type: PieceType, existing: Record<string, any>): string => {
+    const prefix = color === Color.BLACK ? "sente" : "gote";
+    const typeStr = getPieceTypeKey(type);
+    const baseId = `${prefix}-${typeStr}`;
+    if (!existing[baseId]) return baseId;
+    let i = 1;
+    while (existing[`${baseId}-${i}`])
+        i++;
+    return `${baseId}-${i}`;
+};
+
+const getPieceTypeKey = (type: PieceType): string => {
+    switch (type) {
+        case PieceType.KING: return "ou";
+        case PieceType.GOLD: return "kin";
+        case PieceType.SILVER: return "gin";
+        case PieceType.BISHOP: return "kaku";
+        case PieceType.ROOK: return "hisya";
+        case PieceType.PAWN: return "fu";
+        default: return "unknown";
+    }
+};
+
 // 各駒の初期グリッド位置（駒の移動判定に使用）
 const PIECE_INITIAL_GRID: Record<string, Square> = {
 	"sente-ou": { row: 4, col: 0 },
@@ -567,6 +603,7 @@ const GOTE_PIECES_CONFIG = [
 ];
 
 export default function TatamiBackground({
+	state,
 	onTurnChange,
 	onBoardMove,
 	externalTurn,
@@ -576,6 +613,7 @@ export default function TatamiBackground({
 	isPreparing = false,
 	onLoaded
 }: {
+	state: BoardState;
 	onTurnChange?: (turn: Color) => void;
 	onBoardMove?: (move: Move) => void;
 	onLoaded?: () => void;
@@ -590,7 +628,7 @@ export default function TatamiBackground({
 	const boardGroupRef = useRef<THREE.Group>(null);
 	const lastExternalMoveIdRef = useRef<string | null>(null);
 	// 将棋の論理的な盤面状態
-	const [boardState, setBoardState] = useState<BoardState>(() => createInitialBoard());
+	const [boardState, setBoardState] = useState<BoardState>(state);
 
 	// 各駒の現在位置（ワールド座標）を管理
 	const [piecePositions, setPiecePositions] = useState<Record<string, [number, number, number]>>({});
@@ -613,12 +651,6 @@ export default function TatamiBackground({
 
 	// 盤面の向き：自分が後手(White)の場合は論理的な座標を反転させる
 	const isFlipped = useMemo(() => playerColor === Color.WHITE, [playerColor]);
-
-
-
-
-
-
 
 	// 3D 盤面のみを更新する関数（循環防止、または外部指し手用）
 	const applyMoveTo3D = useCallback((id: string, move: Move) => {
@@ -693,7 +725,7 @@ export default function TatamiBackground({
 		if (onTurnChange) onTurnChange(nextSide);
 		if (onBoardMove) onBoardMove(move);
 
-		console.log(`[3D] アクション実行: ${id}`);
+		// console.log(`[3D] アクション実行: ${id}`);
 	}, [boardState, applyMoveTo3D, onTurnChange, onBoardMove]);
 
 	// 外部からの手番同期（HUDとの同期用）
@@ -920,7 +952,7 @@ export default function TatamiBackground({
 				executeMove(id, move);
 			}
 		} else {
-			console.log("無効な移動です");
+			// console.log("無効な移動です");
 		}
 	}, [boardState, piecePositions, executeMove, isPiecePromoted]);
 

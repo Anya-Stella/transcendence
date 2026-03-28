@@ -24,3 +24,5 @@ rmi:
 
 studio:
 	docker compose -f docker-compose.dev.yml exec nextjs npx prisma studio
+
+re: down-prod rmi prod

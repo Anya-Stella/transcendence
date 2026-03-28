@@ -23,8 +23,6 @@ export default function SpectateRoomPage() {
             s.emit("joinRoom", {roomId: roomId,isPlayer:false});
         });
 
-        setMySide("spectator");
-     
         s.on("disconnect", () => setWsStatus("disconnected"));
 
         setSocket(s);

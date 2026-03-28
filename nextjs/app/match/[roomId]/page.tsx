@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { io, Socket } from "socket.io-client";
 import MatchBoard from "@/components/MatchBoard";
+import { useUser } from "@/hooks/useUser";
 
 export default function OnlineMatchPage() {
 	const params = useParams();
@@ -11,16 +12,7 @@ export default function OnlineMatchPage() {
 	const [socket, setSocket] = useState<Socket | null>(null);
 	const [wsStatus, setWsStatus] = useState<"connected" | "disconnected" | "connecting">("connecting");
 	const [mySide, setMySide] = useState<"sente" | "gote" | "spectator">("spectator");
-	const [userId, setUserId] = useState<string | null>(null);
-
-	useEffect(() => {
-		fetch("/api/me")
-			.then((res) => res.json())
-			.then((data) => {
-				if (data.user) setUserId(data.user.id);
-			})
-			.catch(() => { });
-	}, []);
+	const userId = useUser();
 
 	useEffect(() => {
 		const host = typeof window !== "undefined" ? window.location.hostname : "localhost";
@@ -31,7 +23,7 @@ export default function OnlineMatchPage() {
 		});
 
 		s.on("connect", () => {
-			console.log("[WS] Connected. ID:", s.id);
+			// console.log("[WS] Connected. ID:", s.id);
 			setWsStatus("connected");
 			s.emit("joinRoom", {
 				roomId: roomId,
@@ -44,13 +36,8 @@ export default function OnlineMatchPage() {
 			setWsStatus("disconnected");
 		});
 
-		s.on("setSide", (data: { side: "sente" | "gote" }) => {
-			console.log("[WS] Server setSide:", data.side);
-			setMySide(data.side);
-		});
-
 		s.on("roomState", (state: { players: { socketId: string, userId?: string, side: "b" | "w" }[] }) => {
-			console.log("[WS] Room state update:", state);
+			// console.log("[WS] Room state update:", state);
 			const me = state.players.find((p) =>
 				(userId && p.userId === userId) || p.socketId === s.id
 			);
