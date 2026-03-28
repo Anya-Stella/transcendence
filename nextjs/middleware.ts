@@ -7,17 +7,20 @@ export default auth((req) => {
   const { nextUrl } = req;
   const isAuthenticated = !!req.auth?.user;
 
-  const isPublicPage = nextUrl.pathname.startsWith("/login");
+  const isLoginPage = nextUrl.pathname.startsWith("/login");
+  const isLegalPage = nextUrl.pathname.startsWith("/privacy")
+    || nextUrl.pathname.startsWith("/terms");
   const isApiAuthRoute = nextUrl.pathname.startsWith("/api/auth");
   const isRoot = nextUrl.pathname === "/";
 
   if (isApiAuthRoute) return;
+  if (isLegalPage) return;
 
   if (isRoot) {
     return Response.redirect(new URL(isAuthenticated ? "/home" : "/login", nextUrl));
   }
 
-  if (isPublicPage) {
+  if (isLoginPage) {
     if (isAuthenticated) {
       return Response.redirect(new URL("/home", nextUrl));
     }
