@@ -54,7 +54,7 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     ports:
-      - "8080:80"
+      - "8080:443"
     depends_on:
       - nextjs
       - ws-server
