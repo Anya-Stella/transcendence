@@ -79,19 +79,12 @@ io.on("connection", (socket: Socket) => {
 			sfen: room.sfen,
 			hostSocketId: room.hostSocketId,
 			hostUserId: room.hostUserId,
-			playerCount: room.players.length,
 			players: room.players.map((p) => ({
 				socketId: p.socketId,
 				userId: p.userId,
 				side: p.side,
 			})),
 		});
-
-		// Explicitly tell THIS player which side they are
-		const playerIndex = room.players.findIndex(p => p.socketId === socket.id);
-		if (playerIndex !== -1) {
-			socket.emit("setSide", { side: playerIndex === 0 ? "sente" : "gote" });
-		}
 
 	});
 

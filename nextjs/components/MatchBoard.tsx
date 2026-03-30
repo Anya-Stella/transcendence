@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Socket } from "socket.io-client";
 import { useShogiGame } from "@/hooks/useShogiGame";
-import { DEMOTE_MAP, PieceData, HandPieces, Color, PieceType } from "@torassen/shogi-logic";
+import { DEMOTE_MAP, PieceData, HandPieces, Color, PieceType, PType, UIBoard, BoardState, Piece, Hand } from "@torassen/shogi-logic";
 import TatamiBackground from "@/components/TatamiBackground";
 import VictoryAnimation from "@/components/VictoryAnimation";
 import DefeatAnimation from "@/components/DefeatAnimation";
@@ -18,6 +18,51 @@ const PIECE_TYPE_TO_KANJI: Record<number, string> = {
 	[PieceType.ROOK]: "飛",
 	[PieceType.KING]: "玉",
 };
+
+export const KANJI_TO_PTYPE: Record<string, PType> = {
+  "歩": PType.PAWN,
+  "銀": PType.SILVER,
+  "金": PType.GOLD,
+  "角": PType.BISHOP,
+  "飛": PType.ROOK,
+  "玉": PType.KING,
+  "王": PType.KING,
+  "と": PType.PRO_PAWN,
+  "全": PType.PRO_SILVER,
+  "馬": PType.PRO_BISHOP,
+  "龍": PType.PRO_ROOK,
+};
+
+export function uiBoardToBoardState(uiBoard: UIBoard, moveCount: number = 0): BoardState {
+  // 1. 盤面（board）の変換
+  const board: (Piece | null)[][] = uiBoard.board.map((row) =>
+    row.map((cell) => {
+      if (!cell) return null;
+
+      const pieceType = KANJI_TO_PTYPE[cell.kanji];
+      // 対応する駒種がない場合はエラー回避のため null を返す
+      if (pieceType === undefined) return null;
+
+      return {
+        color: cell.side === "sente" ? Color.BLACK : Color.WHITE,
+        pieceType: pieceType,
+      };
+    })
+  );
+
+  const hands: [Hand, Hand] = [
+    { ...uiBoard.senteHand },
+    { ...uiBoard.goteHand },
+  ];
+  const sideToMove = uiBoard.turn === "sente" ? Color.BLACK : Color.WHITE;
+
+  return {
+    board,
+    hands,
+    sideToMove,
+    moveCount,
+  };
+}
 
 function PieceComponent({ piece, isPromoted }: { piece: PieceData; isPromoted?: boolean }) {
 	// 2Dの駒を非表示にする（TatamiBackgroundで表示するため）
@@ -59,6 +104,10 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 		gameResult,
 		gameOver
 	} = useShogiGame(socket, roomId, mySide, wsStatus);
+
+	const state = useMemo(() => {
+    return uiBoardToBoardState({ board, senteHand, goteHand, turn });
+	}, [board, senteHand, goteHand, turn]);
 
 	const [showCheckOverlay, setShowCheckOverlay] = useState(false);
 	const [showResultOverlay, setShowResultOverlay] = useState(false);
@@ -105,8 +154,9 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 		<div className="wafuu-page">
 			{/* 背景 */}
 			<TatamiBackground
+				state={state}
 				playerColor={mySide === "sente" ? Color.BLACK : Color.WHITE}
-				externalTurn={turn === "sente" ? Color.BLACK : Color.WHITE}
+				externalTurn={state.sideToMove}
 				lastExternalMove={lastMove || undefined}
 				isGameOver={!!gameOver}
 				isPreparing={isPreparing}

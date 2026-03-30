@@ -44,11 +44,6 @@ export default function OnlineMatchPage() {
 			setWsStatus("disconnected");
 		});
 
-		s.on("setSide", (data: { side: "sente" | "gote" }) => {
-			console.log("[WS] Server setSide:", data.side);
-			setMySide(data.side);
-		});
-
 		s.on("roomState", (state: { players: { socketId: string, userId?: string, side: "b" | "w" }[] }) => {
 			console.log("[WS] Room state update:", state);
 			const me = state.players.find((p) =>

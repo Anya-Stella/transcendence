@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAiGame } from "@/hooks/useAiGame";
@@ -8,6 +8,7 @@ import { DEMOTE_MAP, PieceData, HandPieces, Pos, Color, PieceType } from "@toras
 import TatamiBackground from "@/components/TatamiBackground";
 import VictoryAnimation from "@/components/VictoryAnimation";
 import DefeatAnimation from "@/components/DefeatAnimation";
+import { uiBoardToBoardState } from "./MatchBoard";
 
 const PIECE_TYPE_TO_KANJI: Record<number, string> = {
 	[PieceType.PAWN]: "歩",
@@ -58,6 +59,10 @@ function AiMatchBoard({ mySide = "sente", aiDepth = 4, isPreparing = false }: Ai
 		gameOver
 	} = useAiGame(mySide as "sente" | "gote", aiDepth);
 
+	const state = useMemo(() => {
+		return uiBoardToBoardState({ board, senteHand, goteHand, turn });
+		}, [board, senteHand, goteHand, turn]);
+
 	const [showCheckOverlay, setShowCheckOverlay] = useState(false);
 	const [showResultOverlay, setShowResultOverlay] = useState(false);
 
@@ -92,6 +97,7 @@ function AiMatchBoard({ mySide = "sente", aiDepth = 4, isPreparing = false }: Ai
 		<div className="wafuu-page">
 			{/* 背景 */}
 			<TatamiBackground
+				state={state}
 				playerColor={mySide === "sente" ? Color.BLACK : Color.WHITE}
 				externalTurn={turn === "sente" ? Color.BLACK : Color.WHITE}
 				lastExternalMove={lastMove || undefined}
