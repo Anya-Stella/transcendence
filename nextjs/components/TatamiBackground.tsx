@@ -456,7 +456,7 @@ export default function TatamiBackground({
 										pieceId={piece.id}
 										modelPath={piece.model}
 										initialPosition={piecePositions[piece.id] || gridToWorld(initialGrid[piece.id].row, initialGrid[piece.id].col, isFlipped)}
-										rotation={getPieceRotation(piece.id, pieceOwners[piece.id], isPiecePromoted(piece.id))}
+										rotation={getPieceRotation(piece.id, pieceOwners[piece.id], isPiecePromoted(piece.id), isFlipped)}
 										count={getHandPieceCount(piece.id)}
 										selectedId={selectedPiece}
 										isPromoted={isPiecePromoted(piece.id)}
@@ -474,7 +474,7 @@ export default function TatamiBackground({
 										pieceId={piece.id}
 										modelPath={piece.model}
 										initialPosition={piecePositions[piece.id] || gridToWorld(initialGrid[piece.id].row, initialGrid[piece.id].col, isFlipped)}
-										rotation={getPieceRotation(piece.id, pieceOwners[piece.id], isPiecePromoted(piece.id))}
+										rotation={getPieceRotation(piece.id, pieceOwners[piece.id], isPiecePromoted(piece.id), isFlipped)}
 										count={getHandPieceCount(piece.id)}
 										selectedId={selectedPiece}
 										isPromoted={isPiecePromoted(piece.id)}
