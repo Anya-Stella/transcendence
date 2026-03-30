@@ -21,6 +21,7 @@ export function useShogiGame(
 ) {
 	const router = useRouter();
 	const [lastMove, setLastMove] = useState<Move | null>(null);
+	const [gotSfen, setGotSfen] = useState<boolean>(false);
 
 	const {
 		board,
@@ -127,9 +128,9 @@ export function useShogiGame(
 		const handleSyncState = (data: { sfen: string }) => {
 			const syncedBoard = sfenToUIBoard(data.sfen);
 			syncBoardState(syncedBoard);
-			console.log(data.sfen);
 		};
 
+		setGotSfen(true);
 		socket.on("syncState", handleSyncState);
 		return () => {
 			socket.off("syncState", handleSyncState);
@@ -246,5 +247,6 @@ export function useShogiGame(
 		isCheck,
 		gameResult,
 		gameOver: gameResult.message,
+		gotSfen,
 	};
 }

@@ -13,7 +13,6 @@ import EnemyInfo from "./Info/EnemyInfo";
 import MyInfo from "./Info/MyInfo";
 import SarenderButton from "./Button/Sarender";
 import GameResultButton from "./Button/GameResult";
-import PromotionButton from "./Button/Promotion";
 import ShowResultOverlay from "./Overlay/ShowResultOverlay";
 import OteOverlay from "@/components/Overlay/OteOverlay";
 
@@ -92,16 +91,16 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 		senteHand,
 		goteHand,
 		isMyTurn,
-		promoteDialog,
-		setPromoteDialog,
 		executeMove,
 		executeDrop,
 		handleEndMatch,
 		lastMove,
 		isCheck,
 		gameResult,
-		gameOver
+		gameOver,
+		gotSfen
 	} = useShogiGame(socket, roomId, mySide, wsStatus);
+
 
 	const state = useMemo(() => {
     return uiBoardToBoardState({ board, senteHand, goteHand, turn });
@@ -141,14 +140,15 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 	return (
 		<div className="wafuu-page">
 			{/* 背景 */}
-			<TatamiBackground
+			{gotSfen && 
+				<TatamiBackground
 				state={state}
 				playerColor={mySide === "sente" ? Color.BLACK : Color.WHITE}
 				externalTurn={turn === "sente" ? Color.BLACK : Color.WHITE}
 				lastExternalMove={lastMove || undefined}
 				isGameOver={!!gameOver}
 				isPreparing={isPreparing}
-				onLoaded={() => setIsLoaded(true)}
+				onLoaded={() => {setIsLoaded(true);}}
 				onBoardMove={(move: Move) => {
 					if (mySide === "spectator") return;
 					if (move.type === "move") {
@@ -160,7 +160,9 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 						}
 					}
 				}}
-			/>
+				/>
+			}
+			
 
 			{!isPreparing && isLoaded && (
 				<>
@@ -211,18 +213,10 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 
 						{/* 左下 (あなたの情報) */}
 						<MyInfo mySide={mySide}/>
-						
 
 						{/* 下部のボタン (右下) */}
 						<SarenderButton isGameOver={gameOver !== null} mySide={mySide} clickHandler={handleEndMatch}/>
 					</div>
-
-					{/* Promotion dialog */}
-					{promoteDialog && <PromotionButton
-						Dialog={promoteDialog} 
-						promoteDialog={setPromoteDialog}
-						onExecute={executeMove}/>
-					}
 
 					{/* Result Overlay */}
 					{showResultOverlay && <ShowResultOverlay
