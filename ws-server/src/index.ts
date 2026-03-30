@@ -79,20 +79,12 @@ io.on("connection", (socket: Socket) => {
 			sfen: room.sfen,
 			hostSocketId: room.hostSocketId,
 			hostUserId: room.hostUserId,
-			playerCount: room.players.length,
 			players: room.players.map((p) => ({
 				socketId: p.socketId,
 				userId: p.userId,
 				side: p.side,
 			})),
 		});
-
-		// Explicitly tell THIS player which side they are
-		const playerIndex = room.players.findIndex(p => p.socketId === socket.id);
-		if (playerIndex !== -1) {
-			socket.emit("setSide", { side: playerIndex === 0 ? "sente" : "gote" });
-		}
-
 	});
 
 	socket.on("getRoomState", (data: { roomId: string }) => {
@@ -106,6 +98,7 @@ io.on("connection", (socket: Socket) => {
 				players: room.players.map((p) => ({
 					socketId: p.socketId,
 					userId: p.userId,
+					side: p.side,
 				})),
 			});
 		} else {
@@ -193,23 +186,19 @@ io.on("connection", (socket: Socket) => {
 			return;
 		}
 
-		const playerIdx = room.players.findIndex((p) => p.socketId === socket.id);
-		if (playerIdx === -1) {
-			console.log(`[WS] Player ${socket.id} not found in room ${data.roomId} players list`);
-			// Debug: show current players
-			console.log("[WS] Current players in room:", room.players.map(p => p.socketId));
-			return;
-		}
+		const loserIdx = room.players.findIndex((p) => p.socketId === socket.id);
+	if (loserIdx === -1) return;
 
-		const winner = playerIdx === 0 ? "gote" : "sente";
-		const winnerName = playerIdx === 0 ? "後手" : "先手";
+	const loserSide = room.players[loserIdx].side; 
+	const winnerSide = loserSide === "b" ? "gote" : "sente";
 
-		console.log(`[WS] Player index ${playerIdx} resigned. Winner: ${winner} (${winnerName})`);
+	const winnerName = winnerSide === "gote" ? "後手" : "先手";
+	const loserName = loserSide === "w" ? "後手" : "先手";
 
-		io.to(data.roomId).emit("match_ended", {
-			winner: winner,
-			message: `${playerIdx === 0 ? "先手" : "後手"}が投了しました。${winnerName}の勝ちです。`,
-		});
+	io.to(data.roomId).emit("match_ended", {
+		winner: winnerSide,
+		message: `${loserName}が投了しました。${winnerName}の勝ちです。`,
+	});
 	});
 
 	socket.on("disconnect", () => {
@@ -239,6 +228,7 @@ io.on("connection", (socket: Socket) => {
 						players: room.players.map((p) => ({
 							socketId: p.socketId,
 							userId: p.userId,
+							side: p.side
 						})),
 					});
 

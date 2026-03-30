@@ -21,6 +21,7 @@ export function useShogiGame(
 ) {
 	const router = useRouter();
 	const [lastMove, setLastMove] = useState<Move | null>(null);
+	const [gotSfen, setGotSfen] = useState<boolean>(false);
 
 	const {
 		board,
@@ -92,7 +93,7 @@ export function useShogiGame(
 		};
 
 		const handleMatchEnded = (data: { winner: string | null; message: string }) => {
-			console.log("[WS] match_ended received:", data);
+			// console.log("[WS] match_ended received:", data);
 
 			// 自分の勝敗に合わせてメッセージを書き換える
 			let displayMessage = data.message;
@@ -129,11 +130,12 @@ export function useShogiGame(
 			syncBoardState(syncedBoard);
 		};
 
+		setGotSfen(true);
 		socket.on("syncState", handleSyncState);
 		return () => {
 			socket.off("syncState", handleSyncState);
 		};
-	}, [socket, roomId, syncBoardState]);
+	}, [socket, roomId]);
 
 	// ========= クリックハンドラ =========
 
@@ -245,5 +247,6 @@ export function useShogiGame(
 		isCheck,
 		gameResult,
 		gameOver: gameResult.message,
+		gotSfen,
 	};
 }

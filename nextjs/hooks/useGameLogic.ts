@@ -124,12 +124,12 @@ export function useGameLogic(mySide: "sente" | "gote" | "spectator") {
 	});
 
 	const setGameResult = ((result: { isOver: boolean; winner: "sente" | "gote" | "draw" | null; message: string | null }) => {
-		console.log("[Logic] setGameResult called:", result);
+		// console.log("[Logic] setGameResult called:", result);
 		if (result.isOver && result.winner) {
-			console.log("[Logic] Dispatching SET_GAME_OVER");
+			// console.log("[Logic] Dispatching SET_GAME_OVER");
 			dispatch({ type: "SET_GAME_OVER", payload: { winner: result.winner, message: result.message || "" } });
 		} else {
-			console.log("[Logic] setGameResult skipped due to missing winner or isOver false");
+			// console.log("[Logic] setGameResult skipped due to missing winner or isOver false");
 		}
 	});
 

@@ -3,8 +3,8 @@
 import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import VictoryAnimation from "@/components/VictoryAnimation";
-import DefeatAnimation from "@/components/DefeatAnimation";
+import VictoryAnimation from "@/components/Overlay/VictoryAnimation";
+import DefeatAnimation from "@/components/Overlay/DefeatAnimation";
 
 export default function ResultPage() {
 	return (
