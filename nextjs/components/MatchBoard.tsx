@@ -101,7 +101,6 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 		gotSfen
 	} = useShogiGame(socket, roomId, mySide, wsStatus);
 
-
 	const state = useMemo(() => {
     return uiBoardToBoardState({ board, senteHand, goteHand, turn });
 	}, [board, senteHand, goteHand, turn]);
