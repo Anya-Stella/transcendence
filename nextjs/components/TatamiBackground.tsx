@@ -41,6 +41,7 @@ import Background from "./Background/Background";
 import PromotionButton from "./Button/Promotion";
 import MoveMarker from "./MoveMarker";
 import { stat } from "fs";
+import BoardPieceDiaplay from "./PieceDisplay/BoardPiece";
 
 const LOADER_PIECES = [
 	"/models/fu.glb",
@@ -399,6 +400,104 @@ export default function TatamiBackground({
 		}
 	}, [boardState, piecePositions, executeMove, isPiecePromoted]);
 
+	// const handleDragEnd = useCallback((id: string, nowPos: [number, number, number], newPos: [number, number, number], isPromoted: boolean) => {
+	// 	const toGrid = worldToGrid(newPos[0], newPos[2], isFlipped);
+	// 	if (!toGrid) return;
+
+	// 	const isFromHand = checkIsHandPos(nowPos);
+
+	// 	let move: Move;
+
+	// 	if (isFromHand) {
+	// 		// 持ち駒を打つ
+	// 		move = {
+	// 			type: "drop",
+	// 			pieceType: getBasePieceType(id),
+	// 			to: toGrid
+	// 		};
+	// 	} else {
+	// 		// 盤上の移動
+	// 		const fromGrid = worldToGrid(nowPos[0], nowPos[2], isFlipped);
+	// 		if (fromGrid.row === toGrid.row && fromGrid.col === toGrid.col) return;
+
+	// 		// 成り判定: 敵陣（1段目/5段目）に入る、または敵陣内から移動する場合
+	// 		const promoRank = boardState.sideToMove === Color.BLACK ? 0 : 4;
+	// 		const isToEnemyTerritory = toGrid.row === promoRank;
+	// 		const isFromEnemyTerritory = fromGrid.row === promoRank;
+	// 		const isEnemyTerritoryMove = isToEnemyTerritory || isFromEnemyTerritory;
+
+	// 		const canPromote = (id.includes("fu") || id.includes("gin") || id.includes("hisya") || id.includes("kaku"));
+
+	// 		// 既に成っている駒は promote: false (shogi-logicの仕様に合わせる)
+	// 		const promote = canPromote && isEnemyTerritoryMove && !isPromoted;
+
+	// 		move = {
+	// 			type: "move",
+	// 			from: fromGrid,
+	// 			to: toGrid,
+	// 			promote: promote
+	// 		};
+	// 	}
+
+	// 	if (isLegalMove(boardState, move)) {
+	// 		if (move.type === "move") {
+	// 			// 成り選択のプロンプトが必要か再判定
+	// 			const promoRank = boardState.sideToMove === Color.BLACK ? 0 : 4;
+	// 			const isToEnemyTerritory = toGrid.row === promoRank;
+	// 			const isFromEnemyTerritory = move.from.row === promoRank;
+	// 			const isEnemyTerritoryMove = isToEnemyTerritory || isFromEnemyTerritory;
+
+	// 			const canPromote = (id.includes("fu") || id.includes("gin") || id.includes("hisya") || id.includes("kaku")) && !isPromoted;
+
+	// 			if (canPromote && isEnemyTerritoryMove) {
+	// 				if (id.includes("fu")) {
+	// 					// 歩は強制成り
+	// 					executeMove(id, { ...move, promote: true });
+	// 				} else {
+	// 					// 移動先に駒があるか確認し、あれば先に駒取りだけ視覚的に行う
+	// 					const toGrid = move.to;
+	// 					const capturedPiece = boardState.board[toGrid.row][toGrid.col];
+	// 					if (capturedPiece) {
+	// 						const capturedId = Object.keys(initialGrid).find(pid => {
+	// 							if (pid === id) return false;
+
+	// 							if (checkIsHandPos(newPos)) return false;
+	// 							const pg = worldToGrid(newPos[0], newPos[2], isFlipped);
+	// 							return pg && pg.row === toGrid.row && pg.col === toGrid.col;
+	// 						});
+	// 						if (capturedId) {
+	// 							setPieceOwners(prev => ({ ...prev, [capturedId]: boardState.sideToMove }));
+	// 							setPiecePromotions(prev => ({ ...prev, [capturedId]: false }));
+	// 							setPiecePositions(prev => {
+	// 								const winnerColor = boardState.sideToMove;
+	// 								const coordsMap = winnerColor === Color.BLACK ? SENTE_HAND_COORDS : GOTE_HAND_COORDS;
+	// 								const baseType = UNPROMOTE_MAP[capturedPiece.pieceType] ?? capturedPiece.pieceType;
+	// 								const capturedHandPos = coordsMap[baseType] || [0, 0, 0];
+	// 								return { ...prev, [capturedId]: capturedHandPos, [id]: gridToWorld(toGrid.row, toGrid.col, isFlipped) };
+	// 							});
+	// 						} else {
+	// 							// 駒取りがない場合でも駒を移動先に進める
+	// 							setPiecePositions(prev => ({ ...prev, [id]: gridToWorld(toGrid.row, toGrid.col, isFlipped) }));
+	// 						}
+	// 					} else {
+	// 						// 駒がない場所への移動
+	// 						setPiecePositions(prev => ({ ...prev, [id]: gridToWorld(toGrid.row, toGrid.col, isFlipped) }));
+	// 					}
+
+	// 					// それ以外は選択
+	// 					setPendingPromotion({ id, move: move as BoardMove });
+	// 				}
+	// 			} else {
+	// 				executeMove(id, move);
+	// 			}
+	// 		} else {
+	// 			executeMove(id, move);
+	// 		}
+	// 	} else {
+	// 		console.log("無効な移動です");
+	// 	}
+	// }, [boardState, piecePositions, executeMove, isPiecePromoted]);
+
 	// 背景クリックで選択解除
 	const handleBackgroundClick = useCallback(() => {
 		setSelectedPiece(null);
@@ -450,7 +549,7 @@ export default function TatamiBackground({
 								<MoveMarker validMoveDestinations={validMoveDestinations} isFlipped={isFlipped}/>
 
 								{/* === 先手の駒 === */}
-								{SENTE_PIECES_CONFIG.map(piece => isPrimaryHandPiece(piece.id) && (
+								{/* {SENTE_PIECES_CONFIG.map(piece => isPrimaryHandPiece(piece.id) && (
 									<DraggablePiece
 										key={piece.id}
 										pieceId={piece.id}
@@ -465,10 +564,21 @@ export default function TatamiBackground({
 										parentGroupRef={boardGroupRef}
 										draggable={isPieceDraggable(piece.id)}
 									/>
-								))}
+								))} */}
+
+								<BoardPieceDiaplay
+									board={boardState.board}
+									isFlipped={isFlipped}
+									selectedPiece={selectedPiece}
+									playerColor={playerColor}
+									isMyTurn={playerColor === boardState.sideToMove}
+									handleSelect={handleSelect}
+									handleDragEnd={handleDragEnd}
+									boardGroupRef={boardGroupRef}
+								/>
 
 								{/* === 後手の駒 === */}
-								{GOTE_PIECES_CONFIG.map(piece => isPrimaryHandPiece(piece.id) && (
+								{/* {GOTE_PIECES_CONFIG.map(piece => isPrimaryHandPiece(piece.id) && (
 									<DraggablePiece
 										key={piece.id}
 										pieceId={piece.id}
@@ -483,7 +593,7 @@ export default function TatamiBackground({
 										parentGroupRef={boardGroupRef}
 										draggable={isPieceDraggable(piece.id)}
 									/>
-								))}
+								))} */}
 							</group>
 						</>
 					)}

@@ -60,5 +60,6 @@ export {
     BOARD_SIZE,
     BOARD_X_COORDS,
     BOARD_Y,
-    BOARD_Z_COORDS
+    BOARD_Z_COORDS,
+    MODEL,
 } from "./constants"

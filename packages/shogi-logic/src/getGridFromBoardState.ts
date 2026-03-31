@@ -1,38 +1,31 @@
-import { BoardState, Color, PieceType, Square } from "./types";
+import { BoardState, Color, PType, Square } from "./types";
 
+/**
+ * 盤面状態から各駒のIDをキーとした座標マップを生成する
+ */
 export const getGridFromBoardState = (state: BoardState): Record<string, Square> => {
     const gridMap: Record<string, Square> = {};
-    for (let row = 0; row < 5; row++) {
-        for (let col = 0; col < 5; col++) {
-            const piece = state.board[row][col];
-            if (piece) {
-                const id = generatePieceId(piece.color, piece.pieceType as PieceType, gridMap);
-                gridMap[id] = { row, col };
+    
+    const counts: Record<string, number> = {};
+
+    state.board.forEach((row, rowIndex) => {
+        row.forEach((cell, colIndex) => {
+            if (cell) {
+                const { color, pieceType } = cell;
+
+                const side = color === Color.BLACK ? "sente" : "gote";
+                
+                const typeName = PType[pieceType];
+                
+                const baseId = `${side}-${typeName}`;
+
+                counts[baseId] = (counts[baseId] || 0) + 1;
+                const uniqueId = `${baseId}-${counts[baseId]}`;
+
+                gridMap[uniqueId] = { row: rowIndex, col: colIndex };
             }
-        }
-    }
+        });
+    });
+
     return gridMap;
-};
-
-const generatePieceId = (color: Color, type: PieceType, existing: Record<string, any>): string => {
-    const prefix = color === Color.BLACK ? "sente" : "gote";
-    const typeStr = getPieceTypeKey(type);
-    const baseId = `${prefix}-${typeStr}`;
-    if (!existing[baseId]) return baseId;
-    let i = 1;
-    while (existing[`${baseId}-${i}`])
-        i++;
-    return `${baseId}-${i}`;
-};
-
-const getPieceTypeKey = (type: PieceType): string => {
-    switch (type) {
-        case PieceType.KING: return "ou";
-        case PieceType.GOLD: return "kin";
-        case PieceType.SILVER: return "gin";
-        case PieceType.BISHOP: return "kaku";
-        case PieceType.ROOK: return "hisya";
-        case PieceType.PAWN: return "fu";
-        default: return "unknown";
-    }
 };
