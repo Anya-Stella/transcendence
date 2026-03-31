@@ -5,19 +5,20 @@ import { useParams, useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { io, Socket } from "socket.io-client";
 import { useSession } from "next-auth/react";
+import Header from "@/components/Header";
 
 interface Player {
-    socketId: string;
-    userId?: string;
-    side?: "b" | "w";
+	socketId: string;
+	userId?: string;
+	side?: "b" | "w";
 }
 
 interface RoomState {
-    roomId: string;
-    hostSocketId: string;
-    hostUserId?: string;
-    players: Player[];
-    sfen?: string;
+	roomId: string;
+	hostSocketId: string;
+	hostUserId?: string;
+	players: Player[];
+	sfen?: string;
 }
 
 export default function RoomPage() {
@@ -41,7 +42,7 @@ export default function RoomPage() {
 
 		s.on("connect", () => {
 			setMySocketId(s.id ?? null);
-			s.emit("joinRoom", { roomId, userId ,isPlayer: true});
+			s.emit("joinRoom", { roomId, userId, isPlayer: true });
 		});
 
 		s.on("roomState", (state: RoomState) => {
@@ -96,17 +97,14 @@ export default function RoomPage() {
 				style={{ backgroundImage: "url(/images/online-bg.png)" }}
 			/>
 
-			{/* ヘッダー */}
-			<header className="wafuu-header">
-				<Link href="/home" className="wafuu-header-logo">
-					将棋ゲーム
-				</Link>
-				<div className="wafuu-header-right">
+			<Header
+				title="将棋ゲーム"
+				rightElement={
 					<span className="wafuu-badge wafuu-badge-info">
 						{amIHost ? "👑 ホスト" : "参加者"}
 					</span>
-				</div>
-			</header>
+				}
+			/>
 
 			{/* コンテンツ */}
 			<div className="wafuu-content">

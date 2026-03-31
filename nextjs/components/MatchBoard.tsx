@@ -15,6 +15,7 @@ import SarenderButton from "./Button/Sarender";
 import GameResultButton from "./Button/GameResult";
 import ShowResultOverlay from "./Overlay/ShowResultOverlay";
 import OteOverlay from "@/components/Overlay/OteOverlay";
+import Header from "@/components/Header";
 
 export const PIECE_TYPE_TO_KANJI: Record<number, string> = {
 	[PieceType.PAWN]: "歩",
@@ -26,48 +27,48 @@ export const PIECE_TYPE_TO_KANJI: Record<number, string> = {
 };
 
 export const KANJI_TO_PTYPE: Record<string, PType> = {
-  "歩": PType.PAWN,
-  "銀": PType.SILVER,
-  "金": PType.GOLD,
-  "角": PType.BISHOP,
-  "飛": PType.ROOK,
-  "玉": PType.KING,
-  "王": PType.KING,
-  "と": PType.PRO_PAWN,
-  "全": PType.PRO_SILVER,
-  "馬": PType.PRO_BISHOP,
-  "龍": PType.PRO_ROOK,
+	"歩": PType.PAWN,
+	"銀": PType.SILVER,
+	"金": PType.GOLD,
+	"角": PType.BISHOP,
+	"飛": PType.ROOK,
+	"玉": PType.KING,
+	"王": PType.KING,
+	"と": PType.PRO_PAWN,
+	"全": PType.PRO_SILVER,
+	"馬": PType.PRO_BISHOP,
+	"龍": PType.PRO_ROOK,
 };
 
 export function uiBoardToBoardState(uiBoard: UIBoard, moveCount: number = 0): BoardState {
-  // 1. 盤面（board）の変換
-  const board: (Piece | null)[][] = uiBoard.board.map((row) =>
-    row.map((cell) => {
-      if (!cell) return null;
+	// 1. 盤面（board）の変換
+	const board: (Piece | null)[][] = uiBoard.board.map((row) =>
+		row.map((cell) => {
+			if (!cell) return null;
 
-      const pieceType = KANJI_TO_PTYPE[cell.kanji];
-      // 対応する駒種がない場合はエラー回避のため null を返す
-      if (pieceType === undefined) return null;
+			const pieceType = KANJI_TO_PTYPE[cell.kanji];
+			// 対応する駒種がない場合はエラー回避のため null を返す
+			if (pieceType === undefined) return null;
 
-      return {
-        color: cell.side === "sente" ? Color.BLACK : Color.WHITE,
-        pieceType: pieceType,
-      };
-    })
-  );
+			return {
+				color: cell.side === "sente" ? Color.BLACK : Color.WHITE,
+				pieceType: pieceType,
+			};
+		})
+	);
 
-  const hands: [Hand, Hand] = [
-    { ...uiBoard.senteHand },
-    { ...uiBoard.goteHand },
-  ];
-  const sideToMove = uiBoard.turn === "sente" ? Color.BLACK : Color.WHITE;
+	const hands: [Hand, Hand] = [
+		{ ...uiBoard.senteHand },
+		{ ...uiBoard.goteHand },
+	];
+	const sideToMove = uiBoard.turn === "sente" ? Color.BLACK : Color.WHITE;
 
-  return {
-    board,
-    hands,
-    sideToMove,
-    moveCount,
-  };
+	return {
+		board,
+		hands,
+		sideToMove,
+		moveCount,
+	};
 }
 
 interface MatchBoardProps {
@@ -102,7 +103,7 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 	} = useShogiGame(socket, roomId, mySide, wsStatus);
 
 	const state = useMemo(() => {
-    return uiBoardToBoardState({ board, senteHand, goteHand, turn });
+		return uiBoardToBoardState({ board, senteHand, goteHand, turn });
 	}, [board, senteHand, goteHand, turn]);
 
 	const [showCheckOverlay, setShowCheckOverlay] = useState<boolean>(false);
@@ -139,62 +140,53 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 	return (
 		<div className="wafuu-page">
 			{/* 背景 */}
-			{gotSfen && 
+			{gotSfen &&
 				<TatamiBackground
-				state={state}
-				playerColor={mySide === "sente" ? Color.BLACK : Color.WHITE}
-				externalTurn={turn === "sente" ? Color.BLACK : Color.WHITE}
-				lastExternalMove={lastMove || undefined}
-				isGameOver={!!gameOver}
-				isPreparing={isPreparing}
-				onLoaded={() => {setIsLoaded(true);}}
-				onBoardMove={(move: Move) => {
-					if (mySide === "spectator") return;
-					if (move.type === "move") {
-						executeMove(move.from, move.to, move.promote ?? false);
-					} else if (move.type === "drop") {
-						const kanji = PIECE_TYPE_TO_KANJI[move.pieceType];
-						if (kanji) {
-							executeDrop(kanji, move.to);
+					state={state}
+					playerColor={mySide === "sente" ? Color.BLACK : Color.WHITE}
+					externalTurn={turn === "sente" ? Color.BLACK : Color.WHITE}
+					lastExternalMove={lastMove || undefined}
+					isGameOver={!!gameOver}
+					isPreparing={isPreparing}
+					onLoaded={() => { setIsLoaded(true); }}
+					onBoardMove={(move: Move) => {
+						if (mySide === "spectator") return;
+						if (move.type === "move") {
+							executeMove(move.from, move.to, move.promote ?? false);
+						} else if (move.type === "drop") {
+							const kanji = PIECE_TYPE_TO_KANJI[move.pieceType];
+							if (kanji) {
+								executeDrop(kanji, move.to);
+							}
 						}
-					}
-				}}
+					}}
 				/>
 			}
-			
+
 
 			{!isPreparing && isLoaded && (
 				<>
-					{/* ヘッダー */}
-					<header className="wafuu-header">
-						<Link href="/home" className="wafuu-header-logo">
-							将棋ゲーム
-						</Link>
-						<div className="wafuu-header-right">
-							{roomId && (
+					<Header
+						title="将棋ゲーム"
+						rightElement={
+							roomId && (
 								<span style={{ color: "rgba(245, 230, 200, 0.4)", fontSize: "0.8rem", marginRight: "8px" }}>
 									部屋: {roomId} | {statusLabel}
 								</span>
-							)}
-							{user && (
-								<span className="wafuu-header-username">{user}</span>
-							)}
-							<button
-								className="wafuu-header-btn"
-								onClick={handleLogout}
-							>
-								ログアウト
-							</button>
-						</div>
-					</header>
+							)
+						}
+						userName={user}
+						onLogout={handleLogout}
+						logoutLabel="ログアウト"
+					/>
 
 					{/* コンテンツ */}
 					<div className="wafuu-content" style={{ flex: 1, padding: 0, overflow: "hidden", pointerEvents: "none" }}>
 						{/* 王手！ オーバーレイ (盤面中央) */}
-						{showCheckOverlay && <OteOverlay/>}
-						
+						{showCheckOverlay && <OteOverlay />}
+
 						{/* 手番表示 (中央上部) */}
-						{<GameStatusBanner 
+						{<GameStatusBanner
 							turnIsSente={turn === "sente" ? true : false}
 							isCheck={isCheck}
 							isGameOver={gameOver !== null}
@@ -205,16 +197,16 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 						/>}
 
 						{/* 対局終了通知 */}
-						{gameOver && <GameResultButton clickHandler={setShowResultOverlay}/>}
+						{gameOver && <GameResultButton clickHandler={setShowResultOverlay} />}
 
 						{/* 右上 (対戦相手の情報) */}
-						<EnemyInfo mySide={mySide}/>
+						<EnemyInfo mySide={mySide} />
 
 						{/* 左下 (あなたの情報) */}
-						<MyInfo mySide={mySide}/>
+						<MyInfo mySide={mySide} />
 
 						{/* 下部のボタン (右下) */}
-						<SarenderButton isGameOver={gameOver !== null} mySide={mySide} clickHandler={handleEndMatch}/>
+						<SarenderButton isGameOver={gameOver !== null} mySide={mySide} clickHandler={handleEndMatch} />
 					</div>
 
 					{/* Result Overlay */}

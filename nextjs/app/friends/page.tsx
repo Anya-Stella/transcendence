@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Header from "@/components/Header";
 import { isOnline } from "@/lib/utils";
 
 interface UserProfile {
@@ -107,26 +108,20 @@ export default function FriendsPage() {
 				style={{ backgroundImage: "url(/images/home-bg.png)" }}
 			/>
 
-			{/* ヘッダー */}
-			<header className="wafuu-header">
-				<Link href="/home" className="wafuu-header-logo">
-					将棋ゲーム
-				</Link>
-				<div className="wafuu-header-right">
-					<span className="wafuu-header-username">フレンド管理</span>
-					<Link href="/home" className="wafuu-header-btn">
-						戻る
-					</Link>
-				</div>
-			</header>
+			<Header
+				title="将棋ゲーム"
+				pageName="フレンド管理"
+				backHref="/home"
+				backLabel="戻る"
+			/>
 
 			{/* コンテンツ */}
 			<div className="wafuu-content" style={{ justifyContent: "flex-start", paddingTop: "80px" }}>
-				<div 
-					className="wafuu-flex-col wafuu-gap-16" 
+				<div
+					className="wafuu-flex-col wafuu-gap-16"
 					style={{ width: "100%", maxWidth: "600px", alignItems: "center" }}
 				>
-					
+
 					{/* フレンド追加 */}
 					<div className="wafuu-card" style={{ maxWidth: "100%" }}>
 						<h3 className="wafuu-label" style={{ fontSize: "1rem", marginBottom: "12px" }}>フレンド追加</h3>
@@ -169,10 +164,10 @@ export default function FriendsPage() {
 											return (
 												<div key={req.friendshipId} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBottom: "8px", borderBottom: "1px solid rgba(212, 175, 55, 0.1)" }}>
 													<div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-														<img 
-															src={req.user.image || "/images/default-avatar.png"} 
-															alt="avatar" 
-															style={{ width: "36px", height: "36px", borderRadius: "50%", border: "1px solid rgba(212, 175, 55, 0.3)" }} 
+														<img
+															src={req.user.image || "/images/default-avatar.png"}
+															alt="avatar"
+															style={{ width: "36px", height: "36px", borderRadius: "50%", border: "1px solid rgba(212, 175, 55, 0.3)" }}
 														/>
 														<div className="wafuu-flex-col">
 															<span style={{ color: "#f5e6c8", fontWeight: "600", fontSize: "0.95rem" }}>{req.user.name}</span>
@@ -204,10 +199,10 @@ export default function FriendsPage() {
 											return (
 												<div key={friend.friendshipId} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBottom: "8px", borderBottom: "1px solid rgba(212, 175, 55, 0.1)" }}>
 													<div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-														<img 
-															src={friend.user.image || "/images/default-avatar.png"} 
-															alt="avatar" 
-															style={{ width: "40px", height: "40px", borderRadius: "50%", border: "1px solid rgba(212, 175, 55, 0.3)" }} 
+														<img
+															src={friend.user.image || "/images/default-avatar.png"}
+															alt="avatar"
+															style={{ width: "40px", height: "40px", borderRadius: "50%", border: "1px solid rgba(212, 175, 55, 0.3)" }}
 														/>
 														<div className="wafuu-flex-col">
 															<span style={{ color: "#f5e6c8", fontWeight: "600" }}>{friend.user.name}</span>
@@ -243,10 +238,10 @@ export default function FriendsPage() {
 											return (
 												<div key={req.friendshipId} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBottom: "8px", borderBottom: "1px solid rgba(212, 175, 55, 0.1)" }}>
 													<div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-														<img 
-															src={req.user.image || "/images/default-avatar.png"} 
-															alt="avatar" 
-															style={{ width: "36px", height: "36px", borderRadius: "50%", border: "1px solid rgba(245, 230, 200, 0.1)" }} 
+														<img
+															src={req.user.image || "/images/default-avatar.png"}
+															alt="avatar"
+															style={{ width: "36px", height: "36px", borderRadius: "50%", border: "1px solid rgba(245, 230, 200, 0.1)" }}
 														/>
 														<span style={{ color: "rgba(245, 230, 200, 0.7)", fontSize: "0.9rem" }}>{req.user.name}</span>
 													</div>

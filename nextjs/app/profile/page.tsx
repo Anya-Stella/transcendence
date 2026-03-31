@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
+import Header from "@/components/Header";
 
 export default function ProfilePage() {
 	// 1. Auth.jsからセッション情報と、セッションを再取得するための update 関数をもらう
@@ -57,27 +58,27 @@ export default function ProfilePage() {
 		const formData = new FormData();
 		formData.append("file", file);
 		try {
-		  // 2. 画像アップロード専用API（PUT /api/profile/avatar）を叩く
-		  const res = await fetch("/api/profile/avatar", {
-			method: "PUT",
-			// 【超重要】 FormData を送るときは "Content-Type" を書いてはいけません！（ブラウザが自動で特別な境界線付きのヘッダーを作ってくれます）
-			body: formData,
-		  });
-		  if (res.ok) {
-			const data = await res.json();
-			setMessage({ text: "画像を更新しました！", type: "success" });
-			// 3. 通行証（セッション）も最新の画像URLに即座に更新する
-			await update({ image: data.imageUrl });
-		  } else {
-			const errorData = await res.json();
-			setMessage({ text: `エラー: ${errorData.error}`, type: "error" });
-		  }
+			// 2. 画像アップロード専用API（PUT /api/profile/avatar）を叩く
+			const res = await fetch("/api/profile/avatar", {
+				method: "PUT",
+				// 【超重要】 FormData を送るときは "Content-Type" を書いてはいけません！（ブラウザが自動で特別な境界線付きのヘッダーを作ってくれます）
+				body: formData,
+			});
+			if (res.ok) {
+				const data = await res.json();
+				setMessage({ text: "画像を更新しました！", type: "success" });
+				// 3. 通行証（セッション）も最新の画像URLに即座に更新する
+				await update({ image: data.imageUrl });
+			} else {
+				const errorData = await res.json();
+				setMessage({ text: `エラー: ${errorData.error}`, type: "error" });
+			}
 		} catch (error) {
-		  setMessage({ text: "通信エラーが発生しました", type: "error" });
+			setMessage({ text: "通信エラーが発生しました", type: "error" });
 		} finally {
-		  setIsLoading(false);
+			setIsLoading(false);
 		}
-	  };
+	};
 
 	return (
 		<div className="wafuu-page">
@@ -87,23 +88,17 @@ export default function ProfilePage() {
 				style={{ backgroundImage: "url(/images/home-bg.png)" }}
 			/>
 
-			{/* ヘッダー */}
-			<header className="wafuu-header">
-				<Link href="/home" className="wafuu-header-logo">
-					将棋ゲーム
-				</Link>
-				<div className="wafuu-header-right">
-					<span className="wafuu-header-username">プロフィール設定</span>
-					<Link href="/home" className="wafuu-header-btn">
-						戻る
-					</Link>
-				</div>
-			</header>
+			<Header
+				title="将棋ゲーム"
+				pageName="プレイヤー設定"
+				backHref="/home"
+				backLabel="戻る"
+			/>
 
 			{/* コンテンツ */}
 			<div className="wafuu-content" style={{ justifyContent: "flex-start", paddingTop: "80px" }}>
-				<div 
-					className="wafuu-flex-col wafuu-gap-16" 
+				<div
+					className="wafuu-flex-col wafuu-gap-16"
 					style={{ width: "100%", maxWidth: "500px", alignItems: "center" }}
 				>
 					<h2 className="wafuu-heading">プレイヤー設定</h2>
@@ -114,20 +109,20 @@ export default function ProfilePage() {
 							<img
 								src={session?.user?.image || "/images/default-avatar.png"}
 								alt="User Avatar"
-								style={{ 
-									width: "120px", 
-									height: "120px", 
-									borderRadius: "50%", 
-									objectFit: "cover", 
+								style={{
+									width: "120px",
+									height: "120px",
+									borderRadius: "50%",
+									objectFit: "cover",
 									border: "3px solid rgba(212, 175, 55, 0.4)",
 									boxShadow: "0 0 20px rgba(0, 0, 0, 0.5)"
 								}}
 							/>
 							<div style={{ marginTop: "1rem" }}>
-								<label 
-									htmlFor="avatar-upload" 
+								<label
+									htmlFor="avatar-upload"
 									className="wafuu-header-btn"
-									style={{ 
+									style={{
 										cursor: isLoading ? "wait" : "pointer",
 										display: "inline-block"
 									}}

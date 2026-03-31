@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
+import Header from "@/components/Header";
 
 export default function HomePage() {
 	const router = useRouter();
@@ -21,23 +22,11 @@ export default function HomePage() {
 				style={{ backgroundImage: "url(/images/home-bg.png)" }}
 			/>
 
-			{/* ヘッダー */}
-			<header className="wafuu-header">
-				<div className="wafuu-header-logo">将棋ゲーム</div>
-				<div className="wafuu-header-right">
-					{user && (
-						<Link href="/profile" className="wafuu-header-username" style={{ cursor: "pointer", textDecoration: "underline" }}>
-							{user.name}
-						</Link>
-					)}
-					<button
-						className="wafuu-header-btn"
-						onClick={handleLogout}
-					>
-						ログアウト
-					</button>
-				</div>
-			</header>
+			<Header
+				userName={user?.name}
+				onLogout={handleLogout}
+				logoutLabel="ログアウト"
+			/>
 
 			{/* コンテンツ */}
 			<div className="wafuu-content">
