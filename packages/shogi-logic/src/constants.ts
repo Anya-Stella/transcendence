@@ -118,6 +118,24 @@ export const SENTE_PIECES_CONFIG = [
 	{ id: "sente-fu", model: "/models/fu.glb", defaultPos: [-6, 10.0, -6.4] as [number, number, number] },
 ];
 
+export const HAND_PIECE_COORDS = 
+[
+	{
+		[PType.PAWN]: [-3, 10.0, 10.2],
+		[PType.ROOK]: [-3, 10.0, 13.2],
+		[PType.BISHOP]: [-3, 10.0, 16.2],
+		[PType.SILVER]: [-7.1, 10.0, 10.2],
+		[PType.GOLD]: [-7.1, 10.0, 13.2],
+	},
+	{
+		[PType.PAWN]: [-2.7, 10.0, -10.2],
+		[PType.ROOK]: [-2.7, 10.0, -13.2],
+		[PType.BISHOP]: [-2.7, 10.0, -16.2],
+		[PType.SILVER]: [1.5, 10.0, -10.2],
+		[PType.GOLD]: [1.5, 10.0, -13.2],
+	}
+]
+
 export const GOTE_PIECES_CONFIG = [
 	{ id: "gote-ou", model: "/models/ousyo_NoTen.glb", defaultPos: [3.9, 10.0, 6.4] as [number, number, number] },
 	{ id: "gote-kin", model: "/models/kin.glb", defaultPos: [3.9, 10.0, 3.2] as [number, number, number] },

@@ -7,10 +7,10 @@ export function isPromotedPieceType(type: number): boolean {
 
 // IDから基本の駒種を取得する
 export function getBasePieceType(id: string): PieceType {
-	if (id.includes("fu")) return PieceType.PAWN;
-	if (id.includes("hisya")) return PieceType.ROOK;
-	if (id.includes("kaku")) return PieceType.BISHOP;
-	if (id.includes("gin")) return PieceType.SILVER;
-	if (id.includes("kin")) return PieceType.GOLD;
+	if (id.includes("PAWN")) return PieceType.PAWN;
+	if (id.includes("ROOK")) return PieceType.ROOK;
+	if (id.includes("BISHOP")) return PieceType.BISHOP;
+	if (id.includes("SILVER")) return PieceType.SILVER;
+	if (id.includes("GOLD")) return PieceType.GOLD;
 	return PieceType.KING;
 }

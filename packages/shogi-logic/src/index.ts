@@ -48,6 +48,7 @@ export { checkIsHandPos } from "./checkIsHandPos"
 export { isPromotedPieceType, getBasePieceType } from "./pieceType"
 export { getGridFromBoardState } from "./getGridFromBoardState"
 export { getPieceRotation } from "./getPieceRotation"
+export { getWorldPositionsFromBoardState } from "./getWorldPositionsFromBoardState"
 
 export { 
     createInitialBoard,
@@ -62,4 +63,5 @@ export {
     BOARD_Y,
     BOARD_Z_COORDS,
     MODEL,
+    HAND_PIECE_COORDS,
 } from "./constants"

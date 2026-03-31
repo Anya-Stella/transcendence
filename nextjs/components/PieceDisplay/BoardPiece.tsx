@@ -25,7 +25,7 @@ export default function BoardPieceDiaplay(props: BoardPiece) {
         {board.map((row, rowIndex) => 
             row.map((cell, colIndex) => {
 
-                if(!cell) return <></>;
+                if(!cell) return;
 
                 const { color, pieceType } = cell;
                 const side = color === Color.BLACK ? "sente" : "gote";
@@ -63,15 +63,3 @@ export default function BoardPieceDiaplay(props: BoardPiece) {
     </>
     );
 }
-
-// const isPieceDraggable = useCallback((id: string) => {
-//         // 終局している場合は操作不可
-//         if (isGameOver) return false;
-
-//         const owner = pieceOwners[id];
-//         // その駒の所有者の手番であること
-//         if (owner !== boardState.sideToMove) return false;
-//         // 自分が動かせる色であること（AI対戦やオンライン対局用）
-//         if (playerColor !== undefined && owner !== playerColor) return false;
-//         return true;
-//     }, [pieceOwners, boardState.sideToMove, playerColor]);
