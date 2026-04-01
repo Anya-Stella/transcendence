@@ -11,6 +11,7 @@ import DefeatAnimation from "@/components/Overlay/DefeatAnimation";
 import { uiBoardToBoardState } from "./MatchBoard";
 import { useUser } from "@/hooks/useUser";
 import Overlay from "./Overlay/OteOverlay";
+import Header from "@/components/Header";
 
 const PIECE_TYPE_TO_KANJI: Record<number, string> = {
 	[PieceType.PAWN]: "歩",
@@ -54,7 +55,7 @@ function AiMatchBoard({ mySide = "sente", aiDepth = 4, isPreparing = false }: Ai
 		gameOver
 	} = useAiGame(mySide as "sente" | "gote", aiDepth);
 
-	let state = uiBoardToBoardState({board: board,senteHand:senteHand,goteHand:goteHand,turn:turn});
+	let state = uiBoardToBoardState({ board: board, senteHand: senteHand, goteHand: goteHand, turn: turn });
 
 	const [showCheckOverlay, setShowCheckOverlay] = useState(false);
 	const [showResultOverlay, setShowResultOverlay] = useState(false);
@@ -101,29 +102,18 @@ function AiMatchBoard({ mySide = "sente", aiDepth = 4, isPreparing = false }: Ai
 
 			{!isPreparing && isLoaded && (
 				<>
-					{/* ヘッダー */}
-					<header className="wafuu-header">
-						<Link href="/home" className="wafuu-header-logo">
-							将棋ゲーム
-						</Link>
-						<div className="wafuu-header-right">
-							<span style={{ color: "rgba(245, 230, 200, 0.4)", fontSize: "0.8rem", marginRight: "8px" }}>AI対戦</span>
-							{user && (
-								<span className="wafuu-header-username">{user}</span>
-							)}
-							<button
-								className="wafuu-header-btn"
-								onClick={handleLogout}
-							>
-								退出
-							</button>
-						</div>
-					</header>
+					<Header
+						title="将棋ゲーム"
+						pageName="AI対戦"
+						userName={user}
+						onLogout={handleLogout}
+						logoutLabel="退出"
+					/>
 
 					{/* コンテンツ */}
 					<div className="wafuu-content" style={{ flex: 1, padding: 0, overflow: "hidden", pointerEvents: "none" }}>
 						{/* 王手！ オーバーレイ (盤面中央) */}
-						{showCheckOverlay && <Overlay/>}
+						{showCheckOverlay && <Overlay />}
 						{/* ターン表示 (中央上部) */}
 						<div
 							style={{
