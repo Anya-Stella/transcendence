@@ -1,391 +1,204 @@
 /* ===============================
-   和風テーマ — 共通スタイル
+   和風テーマ — Tailwind移行版
    =============================== */
 
 /* --- 和風ページ共通レイアウト --- */
 .wafuu-page {
-	position: relative;
-	min-height: 100vh;
-	display: flex;
-	flex-direction: column;
-	overflow: hidden;
+	@apply relative min-h-screen flex flex-col overflow-hidden;
 }
 
 /* --- 背景 --- */
 .wafuu-bg {
-	position: fixed;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	z-index: 0;
-	background-size: cover;
-	background-position: center;
-	background-repeat: no-repeat;
+	@apply fixed top-0 left-0 w-full h-full z-0 bg-cover bg-center bg-no-repeat;
 }
 
 .wafuu-bg::after {
-	content: "";
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	background: linear-gradient(180deg,
-			rgba(10, 10, 20, 0.3) 0%,
-			rgba(10, 10, 20, 0.65) 100%);
+	@apply content-[""] absolute top-0 left-0 w-full h-full bg-gradient-to-b from-[rgba(10,10,20,0.3)] to-[rgba(10,10,20,0.65)];
 }
 
 /* --- ヘッダー --- */
 .wafuu-header {
-	position: fixed;
-	top: 0;
-	left: 0;
-	right: 0;
-	z-index: 10;
-	pointer-events: auto;
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	padding: 16px 24px;
-	background: rgba(10, 8, 5, 0.6);
-	backdrop-filter: blur(12px);
-	border-bottom: 1px solid rgba(212, 175, 55, 0.15);
+	@apply fixed top-0 left-0 right-0 z-10 pointer-events-auto flex items-center justify-between px-6 py-4 bg-[rgba(10,8,5,0.6)] backdrop-blur-xl border-b border-[rgba(212,175,55,0.15)];
 }
 
 .wafuu-header-logo {
-	color: #f5e6c8;
-	font-size: 1.2rem;
-	font-weight: 700;
-	letter-spacing: 0.08em;
-	text-decoration: none;
-	text-shadow: 0 0 12px rgba(212, 175, 55, 0.4);
+	@apply text-[#f5e6c8] text-[1.2rem] font-bold tracking-widest no-underline [text-shadow:0_0_12px_rgba(212,175,55,0.4)];
 }
 
 .wafuu-header-right {
-	display: flex;
-	align-items: center;
-	gap: 12px;
+	@apply flex items-center gap-3;
 }
 
 .wafuu-header-username {
-	color: rgba(245, 230, 200, 0.7);
-	font-size: 0.85rem;
+	@apply text-[rgba(245,230,200,0.7)] text-[0.85rem];
 }
 
 .wafuu-header-btn {
-	padding: 6px 14px;
-	border: 1px solid rgba(212, 175, 55, 0.3);
-	border-radius: 8px;
-	background: transparent;
-	color: rgba(245, 230, 200, 0.7);
-	font-size: 0.8rem;
-	cursor: pointer;
-	transition: all 0.3s ease;
+	@apply px-3.5 py-1.5 border border-[rgba(212,175,55,0.3)] rounded-lg bg-transparent text-[rgba(245,230,200,0.7)] text-[0.8rem] cursor-pointer transition-all duration-300;
 }
 
 .wafuu-header-btn:hover {
-	background: rgba(212, 175, 55, 0.1);
-	color: #f5e6c8;
-	border-color: rgba(212, 175, 55, 0.5);
+	@apply bg-[rgba(212,175,55,0.1)] text-[#f5e6c8] border-[rgba(212,175,55,0.5)];
 }
 
 /* --- コンテンツ --- */
 .wafuu-content {
-	position: relative;
-	z-index: 1;
-	flex: 1;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	padding: 32px 20px;
+	@apply relative z-[1] flex-1 flex flex-col items-center justify-center px-5 py-8;
 }
 
 /* --- 見出し --- */
 .wafuu-heading {
-	color: #f5e6c8;
-	font-size: 1.6rem;
-	font-weight: 700;
-	letter-spacing: 0.1em;
-	text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
-	margin: 0 0 24px;
-	text-align: center;
+	@apply text-[#f5e6c8] text-[1.6rem] font-bold tracking-widest [text-shadow:0_2px_8px_rgba(0,0,0,0.8)] mb-6 text-center;
 }
 
 .wafuu-subheading {
-	color: rgba(245, 230, 200, 0.5);
-	font-size: 0.85rem;
-	letter-spacing: 0.2em;
-	margin-top: -16px;
-	margin-bottom: 24px;
-	text-align: center;
+	@apply text-[rgba(245,230,200,0.5)] text-[0.85rem] tracking-[0.2em] -mt-4 mb-6 text-center;
 }
 
 /* --- カード --- */
 .wafuu-card {
-	width: 100%;
-	max-width: 440px;
-	background: rgba(20, 15, 10, 0.85);
-	backdrop-filter: blur(16px);
-	border: 1px solid rgba(212, 175, 55, 0.15);
-	border-radius: 16px;
-	padding: 28px 24px;
-	box-shadow:
-		0 8px 32px rgba(0, 0, 0, 0.5),
-		inset 0 1px 0 rgba(212, 175, 55, 0.1);
+	@apply w-full max-w-[440px] bg-[rgba(20,15,10,0.85)] backdrop-blur-2xl border border-[rgba(212,175,55,0.15)] rounded-2xl p-[28px_24px] shadow-[0_8px_32px_rgba(0,0,0,0.5),inset_0_1px_0_rgba(212,175,55,0.1)];
 }
 
 /* --- メニューアイテム --- */
 .wafuu-menu {
-	display: flex;
-	flex-direction: column;
-	gap: 12px;
-	width: 100%;
-	max-width: 440px;
+	@apply flex flex-col gap-3 w-full max-w-[440px];
 }
 
 .wafuu-menu-item {
-	display: flex;
-	align-items: center;
-	gap: 16px;
-	padding: 18px 20px;
-	background: rgba(20, 15, 10, 0.8);
-	backdrop-filter: blur(12px);
-	border: 1px solid rgba(212, 175, 55, 0.12);
-	border-radius: 14px;
-	text-decoration: none;
-	cursor: pointer;
-	transition: all 0.3s ease;
+	@apply flex items-center gap-4 p-[18px_20px] bg-[rgba(20,15,10,0.8)] backdrop-blur-xl border border-[rgba(212,175,55,0.12)] rounded-[14px] no-underline cursor-pointer transition-all duration-300;
 }
 
 .wafuu-menu-item:hover {
-	background: rgba(212, 175, 55, 0.1);
-	border-color: rgba(212, 175, 55, 0.35);
-	transform: translateX(4px);
+	@apply bg-[rgba(212,175,55,0.1)] border-[rgba(212,175,55,0.35)] translate-x-1;
 }
 
 .wafuu-menu-icon {
-	font-size: 1.5rem;
-	width: 40px;
-	text-align: center;
-	flex-shrink: 0;
+	@apply text-[1.5rem] w-10 text-center shrink-0;
 }
 
 .wafuu-menu-text {
-	flex: 1;
+	@apply flex-1;
 }
 
 .wafuu-menu-title {
-	color: #f5e6c8;
-	font-size: 1rem;
-	font-weight: 600;
+	@apply text-[#f5e6c8] text-base font-semibold;
 }
 
 .wafuu-menu-desc {
-	color: rgba(245, 230, 200, 0.45);
-	font-size: 0.8rem;
-	margin-top: 2px;
+	@apply text-[rgba(245,230,200,0.45)] text-[0.8rem] mt-0.5;
 }
 
 .wafuu-menu-arrow {
-	color: rgba(212, 175, 55, 0.4);
-	font-size: 1.2rem;
-	transition: all 0.3s ease;
+	@apply text-[rgba(212,175,55,0.4)] text-[1.2rem] transition-all duration-300;
 }
 
 .wafuu-menu-item:hover .wafuu-menu-arrow {
-	color: rgba(212, 175, 55, 0.8);
-	transform: translateX(4px);
+	@apply text-[rgba(212,175,55,0.8)] translate-x-1;
 }
 
 /* --- ボタン --- */
 .wafuu-btn-primary {
-	width: 100%;
-	padding: 14px 0;
-	border: none;
-	border-radius: 10px;
-	background: linear-gradient(135deg, #b8860b 0%, #d4af37 50%, #b8860b 100%);
-	color: #1a1208;
-	font-size: 1rem;
-	font-weight: 700;
-	letter-spacing: 0.1em;
-	cursor: pointer;
-	transition: all 0.3s ease;
-	box-shadow: 0 4px 16px rgba(212, 175, 55, 0.3);
+	@apply w-full py-3.5 border-none rounded-xl bg-gradient-to-br from-[#b8860b] via-[#d4af37] to-[#b8860b] text-[#1a1208] text-base font-bold tracking-widest cursor-pointer transition-all duration-300 shadow-[0_4px_16px_rgba(212,175,55,0.3)];
 }
 
 .wafuu-btn-primary:hover {
-	transform: translateY(-1px);
-	box-shadow: 0 6px 24px rgba(212, 175, 55, 0.4);
-	background: linear-gradient(135deg, #d4af37 0%, #f0d060 50%, #d4af37 100%);
+	@apply -translate-y-px shadow-[0_6px_24px_rgba(212,175,55,0.4)] bg-gradient-to-br from-[#d4af37] via-[#f0d060] to-[#d4af37];
 }
 
 .wafuu-btn-primary:disabled {
-	opacity: 0.5;
-	cursor: not-allowed;
-	transform: none;
+	@apply opacity-50 cursor-not-allowed translate-y-0;
 }
 
 .wafuu-btn-secondary {
-	width: 100%;
-	padding: 14px 0;
-	border: 1px solid rgba(212, 175, 55, 0.3);
-	border-radius: 10px;
-	background: rgba(212, 175, 55, 0.08);
-	color: #f5e6c8;
-	font-size: 1rem;
-	font-weight: 600;
-	letter-spacing: 0.08em;
-	cursor: pointer;
-	transition: all 0.3s ease;
+	@apply w-full py-3.5 border border-[rgba(212,175,55,0.3)] rounded-xl bg-[rgba(212,175,55,0.08)] text-[#f5e6c8] text-base font-semibold tracking-wider cursor-pointer transition-all duration-300;
 }
 
 .wafuu-btn-secondary:hover {
-	background: rgba(212, 175, 55, 0.15);
-	border-color: rgba(212, 175, 55, 0.5);
+	@apply bg-[rgba(212,175,55,0.15)] border-[rgba(212,175,55,0.5)];
 }
 
 .wafuu-btn-outline {
-	width: 100%;
-	padding: 10px 0;
-	border: 1px solid rgba(245, 230, 200, 0.15);
-	border-radius: 10px;
-	background: transparent;
-	color: rgba(245, 230, 200, 0.5);
-	font-size: 0.9rem;
-	cursor: pointer;
-	transition: all 0.3s ease;
-	text-align: center;
-	text-decoration: none;
-	display: block;
+	@apply w-full py-2.5 border border-[rgba(245,230,200,0.15)] rounded-xl bg-transparent text-[rgba(245,230,200,0.5)] text-[0.9rem] cursor-pointer transition-all duration-300 text-center no-underline block;
 }
 
 .wafuu-btn-outline:hover {
-	border-color: rgba(245, 230, 200, 0.3);
-	color: rgba(245, 230, 200, 0.8);
+	@apply border-[rgba(245,230,200,0.3)] text-[rgba(245,230,200,0.8)];
 }
 
 /* --- フォーム --- */
 .wafuu-input {
-	width: 100%;
-	padding: 12px 14px;
-	background: rgba(245, 230, 200, 0.06);
-	border: 1px solid rgba(212, 175, 55, 0.15);
-	border-radius: 10px;
-	color: #f5e6c8;
-	font-size: 0.95rem;
-	outline: none;
-	transition: all 0.3s ease;
-	box-sizing: border-box;
+	@apply w-full p-[12px_14px] bg-[rgba(245,230,200,0.06)] border border-[rgba(212,175,55,0.15)] rounded-xl text-[#f5e6c8] text-[0.95rem] outline-none transition-all duration-300 box-border;
 }
 
 .wafuu-input::placeholder {
-	color: rgba(245, 230, 200, 0.25);
+	@apply text-[rgba(245,230,200,0.25)];
 }
 
 .wafuu-input:focus {
-	border-color: rgba(212, 175, 55, 0.5);
-	background: rgba(245, 230, 200, 0.1);
-	box-shadow: 0 0 12px rgba(212, 175, 55, 0.1);
+	@apply border-[rgba(212,175,55,0.5)] bg-[rgba(245,230,200,0.1)] shadow-[0_0_12px_rgba(212,175,55,0.1)];
 }
 
 .wafuu-label {
-	font-size: 0.8rem;
-	color: rgba(245, 230, 200, 0.6);
-	font-weight: 500;
-	letter-spacing: 0.05em;
-	margin-bottom: 6px;
-	display: block;
+	@apply text-[0.8rem] text-[rgba(245,230,200,0.6)] font-medium tracking-wider mb-1.5 block;
 }
 
 /* --- エラー --- */
 .wafuu-error {
-	background: rgba(200, 50, 50, 0.15);
-	border: 1px solid rgba(200, 50, 50, 0.3);
-	border-radius: 10px;
-	padding: 10px 14px;
-	color: #ff8888;
-	font-size: 0.85rem;
-	margin-bottom: 12px;
+	@apply bg-[rgba(200,50,50,0.15)] border border-[rgba(200,50,50,0.3)] rounded-xl p-[10px_14px] text-[#ff8888] text-[0.85rem] mb-3;
 }
 
 /* --- ステータスバッジ --- */
 .wafuu-badge {
-	display: inline-flex;
-	align-items: center;
-	gap: 6px;
-	padding: 4px 12px;
-	border-radius: 20px;
-	font-size: 0.75rem;
-	font-weight: 600;
+	@apply inline-flex items-center gap-1.5 px-3 py-1 rounded-[20px] text-[0.75rem] font-semibold;
 }
 
 .wafuu-badge-success {
-	background: rgba(34, 197, 94, 0.15);
-	color: #4ade80;
-	border: 1px solid rgba(34, 197, 94, 0.2);
+	@apply bg-[rgba(34,197,94,0.15)] text-[#4ade80] border border-[rgba(34,197,94,0.2)];
 }
 
 .wafuu-badge-warning {
-	background: rgba(234, 179, 8, 0.15);
-	color: #fbbf24;
-	border: 1px solid rgba(234, 179, 8, 0.2);
+	@apply bg-[rgba(234,179,8,0.15)] text-[#fbbf24] border border-[rgba(234,179,8,0.2)];
 }
 
 .wafuu-badge-info {
-	background: rgba(59, 130, 246, 0.15);
-	color: #60a5fa;
-	border: 1px solid rgba(59, 130, 246, 0.2);
+	@apply bg-[rgba(59,130,246,0.15)] text-[#60a5fa] border border-[rgba(59,130,246,0.2)];
 }
 
 /* --- 待機アニメーション --- */
 .wafuu-pulse {
-	animation: wafuuPulse 2s ease-in-out infinite;
-}
-
-@keyframes wafuuPulse {
-
-	0%,
-	100% {
-		opacity: 0.5;
-	}
-
-	50% {
-		opacity: 1;
-	}
+	@apply animate-pulse;
 }
 
 /* --- ユーティリティ --- */
 .wafuu-gap-8 {
-	gap: 8px;
+	@apply gap-2;
 }
 
 .wafuu-gap-12 {
-	gap: 12px;
+	@apply gap-3;
 }
 
 .wafuu-gap-16 {
-	gap: 16px;
+	@apply gap-4;
 }
 
 .wafuu-mt-8 {
-	margin-top: 8px;
+	@apply mt-2;
 }
 
 .wafuu-mt-12 {
-	margin-top: 12px;
+	@apply mt-3;
 }
 
 .wafuu-mt-16 {
-	margin-top: 16px;
+	@apply mt-4;
 }
 
 .wafuu-text-center {
-	text-align: center;
+	@apply text-center;
 }
 
 .wafuu-flex-col {
-	display: flex;
-	flex-direction: column;
+	@apply flex flex-col;
 }

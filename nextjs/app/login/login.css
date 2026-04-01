@@ -1,278 +1,139 @@
 /* ===============================
-   Login Page — 和風テーマ
+   Login Page — Tailwind移行版
    =============================== */
 
 .login-page {
-    position: relative;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
+    @apply relative min-h-screen flex items-center justify-center overflow-hidden;
 }
 
 /* --- 背景画像 --- */
 .login-bg {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: 0;
-    background-image: url("/images/login-bg.png");
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
+    @apply fixed top-0 left-0 w-full h-full z-0 bg-[url("/images/login-bg.png")] bg-cover bg-center bg-no-repeat;
 }
 
 /* --- 暗いオーバーレイ --- */
 .login-bg::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(180deg,
-            rgba(10, 10, 20, 0.4) 0%,
-            rgba(10, 10, 20, 0.7) 100%);
+    @apply content-[""] absolute top-0 left-0 w-full h-full bg-gradient-to-b from-[rgba(10,10,20,0.4)] to-[rgba(10,10,20,0.7)];
 }
 
 /* --- コンテンツ --- */
 .login-content {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 24px;
-    width: 100%;
-    max-width: 420px;
-    padding: 0 20px;
+    @apply relative z-[1] flex flex-col items-center gap-6 w-full max-w-[420px] px-5;
 }
 
 /* --- タイトル --- */
 .login-title {
-    text-align: center;
-    color: #f5e6c8;
-    font-size: 2.4rem;
-    font-weight: 800;
-    letter-spacing: 0.15em;
-    text-shadow:
-        0 0 20px rgba(212, 175, 55, 0.5),
-        0 2px 8px rgba(0, 0, 0, 0.8);
-    margin: 0;
+    @apply text-center text-[#f5e6c8] text-[2.4rem] font-extrabold tracking-widest [text-shadow:0_0_20px_rgba(212,175,55,0.5),0_2px_8px_rgba(0,0,0,0.8)] m-0;
 }
 
 .login-subtitle {
-    color: rgba(245, 230, 200, 0.6);
-    font-size: 0.85rem;
-    letter-spacing: 0.3em;
-    margin-top: -8px;
+    @apply text-[rgba(245,230,200,0.6)] text-[0.85rem] tracking-[0.3em] -mt-2;
 }
 
 /* --- カード --- */
 .login-card {
-    width: 100%;
-    background: rgba(20, 15, 10, 0.85);
-    backdrop-filter: blur(16px);
-    border: 1px solid rgba(212, 175, 55, 0.15);
-    border-radius: 16px;
-    padding: 32px 28px;
-    box-shadow:
-        0 8px 32px rgba(0, 0, 0, 0.6),
-        inset 0 1px 0 rgba(212, 175, 55, 0.1);
+    @apply w-full bg-[rgba(20,15,10,0.85)] backdrop-blur-2xl border border-[rgba(212,175,55,0.15)] rounded-2xl p-[32px_28px] shadow-[0_8px_32px_rgba(0,0,0,0.6),inset_0_1px_0_rgba(212,175,55,0.1)];
 }
 
 /* --- タブ --- */
 .login-tabs {
-    display: flex;
-    gap: 0;
-    margin-bottom: 24px;
-    border-radius: 10px;
-    overflow: hidden;
-    border: 1px solid rgba(212, 175, 55, 0.2);
+    @apply flex gap-0 mb-6 rounded-[10px] overflow-hidden border border-[rgba(212,175,55,0.2)];
 }
 
 .login-tab {
-    flex: 1;
-    padding: 10px 0;
-    border: none;
-    background: transparent;
-    color: rgba(245, 230, 200, 0.5);
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    letter-spacing: 0.05em;
+    @apply flex-1 py-2.5 border-none bg-transparent text-[rgba(245,230,200,0.5)] text-[0.9rem] font-semibold cursor-pointer transition-all duration-300 tracking-wider;
 }
 
 .login-tab:hover {
-    color: rgba(245, 230, 200, 0.8);
-    background: rgba(212, 175, 55, 0.05);
+    @apply text-[rgba(245,230,200,0.8)] bg-[rgba(212,175,55,0.05)];
 }
 
 .login-tab-active {
-    background: rgba(212, 175, 55, 0.15);
-    color: #f5e6c8;
+    @apply bg-[rgba(212,175,55,0.15)] text-[#f5e6c8];
 }
 
 /* --- フォーム --- */
 .login-form {
-    display: flex;
-    flex-direction: column;
-    gap: 18px;
+    @apply flex flex-col gap-[18px];
 }
 
 .login-field {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
+    @apply flex flex-col gap-1.5;
 }
 
 .login-label {
-    font-size: 0.8rem;
-    color: rgba(245, 230, 200, 0.6);
-    font-weight: 500;
-    letter-spacing: 0.05em;
+    @apply text-[0.8rem] text-[rgba(245,230,200,0.6)] font-medium tracking-wider;
 }
 
 .login-input {
-    padding: 12px 14px;
-    background: rgba(245, 230, 200, 0.06);
-    border: 1px solid rgba(212, 175, 55, 0.15);
-    border-radius: 10px;
-    color: #f5e6c8;
-    font-size: 0.95rem;
-    outline: none;
-    transition: all 0.3s ease;
+    @apply p-[12px_14px] bg-[rgba(245,230,200,0.06)] border border-[rgba(212,175,55,0.15)] rounded-xl text-[#f5e6c8] text-[0.95rem] outline-none transition-all duration-300;
 }
 
 .login-input::placeholder {
-    color: rgba(245, 230, 200, 0.25);
+    @apply text-[rgba(245,230,200,0.25)];
 }
 
 .login-input:focus {
-    border-color: rgba(212, 175, 55, 0.5);
-    background: rgba(245, 230, 200, 0.1);
-    box-shadow: 0 0 12px rgba(212, 175, 55, 0.1);
+    @apply border-[rgba(212,175,55,0.5)] bg-[rgba(245,230,200,0.1)] shadow-[0_0_12px_rgba(212,175,55,0.1)];
 }
 
 /* --- エラー --- */
 .login-error {
-    background: rgba(200, 50, 50, 0.15);
-    border: 1px solid rgba(200, 50, 50, 0.3);
-    border-radius: 10px;
-    padding: 10px 14px;
-    color: #ff8888;
-    font-size: 0.85rem;
-    margin-bottom: 4px;
+    @apply bg-[rgba(200,50,50,0.15)] border border-[rgba(200,50,50,0.3)] rounded-xl p-[10px_14px] text-[#ff8888] text-[0.85rem] mb-1;
 }
 
 /* --- ボタン --- */
 .login-btn {
-    margin-top: 8px;
-    padding: 14px 0;
-    border: none;
-    border-radius: 10px;
-    background: linear-gradient(135deg, #b8860b 0%, #d4af37 50%, #b8860b 100%);
-    color: #1a1208;
-    font-size: 1rem;
-    font-weight: 700;
-    letter-spacing: 0.1em;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 16px rgba(212, 175, 55, 0.3);
+    @apply mt-2 py-3.5 border-none rounded-xl bg-gradient-to-br from-[#b8860b] via-[#d4af37] to-[#b8860b] text-[#1a1208] text-base font-bold tracking-widest cursor-pointer transition-all duration-300 shadow-[0_4px_16px_rgba(212,175,55,0.3)];
 }
 
 .login-btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 6px 24px rgba(212, 175, 55, 0.4);
-    background: linear-gradient(135deg, #d4af37 0%, #f0d060 50%, #d4af37 100%);
+    @apply -translate-y-px shadow-[0_6px_24px_rgba(212,175,55,0.4)] bg-gradient-to-br from-[#d4af37] via-[#f0d060] to-[#d4af37];
 }
 
 .login-btn:active {
-    transform: translateY(0);
+    @apply translate-y-0;
 }
 
 .login-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    transform: none;
-}
-
-/* --- レスポンシブ --- */
-@media (max-width: 480px) {
-    .login-content {
-        padding: 0 16px;
-    }
-
-    .login-card {
-        padding: 24px 20px;
-    }
-
-    .login-title {
-        font-size: 1.8rem;
-    }
+    @apply opacity-50 cursor-not-allowed translate-y-0;
 }
 
 /* --- OAuth セパレーター --- */
 .oauth-separator {
-    display: flex;
-    align-items: center;
-    margin: 24px 0;
-    color: rgba(245, 230, 200, 0.3);
-    font-size: 0.8rem;
+    @apply flex items-center my-6 text-[rgba(245,230,200,0.3)] text-[0.8rem];
 }
 
 .oauth-separator::before,
 .oauth-separator::after {
-    content: "";
-    flex: 1;
-    height: 1px;
-    background: rgba(212, 175, 55, 0.15);
+    @apply content-[""] flex-1 h-[1px] bg-[rgba(212,175,55,0.15)];
 }
 
 .oauth-separator span {
-    padding: 0 12px;
+    @apply px-3;
 }
 
 /* --- OAuth ボタン --- */
 .oauth-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+    @apply flex flex-col gap-3;
 }
 
 .oauth-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 12px;
-    border-radius: 10px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    border: 1px solid rgba(212, 175, 55, 0.2);
+    @apply flex items-center justify-center p-3 rounded-xl text-[0.9rem] font-semibold cursor-pointer transition-all duration-300 border border-[rgba(212,175,55,0.2)];
 }
 
 .github-btn {
-    background: #24292e;
-    color: #ffffff;
+    @apply bg-[#24292e] text-white;
 }
 
 .github-btn:hover {
-    background: #33393f;
-    border-color: rgba(212, 175, 55, 0.4);
+    @apply bg-[#33393f] border-[rgba(212,175,55,0.4)];
 }
 
 .google-btn {
-    background: #ffffff;
-    color: #1a1a1a;
+    @apply bg-white text-[#1a1a1a];
 }
 
 .google-btn:hover {
-    background: #f1f1f1;
-    border-color: rgba(212, 175, 55, 0.4);
+    @apply bg-[#f1f1f1] border-[rgba(212,175,55,0.4)];
 }
