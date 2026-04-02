@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Header from "@/components/Header";
 
 export default function SpectatePage() {
 	const router = useRouter();
@@ -27,12 +28,7 @@ export default function SpectatePage() {
 				style={{ backgroundImage: "url(/images/online-bg.png)" }}
 			/>
 
-			{/* ヘッダー */}
-			<header className="wafuu-header">
-				<Link href="/home" className="wafuu-header-logo">
-					将棋ゲーム
-				</Link>
-			</header>
+			<Header title="将棋ゲーム" logoHref="/home" />
 
 			{/* コンテンツ */}
 			<div className="wafuu-content">
