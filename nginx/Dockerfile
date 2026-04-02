@@ -1,3 +1,6 @@
 FROM nginx:alpine
+RUN apk add --no-cache openssl
+COPY generate-cert.sh /docker-entrypoint.d/generate-cert.sh
+RUN chmod +x /docker-entrypoint.d/generate-cert.sh && /docker-entrypoint.d/generate-cert.sh
 COPY nginx.conf /etc/nginx/conf.d/default.conf
-EXPOSE 80
+EXPOSE 443
