@@ -1,6 +1,6 @@
 import { getPieceRotation, gridToWorld, MODEL, Piece, PieceType, PromotedPieceType, PType } from "@torassen/shogi-logic";
 import { Color } from "@torassen/shogi-logic";
-import DraggablePiece from "../DraggablePiece";
+import DraggablePiece from "./DraggablePiece";
 import * as THREE from "three";
 
 interface BoardPiece {
@@ -14,7 +14,7 @@ interface BoardPiece {
     boardGroupRef: React.RefObject<THREE.Group>;
 }
 
-export default function BoardPieceDiaplay(props: BoardPiece) {
+export default function BoardPieceDisplay(props: BoardPiece) {
 
     const counts: Record<string, number> = {};
 

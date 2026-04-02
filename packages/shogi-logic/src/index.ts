@@ -48,7 +48,7 @@ export { checkIsHandPos } from "./checkIsHandPos"
 export { isPromotedPieceType, getBasePieceType } from "./pieceType"
 export { getGridFromBoardState } from "./getGridFromBoardState"
 export { getPieceRotation } from "./getPieceRotation"
-export { getWorldPositionsFromBoardState } from "./getWorldPositionsFromBoardState"
+export { getInitialDataFromBoardState } from "./getInitialDataFromBoardState"
 
 export { 
     createInitialBoard,

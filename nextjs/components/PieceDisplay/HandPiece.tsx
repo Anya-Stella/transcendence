@@ -1,7 +1,7 @@
 import { getPieceRotation, gridToWorld, Hand, HAND_PIECE_COORDS, MODEL, Piece, PieceType, PromotedPieceType, PType, SENTE_HAND_COORDS } from "@torassen/shogi-logic";
 import { Color } from "@torassen/shogi-logic";
-import DraggablePiece from "../DraggablePiece";
 import * as THREE from "three";
+import DraggablePiece from "./DraggablePiece";
 
 const HAND_COORDS: Record<number, Record<number, [number,number,number]>> = {
     [Color.BLACK]: {
@@ -31,7 +31,7 @@ interface HandPiece {
     boardGroupRef: React.RefObject<THREE.Group>;
 }
 
-export default function HandPieceDiaplay(props: HandPiece) {
+export default function HandPieceDisplay(props: HandPiece) {
 
     const counts: Record<string, number> = {};
 

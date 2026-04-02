@@ -30,20 +30,22 @@ import {
     getBasePieceType,
 	getPieceRotation,
 	getGridFromBoardState,
-	getWorldPositionsFromBoardState
+	getWorldPositionsFromBoardState,
+	getInitialDataFromBoardState
 } from "@torassen/shogi-logic";
 import { PieceData, GameState, Pos } from "@/lib/shogi/types";
 import ShogiLoader from "./ShogiLoader";
 import BanModelContent from "./Background/BanModel";
 import DaiModelContent from "./Background/DaiModel";
 import TatamiModel from "./Background/TatamiModel";
-import DraggablePiece from "./DraggablePiece";
+import DraggablePiece from "./PieceDisplay/DraggablePiece";
 import Background from "./Background/Background";
 import PromotionButton from "./Button/Promotion";
 import MoveMarker from "./MoveMarker";
 import { stat } from "fs";
-import BoardPieceDiaplay from "./PieceDisplay/BoardPiece";
-import HandPieceDiaplay from "./PieceDisplay/HandPiece";
+import BoardPieceDisplay from "./PieceDisplay/BoardPiece";
+import HandPieceDisplay from "./PieceDisplay/HandPiece";
+import { InitialBoardData } from "@torassen/shogi-logic/getInitialDataFromBoardState";
 
 const LOADER_PIECES = [
 	"/models/fu.glb",
@@ -97,32 +99,21 @@ export default function TatamiBackground({
 		setInitialGrid(getGridFromBoardState(state));
 	}, [state])
 
-	// 各駒の現在位置（ワールド座標）を管理
-	const [piecePositions, setPiecePositions] = useState<Record<string, [number, number, number]>>({});
+	const isFlipped = useMemo(() => playerColor === Color.WHITE, [playerColor]);
+
+	const [piecePositions, setPiecePositions] = useState();
+	const [pieceOwners, setPieceOwners] = useState();
+	const [piecePromotions, setPiecePromotions] = useState();
 
 	useEffect(() => {
-		setPiecePositions(getWorldPositionsFromBoardState(boardState,isFlipped));
-	},[boardState])
-
-	// 各駒の現在の所有者（先手/後手）を管理
-	const [pieceOwners, setPieceOwners] = useState<Record<string, Color>>(() => {
-		const initial: Record<string, Color> = {};
-		Object.keys(initialGrid).forEach(id => {
-			initial[id] = id.startsWith("sente-") ? Color.BLACK : Color.WHITE;
-		});
-		return initial;
-	});
-	// 各駒の成り状態を管理
-	const [piecePromotions, setPiecePromotions] = useState<Record<string, boolean>>(() => {
-		const initial: Record<string, boolean> = {};
-		Object.keys(initialGrid).forEach(id => {
-			initial[id] = false;
-		});
-		return initial;
-	});
+		const { positions, owners, promotions } = getInitialDataFromBoardState(boardState, isFlipped);
+		setPiecePositions(positions);
+		setPieceOwners(owners);
+		setPiecePromotions(promotions);
+	}, [boardState]);
 
 	// 盤面の向き：自分が後手(White)の場合は論理的な座標を反転させる
-	const isFlipped = useMemo(() => playerColor === Color.WHITE, [playerColor]);
+	
 
 	// 3D 盤面のみを更新する関数（循環防止、または外部指し手用）
 	const applyMoveTo3D = useCallback((id: string, move: Move) => {
@@ -333,7 +324,7 @@ export default function TatamiBackground({
 			const isFromEnemyTerritory = fromGrid.row === promoRank;
 			const isEnemyTerritoryMove = isToEnemyTerritory || isFromEnemyTerritory;
 
-			const canPromote = (id.includes("fu") || id.includes("gin") || id.includes("hisya") || id.includes("kaku"));
+			const canPromote = (id.includes("PAWN") || id.includes("SHILVER") || id.includes("ROOK") || id.includes("BISHOP"));
 
 			// 既に成っている駒は promote: false (shogi-logicの仕様に合わせる)
 			const promote = canPromote && isEnemyTerritoryMove && !isPiecePromoted(id);
@@ -355,7 +346,7 @@ export default function TatamiBackground({
 				const isEnemyTerritoryMove = isToEnemyTerritory || isFromEnemyTerritory;
 
 				const isAlreadyPromoted = isPiecePromoted(id);
-				const canPromote = (id.includes("fu") || id.includes("gin") || id.includes("hisya") || id.includes("kaku")) && !isAlreadyPromoted;
+				const canPromote = (id.includes("PAWN") || id.includes("SHILVER") || id.includes("ROOK") || id.includes("BISHOP")) && !isAlreadyPromoted;
 
 				if (canPromote && isEnemyTerritoryMove) {
 					if (id.includes("fu")) {
@@ -456,7 +447,7 @@ export default function TatamiBackground({
 								{/* アシストマーク（移動可能な場所の強調） */}
 								<MoveMarker validMoveDestinations={validMoveDestinations} isFlipped={isFlipped}/>
 
-								<BoardPieceDiaplay
+								<BoardPieceDisplay
 									board={boardState.board}
 									isFlipped={isFlipped}
 									selectedPiece={selectedPiece}
@@ -467,7 +458,7 @@ export default function TatamiBackground({
 									boardGroupRef={boardGroupRef}
 								/>
 
-								<HandPieceDiaplay
+								<HandPieceDisplay
 									Hand={boardState.hands}
 									isFlipped={isFlipped}
 									selectedPiece={selectedPiece}
