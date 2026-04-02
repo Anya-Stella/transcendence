@@ -1,0 +1,49 @@
+/* ===============================
+   フッター
+   =============================== */
+
+.site-footer {
+	position: relative;
+	z-index: 5;
+	width: 100%;
+	padding: 20px 24px;
+	background: rgba(10, 8, 5, 0.7);
+	backdrop-filter: blur(8px);
+	border-top: 1px solid rgba(212, 175, 55, 0.1);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 10px;
+}
+
+.site-footer-links {
+	display: flex;
+	align-items: center;
+	gap: 20px;
+	flex-wrap: wrap;
+	justify-content: center;
+}
+
+.site-footer-link {
+	color: rgba(245, 230, 200, 0.45);
+	font-size: 0.78rem;
+	text-decoration: none;
+	transition: color 0.3s ease;
+	letter-spacing: 0.03em;
+}
+
+.site-footer-link:hover {
+	color: rgba(212, 175, 55, 0.8);
+}
+
+.site-footer-divider {
+	color: rgba(245, 230, 200, 0.15);
+	font-size: 0.7rem;
+	user-select: none;
+}
+
+.site-footer-copy {
+	color: rgba(245, 230, 200, 0.25);
+	font-size: 0.72rem;
+	letter-spacing: 0.05em;
+}
