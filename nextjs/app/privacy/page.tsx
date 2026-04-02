@@ -87,7 +87,7 @@ export default function PrivacyPage() {
 						本サービスでは、以下の目的でCookieを使用しています。
 					</p>
 					<ul>
-						<li>ログイン状態の維持（セッション管理</li>
+						<li>ログイン状態の維持（セッション管理）</li>
 						<li>認証トークンの保存</li>
 						<li>ユーザー設定の記憶</li>
 					</ul>
