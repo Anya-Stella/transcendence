@@ -243,32 +243,6 @@ export default function TatamiBackground({
 		setSelectedPiece(id);
 	}, []);
 
-	// IDから現在の持ち駒の個数を取得する
-	const getHandPieceCount = useCallback((id: string): number => {
-		const pos = piecePositions[id] || gridToWorld(initialGrid[id].row, initialGrid[id].col);
-		if (!checkIsHandPos(pos)) return 1;
-
-		const owner = pieceOwners[id];
-		const type = getBasePieceType(id);
-		return boardState.hands[owner][type] || 0;
-	}, [piecePositions, pieceOwners, boardState.hands]);
-
-	// その持ち駒の種類の中で、表示されるべき代表駒かどうかを判定（重複表示防止）
-	const isPrimaryHandPiece = useCallback((id: string): boolean => {
-		const pos = piecePositions[id] || gridToWorld(initialGrid[id].row, initialGrid[id].col, isFlipped);
-		if (!checkIsHandPos(pos)) return true;
-
-		const owner = pieceOwners[id];
-		const type = getBasePieceType(id);
-		// 同じ種類かつ同じ所有者の駒リストを取得
-		const sameTypeIds = Object.keys(initialGrid).filter(pid => {
-			const pPos = piecePositions[pid] || gridToWorld(initialGrid[pid].row, initialGrid[pid].col, isFlipped);
-			return checkIsHandPos(pPos) && pieceOwners[pid] === owner && getBasePieceType(pid) === type;
-		});
-		// リストの先頭のIDだけを代表とする
-		return sameTypeIds[0] === id;
-	}, [piecePositions, pieceOwners, isFlipped]);
-
 	// 現在の選択駒に対する有効な移動先を計算
 	const validMoveDestinations = useMemo(() => {
 		if (!selectedPiece) return [];
@@ -349,7 +323,7 @@ export default function TatamiBackground({
 				const canPromote = (id.includes("PAWN") || id.includes("SHILVER") || id.includes("ROOK") || id.includes("BISHOP")) && !isAlreadyPromoted;
 
 				if (canPromote && isEnemyTerritoryMove) {
-					if (id.includes("fu")) {
+					if (id.includes("PAWN")) {
 						// 歩は強制成り
 						executeMove(id, { ...move, promote: true });
 					} else {
