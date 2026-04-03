@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Socket } from "socket.io-client";
 import { useShogiGame } from "@/hooks/useShogiGame";
-import { Color, PieceType, PType, Hand, Piece, UIBoard, BoardState, Move } from "@torassen/shogi-logic";
+import { Color, PieceType, PType, Hand, Piece, UIBoard, BoardState, Move, HandPieces } from "@torassen/shogi-logic";
 import TatamiBackground from "@/components/TatamiBackground";
 import { useUser } from "@/hooks/useUser";
 import GameStatusBanner from "./GamaStatusBanner/GamaStatusBanner";
@@ -40,35 +40,50 @@ export const KANJI_TO_PTYPE: Record<string, PType> = {
 	"龍": PType.PRO_ROOK,
 };
 
+const convertHandPiecesToHand = (handPieces: HandPieces): Hand => {
+  const hand: Hand = {};
+
+  Object.entries(handPieces).forEach(([kanji, count]) => {
+    let type = KANJI_TO_PTYPE[kanji];
+
+    if (type >= PType.PRO_PAWN) {
+      type = (type - 6) as PType;
+    }
+
+    hand[type] = (hand[type] || 0) + count;
+  });
+
+  return hand;
+};
+
 export function uiBoardToBoardState(uiBoard: UIBoard, moveCount: number = 0): BoardState {
-	// 1. 盤面（board）の変換
-	const board: (Piece | null)[][] = uiBoard.board.map((row) =>
-		row.map((cell) => {
-			if (!cell) return null;
+  // 1. 盤面（board）の変換
+  const board: (Piece | null)[][] = uiBoard.board.map((row) =>
+    row.map((cell) => {
+      if (!cell) return null;
 
-			const pieceType = KANJI_TO_PTYPE[cell.kanji];
-			// 対応する駒種がない場合はエラー回避のため null を返す
-			if (pieceType === undefined) return null;
+      const pieceType = KANJI_TO_PTYPE[cell.kanji];
+      if (pieceType === undefined) return null;
 
-			return {
-				color: cell.side === "sente" ? Color.BLACK : Color.WHITE,
-				pieceType: pieceType,
-			};
-		})
-	);
+      return {
+        color: cell.side === "sente" ? Color.BLACK : Color.WHITE,
+        pieceType: pieceType,
+      };
+    })
+  );
 
-	const hands: [Hand, Hand] = [
-		{ ...uiBoard.senteHand },
-		{ ...uiBoard.goteHand },
-	];
-	const sideToMove = uiBoard.turn === "sente" ? Color.BLACK : Color.WHITE;
+  const hands: [Hand, Hand] = [
+    { ...convertHandPiecesToHand(uiBoard.senteHand)},
+    { ...convertHandPiecesToHand(uiBoard.goteHand) },
+  ];
+  const sideToMove = uiBoard.turn === "sente" ? Color.BLACK : Color.WHITE;
 
-	return {
-		board,
-		hands,
-		sideToMove,
-		moveCount,
-	};
+  return {
+    board,
+    hands,
+    sideToMove,
+    moveCount,
+  };
 }
 
 interface MatchBoardProps {
@@ -78,8 +93,6 @@ interface MatchBoardProps {
 	mySide?: "sente" | "gote" | "spectator";
 	isPreparing?: boolean;
 }
-
-
 
 function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente", isPreparing = false }: MatchBoardProps) {
 	const router = useRouter();

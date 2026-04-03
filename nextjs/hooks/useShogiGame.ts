@@ -93,7 +93,6 @@ export function useShogiGame(
 		};
 
 		const handleMatchEnded = (data: { winner: string | null; message: string }) => {
-			// console.log("[WS] match_ended received:", data);
 
 			// 自分の勝敗に合わせてメッセージを書き換える
 			let displayMessage = data.message;

@@ -1,46 +1,36 @@
 // @ts-nocheck
 "use client";
 
-import { Canvas, useThree, useFrame } from "@react-three/fiber";
-import { useGLTF, Environment, Html, useProgress } from "@react-three/drei";
+import { Canvas } from "@react-three/fiber";
+import { useGLTF } from "@react-three/drei";
 import { Suspense, useRef, useState, useCallback, useEffect, useMemo } from "react";
 import * as THREE from "three";
 import {
 	Color,
-	PieceType,
-	createInitialBoard,
 	isLegalMove,
 	applyMove,
 	generateLegalMoves,
 	UNPROMOTE_MAP,
 	type BoardState,
 	type Move,
-	type Square,
-    BOARD_X_COORDS,
-    BOARD_Y,
-    BOARD_Z_COORDS,
     gridToWorld,
     worldToGrid,
     checkIsHandPos,
-    initialGrid,
     SENTE_HAND_COORDS,
     GOTE_HAND_COORDS,
-    SENTE_PIECES_CONFIG,
-    GOTE_PIECES_CONFIG,
     getBasePieceType,
 	getPieceRotation,
-	getGridFromBoardState
+	getGridFromBoardState,
+	getInitialDataFromBoardState,
+	PType,
+	MODEL,
+	Pos
 } from "@torassen/shogi-logic";
-import { PieceData, GameState, Pos } from "@/lib/shogi/types";
 import ShogiLoader from "./ShogiLoader";
-import BanModelContent from "./Background/BanModel";
-import DaiModelContent from "./Background/DaiModel";
-import TatamiModel from "./Background/TatamiModel";
-import DraggablePiece from "./DraggablePiece";
+import DraggablePiece from "./PieceDisplay/DraggablePiece";
 import Background from "./Background/Background";
 import PromotionButton from "./Button/Promotion";
 import MoveMarker from "./MoveMarker";
-import { stat } from "fs";
 
 const LOADER_PIECES = [
 	"/models/fu.glb",
@@ -90,32 +80,27 @@ export default function TatamiBackground({
 	const [initialGrid, setInitialGrid] = useState<Record<string, Pos>>(getGridFromBoardState(state));
 
 	useEffect(() => {
-		setBoardState(state);// こいつうまくいってない
+		setBoardState(state);
 		setInitialGrid(getGridFromBoardState(state));
 	}, [state])
 
-	// 各駒の現在位置（ワールド座標）を管理
-	const [piecePositions, setPiecePositions] = useState<Record<string, [number, number, number]>>({});
+	const isFlipped = useMemo(() => playerColor === Color.WHITE, [playerColor]);
 
-	// 各駒の現在の所有者（先手/後手）を管理
-	const [pieceOwners, setPieceOwners] = useState<Record<string, Color>>(() => {
-		const initial: Record<string, Color> = {};
-		Object.keys(initialGrid).forEach(id => {
-			initial[id] = id.startsWith("sente-") ? Color.BLACK : Color.WHITE;
-		});
-		return initial;
-	});
-	// 各駒の成り状態を管理
-	const [piecePromotions, setPiecePromotions] = useState<Record<string, boolean>>(() => {
-		const initial: Record<string, boolean> = {};
-		Object.keys(initialGrid).forEach(id => {
-			initial[id] = false;
-		});
-		return initial;
-	});
+	const [pieceId, setPieceId] = useState<string[]>([]);
+	const [piecePositions, setPiecePositions] = useState<Record<string, [number, number, number]>>();
+	const [pieceOwners, setPieceOwners] = useState<Record<string, Color>>();
+	const [piecePromotions, setPiecePromotions] = useState<Record<string, number>>();
+
+	useEffect(() => {
+		const { positions, owners, promotions } = getInitialDataFromBoardState(boardState, isFlipped);
+		setPiecePositions(positions);
+		setPieceOwners(owners);
+		setPiecePromotions(promotions);
+		setPieceId(Object.keys(positions));
+	}, [initialGrid]);
 
 	// 盤面の向き：自分が後手(White)の場合は論理的な座標を反転させる
-	const isFlipped = useMemo(() => playerColor === Color.WHITE, [playerColor]);
+	
 
 	// 3D 盤面のみを更新する関数（循環防止、または外部指し手用）
 	const applyMoveTo3D = useCallback((id: string, move: Move) => {
@@ -170,6 +155,7 @@ export default function TatamiBackground({
 
 	// 駒が操作可能かどうかを判定（自分の手番かつ自分の駒であること）
 	const isPieceDraggable = useCallback((id: string) => {
+		if (playerColor === undefined) return false;
 		// 終局している場合は操作不可
 		if (isGameOver) return false;
 
@@ -326,7 +312,7 @@ export default function TatamiBackground({
 			const isFromEnemyTerritory = fromGrid.row === promoRank;
 			const isEnemyTerritoryMove = isToEnemyTerritory || isFromEnemyTerritory;
 
-			const canPromote = (id.includes("fu") || id.includes("gin") || id.includes("hisya") || id.includes("kaku"));
+			const canPromote = (id.includes("PAWN") || id.includes("SILVER") || id.includes("ROOK") || id.includes("BISHOP"));
 
 			// 既に成っている駒は promote: false (shogi-logicの仕様に合わせる)
 			const promote = canPromote && isEnemyTerritoryMove && !isPiecePromoted(id);
@@ -348,10 +334,10 @@ export default function TatamiBackground({
 				const isEnemyTerritoryMove = isToEnemyTerritory || isFromEnemyTerritory;
 
 				const isAlreadyPromoted = isPiecePromoted(id);
-				const canPromote = (id.includes("fu") || id.includes("gin") || id.includes("hisya") || id.includes("kaku")) && !isAlreadyPromoted;
+				const canPromote = (id.includes("PAWN") || id.includes("SILVER") || id.includes("ROOK") || id.includes("BISHOP")) && !isAlreadyPromoted;
 
 				if (canPromote && isEnemyTerritoryMove) {
-					if (id.includes("fu")) {
+					if (id.includes("PAWN")) {
 						// 歩は強制成り
 						executeMove(id, { ...move, promote: true });
 					} else {
@@ -404,6 +390,20 @@ export default function TatamiBackground({
 		setSelectedPiece(null);
 	}, []);
 
+	const getModel = (id: string): string => {
+		const parts = id.split("-");
+		const side = parts[0];     // "sente" or "gote"
+		const typeName = parts[1]; // "PAWN", "KING", "PRO_PAWN" など
+
+		if (side === "sente" && typeName === "KING") {
+			return "/models/ousyo_NoTen.glb"; 
+		}
+		const pTypeKey = (PType as any)[typeName];
+		const modelPath = MODEL[pTypeKey as PType];
+
+		return modelPath || "/models/fu.glb";
+	};
+
 	return (
 		<div
 			style={{
@@ -449,39 +449,20 @@ export default function TatamiBackground({
 								{/* アシストマーク（移動可能な場所の強調） */}
 								<MoveMarker validMoveDestinations={validMoveDestinations} isFlipped={isFlipped}/>
 
-								{/* === 先手の駒 === */}
-								{SENTE_PIECES_CONFIG.map(piece => isPrimaryHandPiece(piece.id) && (
+								{pieceId.map(id=> isPrimaryHandPiece(id) && (
 									<DraggablePiece
-										key={piece.id}
-										pieceId={piece.id}
-										modelPath={piece.model}
-										initialPosition={piecePositions[piece.id] || gridToWorld(initialGrid[piece.id].row, initialGrid[piece.id].col, isFlipped)}
-										rotation={getPieceRotation(piece.id, pieceOwners[piece.id], isPiecePromoted(piece.id), isFlipped)}
-										count={getHandPieceCount(piece.id)}
+										key={id}
+										pieceId={id}
+										modelPath={getModel(id)}
+										initialPosition={piecePositions[id] || gridToWorld(PIECE_INITIAL_GRID[id].row, PIECE_INITIAL_GRID[id].col, isFlipped)}
+										rotation={getPieceRotation(id, pieceOwners[id], isPiecePromoted(id), isFlipped)}
+										count={getHandPieceCount(id)}
 										selectedId={selectedPiece}
-										isPromoted={isPiecePromoted(piece.id)}
+										isPromoted={isPiecePromoted(id)}
 										onSelect={handleSelect}
 										onDragEnd={handleDragEnd}
 										parentGroupRef={boardGroupRef}
-										draggable={isPieceDraggable(piece.id)}
-									/>
-								))}
-
-								{/* === 後手の駒 === */}
-								{GOTE_PIECES_CONFIG.map(piece => isPrimaryHandPiece(piece.id) && (
-									<DraggablePiece
-										key={piece.id}
-										pieceId={piece.id}
-										modelPath={piece.model}
-										initialPosition={piecePositions[piece.id] || gridToWorld(initialGrid[piece.id].row, initialGrid[piece.id].col, isFlipped)}
-										rotation={getPieceRotation(piece.id, pieceOwners[piece.id], isPiecePromoted(piece.id), isFlipped)}
-										count={getHandPieceCount(piece.id)}
-										selectedId={selectedPiece}
-										isPromoted={isPiecePromoted(piece.id)}
-										onSelect={handleSelect}
-										onDragEnd={handleDragEnd}
-										parentGroupRef={boardGroupRef}
-										draggable={isPieceDraggable(piece.id)}
+										draggable={isPieceDraggable(id)}
 									/>
 								))}
 							</group>
@@ -512,3 +493,5 @@ useGLTF.preload("/models/gin.glb");
 useGLTF.preload("/models/kaku.glb");
 useGLTF.preload("/models/hisya.glb");
 useGLTF.preload("/models/fu.glb");
+
+

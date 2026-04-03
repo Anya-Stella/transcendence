@@ -1,38 +1,46 @@
-import { BoardState, Color, PieceType, Square } from "./types";
+import { BoardState, Color, PType, Square } from "./types";
 
 export const getGridFromBoardState = (state: BoardState): Record<string, Square> => {
     const gridMap: Record<string, Square> = {};
-    for (let row = 0; row < 5; row++) {
-        for (let col = 0; col < 5; col++) {
-            const piece = state.board[row][col];
-            if (piece) {
-                const id = generatePieceId(piece.color, piece.pieceType as PieceType, gridMap);
-                gridMap[id] = { row, col };
+    const counts: Record<string, number> = {};
+
+    state.board.forEach((row, rowIndex) => {
+        row.forEach((cell, colIndex) => {
+            if (cell) {
+                const { color, pieceType } = cell;
+                const side = color === Color.BLACK ? "sente" : "gote";
+                const typeName = PType[pieceType];
+                
+                const baseId = `${side}-${typeName}`;
+                counts[baseId] = (counts[baseId] || 0) + 1;
+                const uniqueId = `${baseId}-${counts[baseId]}`;
+
+                gridMap[uniqueId] = { row: rowIndex, col: colIndex };
             }
-        }
-    }
+        });
+    });
+
+    Object.entries(state.hands).forEach(([colorStr, hand]) => {
+        const color = Number(colorStr) as Color;
+        const side = color === Color.BLACK ? "sente" : "gote";
+
+        Object.entries(hand).forEach(([typeStr, count]) => {
+            const pieceType = Number(typeStr) as PType;
+            if (count <= 0) return;
+
+            const typeName = PType[pieceType];
+            
+            const baseId = `${side}-${typeName}-hand`;
+
+            // 持ち駒も1枚ずつ個別のIDを振る場合
+            for (let i = 0; i < count; i++) {
+                counts[baseId] = (counts[baseId] || 0) + 1;
+                const uniqueId = `${baseId}-${counts[baseId]}`;
+
+                gridMap[uniqueId] = { row: -1, col: -1 }; 
+            }
+        });
+    });
+
     return gridMap;
-};
-
-const generatePieceId = (color: Color, type: PieceType, existing: Record<string, any>): string => {
-    const prefix = color === Color.BLACK ? "sente" : "gote";
-    const typeStr = getPieceTypeKey(type);
-    const baseId = `${prefix}-${typeStr}`;
-    if (!existing[baseId]) return baseId;
-    let i = 1;
-    while (existing[`${baseId}-${i}`])
-        i++;
-    return `${baseId}-${i}`;
-};
-
-const getPieceTypeKey = (type: PieceType): string => {
-    switch (type) {
-        case PieceType.KING: return "ou";
-        case PieceType.GOLD: return "kin";
-        case PieceType.SILVER: return "gin";
-        case PieceType.BISHOP: return "kaku";
-        case PieceType.ROOK: return "hisya";
-        case PieceType.PAWN: return "fu";
-        default: return "unknown";
-    }
 };

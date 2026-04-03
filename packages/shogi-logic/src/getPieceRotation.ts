@@ -6,7 +6,7 @@ export function getPieceRotation(
     isPromoted: boolean, 
     isFlipped: boolean = false
 ): [number, number, number] {
-    const isFu = id.includes("fu");
+    const isFu = id.includes("PAWN");
     
     // 視点が反転している場合、駒の向き（基本向き）も反転させる
     const visualColor = isFlipped ? (color === Color.BLACK ? Color.WHITE : Color.BLACK) : color;

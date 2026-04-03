@@ -2,7 +2,7 @@
 // @torassen/shogi-logic — 5×5 Mini Shogi constants
 // ============================================================
 
-import { Color, PieceType, PromotedPieceType, type Piece, type BoardState, type Hand, Square } from "./types";
+import { Color, PieceType, PromotedPieceType, type Piece, type BoardState, type Hand, Square, PType } from "./types";
 
 /** 盤面サイズ */
 export const BOARD_SIZE = 5;
@@ -118,6 +118,24 @@ export const SENTE_PIECES_CONFIG = [
 	{ id: "sente-fu", model: "/models/fu.glb", defaultPos: [-6, 10.0, -6.4] as [number, number, number] },
 ];
 
+export const HAND_PIECE_COORDS = 
+[
+	{
+		[PType.PAWN]: [-3, 10.0, 10.2],
+		[PType.ROOK]: [-3, 10.0, 13.2],
+		[PType.BISHOP]: [-3, 10.0, 16.2],
+		[PType.SILVER]: [-7.1, 10.0, 10.2],
+		[PType.GOLD]: [-7.1, 10.0, 13.2],
+	},
+	{
+		[PType.PAWN]: [-2.7, 10.0, -10.2],
+		[PType.ROOK]: [-2.7, 10.0, -13.2],
+		[PType.BISHOP]: [-2.7, 10.0, -16.2],
+		[PType.SILVER]: [1.5, 10.0, -10.2],
+		[PType.GOLD]: [1.5, 10.0, -13.2],
+	}
+]
+
 export const GOTE_PIECES_CONFIG = [
 	{ id: "gote-ou", model: "/models/ousyo_NoTen.glb", defaultPos: [3.9, 10.0, 6.4] as [number, number, number] },
 	{ id: "gote-kin", model: "/models/kin.glb", defaultPos: [3.9, 10.0, 3.2] as [number, number, number] },
@@ -126,6 +144,20 @@ export const GOTE_PIECES_CONFIG = [
 	{ id: "gote-hisya", model: "/models/hisya.glb", defaultPos: [3.9, 10.0, -6.4] as [number, number, number] },
 	{ id: "gote-fu", model: "/models/fu.glb", defaultPos: [0.6, 10.0, 6.4] as [number, number, number] },
 ];
+
+export const MODEL: Record<PType, string> = {
+    [PType.PAWN]: "/models/fu.glb",
+    [PType.SILVER]: "/models/gin.glb",
+	[PType.GOLD] : "/models/kin.glb",
+	[PType.BISHOP] : "/models/kaku.glb",
+	[PType.ROOK] : "/models/hisya.glb",
+	[PType.KING] : "/models/ousyo.glb",
+	[PType.PRO_PAWN] : "/models/fu.glb",
+	[PType.PRO_SILVER] : "/models/gin.glb",
+	[PType.PRO_BISHOP] : "/models/kaku.glb",
+	[PType.PRO_ROOK] : "/models/hisya.glb",
+	[PType.PTYPE_MAX] : "/models/ginsho.glb",
+};
 
 /** 初期盤面を生成 */
 export function createInitialBoard(): BoardState {
