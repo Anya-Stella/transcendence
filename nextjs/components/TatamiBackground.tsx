@@ -97,7 +97,7 @@ export default function TatamiBackground({
 		setPieceOwners(owners);
 		setPiecePromotions(promotions);
 		setPieceId(Object.keys(positions));
-	}, [initialGrid, isFlipped, boardState]);
+	}, [initialGrid]);
 
 	// 盤面の向き：自分が後手(White)の場合は論理的な座標を反転させる
 
@@ -220,7 +220,7 @@ export default function TatamiBackground({
 			// 外部指し手を適用（親への通知は不要）
 			applyMoveTo3D(targetId, move);
 		}
-	}, [lastExternalMove, piecePositions, pieceOwners, boardState.sideToMove, applyMoveTo3D, isFlipped, initialGrid]);
+	}, [lastExternalMove, piecePositions, pieceOwners, boardState.sideToMove, applyMoveTo3D]);
 
 	// 駒が成っているか確認する
 	const isPiecePromoted = useCallback((id: string): boolean => {
