@@ -156,7 +156,7 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 			{gotSfen &&
 				<TatamiBackground
 					state={state}
-					playerColor={mySide === "sente" ? Color.BLACK : Color.WHITE}
+					playerColor={mySide === "sente" ? Color.BLACK : (mySide === "gote" ? Color.WHITE : undefined)}
 					externalTurn={turn === "sente" ? Color.BLACK : Color.WHITE}
 					lastExternalMove={lastMove || undefined}
 					isGameOver={!!gameOver}
