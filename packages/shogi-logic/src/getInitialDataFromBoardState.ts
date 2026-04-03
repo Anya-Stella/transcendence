@@ -10,7 +10,7 @@ export interface InitialBoardData {
 }
 
 export function getInitialDataFromBoardState(
-    state: BoardState, 
+    state: BoardState,
     isFlipped: boolean = false
 ): InitialBoardData {
     const positions: Record<string, [number, number, number]> = {};
@@ -34,7 +34,7 @@ export function getInitialDataFromBoardState(
                 // 各種データを格納
                 positions[uniqueId] = gridToWorld(rowIndex, colIndex, isFlipped);
                 owners[uniqueId] = color;
-                promotions[uniqueId] = pieceType >= PType.PRO_PAWN; 
+                promotions[uniqueId] = pieceType >= PType.PRO_PAWN;
             }
         });
     });
@@ -49,7 +49,7 @@ export function getInitialDataFromBoardState(
             const pieceType = Number(typeStr) as PType;
             if (count <= 0) return;
 
-            const baseType = pieceType >=  PType.PRO_PAWN ? (pieceType - PType.PRO_PAWN) : pieceType;
+            const baseType = pieceType >= PType.PRO_PAWN ? (pieceType - PType.PRO_PAWN) : pieceType;
             const typeName = PType[pieceType];
             const handPos = coordsSource[baseType as PieceType] || [0, 10, 0];
 
@@ -57,7 +57,7 @@ export function getInitialDataFromBoardState(
                 const baseHandId = `${side}-${typeName}-hand`;
                 counts[baseHandId] = (counts[baseHandId] || 0) + 1;
                 const uniqueId = `${baseHandId}-${counts[baseHandId]}`;
-                
+
                 positions[uniqueId] = [...handPos];
                 owners[uniqueId] = color;
                 promotions[uniqueId] = false; // 持ち駒は必ず「未成り」

@@ -13,12 +13,12 @@ import {
 	UNPROMOTE_MAP,
 	type BoardState,
 	type Move,
-    gridToWorld,
-    worldToGrid,
-    checkIsHandPos,
-    SENTE_HAND_COORDS,
-    GOTE_HAND_COORDS,
-    getBasePieceType,
+	gridToWorld,
+	worldToGrid,
+	checkIsHandPos,
+	SENTE_HAND_COORDS,
+	GOTE_HAND_COORDS,
+	getBasePieceType,
 	getPieceRotation,
 	getGridFromBoardState,
 	getInitialDataFromBoardState,
@@ -100,7 +100,7 @@ export default function TatamiBackground({
 	}, [initialGrid]);
 
 	// 盤面の向き：自分が後手(White)の場合は論理的な座標を反転させる
-	
+
 
 	// 3D 盤面のみを更新する関数（循環防止、または外部指し手用）
 	const applyMoveTo3D = useCallback((id: string, move: Move) => {
@@ -165,7 +165,7 @@ export default function TatamiBackground({
 		// 自分が動かせる色であること（AI対戦やオンライン対局用）
 		if (playerColor !== undefined && owner !== playerColor) return false;
 		return true;
-	}, [pieceOwners, boardState.sideToMove, playerColor]);
+	}, [pieceOwners, boardState.sideToMove, playerColor, isGameOver]);
 
 	// 指し手を実行する共通関数
 	const executeMove = useCallback((id: string, move: Move) => {
@@ -283,7 +283,7 @@ export default function TatamiBackground({
 				.filter(m => m.type === "move" && fromGrid && m.from.row === fromGrid.row && m.from.col === fromGrid.col)
 				.map(m => m.to);
 		}
-	}, [selectedPiece, boardState, piecePositions, pieceOwners]);
+	}, [selectedPiece, boardState, piecePositions, pieceOwners, isFlipped, initialGrid]);
 
 	const handleDragEnd = useCallback((id: string, newPos: [number, number, number]) => {
 		const toGrid = worldToGrid(newPos[0], newPos[2], isFlipped);
@@ -383,7 +383,7 @@ export default function TatamiBackground({
 		} else {
 			console.log("無効な移動です");
 		}
-	}, [boardState, piecePositions, executeMove, isPiecePromoted]);
+	}, [boardState, piecePositions, executeMove, isPiecePromoted, isFlipped, initialGrid]);
 
 	// 背景クリックで選択解除
 	const handleBackgroundClick = useCallback(() => {
@@ -396,7 +396,7 @@ export default function TatamiBackground({
 		const typeName = parts[1]; // "PAWN", "KING", "PRO_PAWN" など
 
 		if (side === "sente" && typeName === "KING") {
-			return "/models/ousyo_NoTen.glb"; 
+			return "/models/ousyo_NoTen.glb";
 		}
 		const pTypeKey = (PType as any)[typeName];
 		const modelPath = MODEL[pTypeKey as PType];
@@ -437,7 +437,7 @@ export default function TatamiBackground({
 						<ShogiLoader />
 					) : (
 						<>
-							<Background isFlipped={isFlipped} boardGroupRef={boardGroupRef}/>
+							<Background isFlipped={isFlipped} boardGroupRef={boardGroupRef} />
 							{/* 盤と駒を同じグループに入れて一括で傾ける */}
 							<group ref={boardGroupRef} position={[0, -0.9, 0]} rotation={[(Math.PI / 180) * 30, Math.PI / 2, 0]}>
 								{/* 背景クリックで選択解除用の透明な平面 */}
@@ -447,9 +447,9 @@ export default function TatamiBackground({
 								</mesh>
 
 								{/* アシストマーク（移動可能な場所の強調） */}
-								<MoveMarker validMoveDestinations={validMoveDestinations} isFlipped={isFlipped}/>
+								<MoveMarker validMoveDestinations={validMoveDestinations} isFlipped={isFlipped} />
 
-								{pieceId.map(id=> isPrimaryHandPiece(id) && (
+								{pieceId.map(id => isPrimaryHandPiece(id) && (
 									<DraggablePiece
 										key={id}
 										pieceId={id}
@@ -472,7 +472,7 @@ export default function TatamiBackground({
 			</Canvas>
 
 			{/* 成り選択UI */}
-			{pendingPromotion && 
+			{pendingPromotion &&
 				<PromotionButton
 					pendingPromotion={pendingPromotion}
 					setPendingPromotion={setPendingPromotion}

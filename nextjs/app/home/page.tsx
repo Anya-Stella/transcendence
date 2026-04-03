@@ -71,7 +71,7 @@ export default function HomePage() {
 						</div>
 						<span className="wafuu-menu-arrow">→</span>
 					</Link>
-				</div>z
+				</div>
 			</div>
 		</div>
 	);
