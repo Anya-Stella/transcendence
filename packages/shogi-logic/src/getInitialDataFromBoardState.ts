@@ -34,7 +34,7 @@ export function getInitialDataFromBoardState(
                 // 各種データを格納
                 positions[uniqueId] = gridToWorld(rowIndex, colIndex, isFlipped);
                 owners[uniqueId] = color;
-                promotions[uniqueId] = pieceType >= 7; 
+                promotions[uniqueId] = pieceType >= PType.PRO_PAWN; 
             }
         });
     });
@@ -49,7 +49,7 @@ export function getInitialDataFromBoardState(
             const pieceType = Number(typeStr) as PType;
             if (count <= 0) return;
 
-            const baseType = pieceType >= 7 ? (pieceType - 7) : pieceType;
+            const baseType = pieceType >=  PType.PRO_PAWN ? (pieceType - PType.PRO_PAWN) : pieceType;
             const typeName = PType[pieceType];
             const handPos = coordsSource[baseType as PieceType] || [0, 10, 0];
 

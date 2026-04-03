@@ -87,9 +87,9 @@ export default function TatamiBackground({
 	const isFlipped = useMemo(() => playerColor === Color.WHITE, [playerColor]);
 
 	const [pieceId, setPieceId] = useState<string[]>([]);
-	const [piecePositions, setPiecePositions] = useState();
-	const [pieceOwners, setPieceOwners] = useState();
-	const [piecePromotions, setPiecePromotions] = useState();
+	const [piecePositions, setPiecePositions] = useState<Record<string, [number, number, number]>>();
+	const [pieceOwners, setPieceOwners] = useState<Record<string, Color>>();
+	const [piecePromotions, setPiecePromotions] = useState<Record<string, number>>();
 
 	useEffect(() => {
 		const { positions, owners, promotions } = getInitialDataFromBoardState(boardState, isFlipped);
@@ -155,6 +155,7 @@ export default function TatamiBackground({
 
 	// 駒が操作可能かどうかを判定（自分の手番かつ自分の駒であること）
 	const isPieceDraggable = useCallback((id: string) => {
+		if (playerColor === undefined) return false;
 		// 終局している場合は操作不可
 		if (isGameOver) return false;
 
@@ -311,7 +312,7 @@ export default function TatamiBackground({
 			const isFromEnemyTerritory = fromGrid.row === promoRank;
 			const isEnemyTerritoryMove = isToEnemyTerritory || isFromEnemyTerritory;
 
-			const canPromote = (id.includes("PAWN") || id.includes("SHILVER") || id.includes("ROOK") || id.includes("BISHOP"));
+			const canPromote = (id.includes("PAWN") || id.includes("SILVER") || id.includes("ROOK") || id.includes("BISHOP"));
 
 			// 既に成っている駒は promote: false (shogi-logicの仕様に合わせる)
 			const promote = canPromote && isEnemyTerritoryMove && !isPiecePromoted(id);
@@ -333,10 +334,10 @@ export default function TatamiBackground({
 				const isEnemyTerritoryMove = isToEnemyTerritory || isFromEnemyTerritory;
 
 				const isAlreadyPromoted = isPiecePromoted(id);
-				const canPromote = (id.includes("PAWN") || id.includes("SHILVER") || id.includes("ROOK") || id.includes("BISHOP")) && !isAlreadyPromoted;
+				const canPromote = (id.includes("PAWN") || id.includes("SILVER") || id.includes("ROOK") || id.includes("BISHOP")) && !isAlreadyPromoted;
 
 				if (canPromote && isEnemyTerritoryMove) {
-					if (id.includes("fu")) {
+					if (id.includes("PAWN")) {
 						// 歩は強制成り
 						executeMove(id, { ...move, promote: true });
 					} else {
