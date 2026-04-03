@@ -7,7 +7,7 @@ import TatamiModel from "./TatamiModel";
 import * as THREE from "three";
 import { RefObject } from "react"
 
-interface Background  {
+interface Background {
     isFlipped: boolean,
     boardGroupRef: RefObject<THREE.Group<THREE.Object3DEventMap> | null>
 }
@@ -24,14 +24,14 @@ export default function Background(props: Background) {
 
                 {/* 自分の駒台 (常に右下) */}
                 <DaiModelContent
-                    position={props.isFlipped ? [-21.2, 0, 12.7] : [-12.5, 0, -21]}
+                    position={props.isFlipped ? [-12.5, 0, -21] : [-21.2, 0, 12.7]}
                     rotation={[0, Math.PI, 0]}
                     scale={[1, 1, 1]}
                 />
 
                 {/* 相手の駒台 (常に左上) */}
                 <DaiModelContent
-                    position={props.isFlipped ? [-12.5, 0, -21] : [-21.2, 0, 12.7]}
+                    position={props.isFlipped ? [-21.2, 0, 12.7] : [-12.5, 0, -21]}
                     rotation={[0, Math.PI, 0]}
                     scale={[1, 1, 1]}
                 />

@@ -43,7 +43,11 @@ export function getInitialDataFromBoardState(
     Object.entries(state.hands).forEach(([colorStr, hand]) => {
         const color = Number(colorStr) as Color;
         const side = color === Color.BLACK ? "sente" : "gote";
-        const coordsSource = color === Color.BLACK ? SENTE_HAND_COORDS : GOTE_HAND_COORDS;
+        
+        const isOwnerSente = color === Color.BLACK;
+        const coordsSource = isFlipped ? 
+            (isOwnerSente ? GOTE_HAND_COORDS : SENTE_HAND_COORDS) : 
+            (isOwnerSente ? SENTE_HAND_COORDS : GOTE_HAND_COORDS);
 
         Object.entries(hand).forEach(([typeStr, count]) => {
             const pieceType = Number(typeStr) as PType;

@@ -35,6 +35,18 @@ export function worldToGrid(x: number, z: number, isFlipped: boolean = false): {
 		}
 	}
 
+	// 盤面の外（閾値以上離れている）ならnullを返す
+	// BOARD_X_COORDS: [3.9, ..., -9.1], BOARD_Z_COORDS: [-6.4, ..., 6.4]
+	const margin = 2.0;
+	const minX = -9.1 - margin;
+	const maxX = 3.9 + margin;
+	const minZ = -6.4 - margin;
+	const maxZ = 6.4 + margin;
+
+	if (x < minX || x > maxX || z < minZ || z > maxZ) {
+		return null;
+	}
+
 	if (isFlipped) {
 		return { row: 4 - bestRow, col: 4 - bestCol };
 	}
