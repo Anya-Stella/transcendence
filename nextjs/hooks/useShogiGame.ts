@@ -96,7 +96,7 @@ export function useShogiGame(
 
 			// 自分の勝敗に合わせてメッセージを書き換える
 			let displayMessage = data.message;
-			if (data.winner) {
+			if (data.winner && mySide !== "spectator") {
 				const isWin = data.winner === mySide;
 				displayMessage = isWin ? "あなたの勝ちです！" : "あなたの負けです。";
 				if (data.message.includes("投了")) {
@@ -204,6 +204,7 @@ export function useShogiGame(
 	const handleEndMatch = async () => {
 		if (mySide === "spectator") {
 			router.push("/home");
+			return;
 		}
 		if (gameResult.isOver) {
 			const isWin = gameResult.winner === mySide;

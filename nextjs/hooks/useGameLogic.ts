@@ -85,7 +85,9 @@ export function useGameLogic(mySide: "sente" | "gote" | "spectator") {
 			const isWin = winner === mySide;
 
 			const mainMessage = isCheck ? "詰みです！" : "合法手がありません。";
-			const resultMessage = isWin ? "あなたの勝ちです！" : "あなたの負けです。";
+			const resultMessage = mySide === "spectator" 
+				? `${winner === "sente" ? "先手" : "後手"}の勝ちです！`
+				: (winner === mySide ? "あなたの勝ちです！" : "あなたの負けです。");
 
 			dispatch({
 				type: "SET_GAME_OVER",
