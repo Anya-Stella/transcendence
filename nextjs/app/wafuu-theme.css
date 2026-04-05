@@ -207,15 +207,6 @@
    プロフィール表示用スタイル
    =============================== */
 
-/* --- @property: CSS Houdiniでカスタムプロパティにアニメーション ---
-   通常のCSS変数（--var）はブラウザが「値の型」を知らないため transition できない。
-   @property で syntax（型）を宣言すると、ブラウザが補間方法を理解し、
-   transition/animation の対象にできるようになる。 */
-@property --progress-width {
-	syntax: '<percentage>';
-	inherits: false;
-	initial-value: 0%;
-}
 
 /* --- アバター --- */
 .wafuu-profile-avatar {
@@ -295,24 +286,6 @@
 	color: rgba(245, 230, 200, 0.45);
 }
 
-/* --- 勝率プログレスバー ---
-   --progress-width を @property で宣言しているため、
-   CSS transition でスムーズにアニメーションする。
-   ページ読み込み時に JS で --progress-width を設定すると、
-   0% → 実際の勝率 まで滑らかに伸びる。 */
-.wafuu-progress-track {
-	@apply w-full h-2 rounded-full overflow-hidden;
-	background: rgba(245, 230, 200, 0.08);
-}
-
-.wafuu-progress-fill {
-	height: 100%;
-	border-radius: 9999px;
-	width: var(--progress-width);
-	background: linear-gradient(90deg, #b8860b, #d4af37, #f0d060);
-	transition: width 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-	box-shadow: 0 0 8px rgba(212, 175, 55, 0.4);
-}
 
 /* --- セクション区切り --- */
 .wafuu-divider {

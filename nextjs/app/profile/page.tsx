@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useSession } from "next-auth/react";
 import Header from "@/components/Header";
 import { isOnline } from "@/lib/utils";
 
@@ -20,7 +19,6 @@ interface UserProfile {
 }
 
 export default function ProfilePage() {
-	const { data: session } = useSession();
 	const [profile, setProfile] = useState<UserProfile | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState("");
