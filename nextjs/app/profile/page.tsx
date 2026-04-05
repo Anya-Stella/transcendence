@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Header from "@/components/Header";
 import { isOnline } from "@/lib/utils";
@@ -19,6 +20,7 @@ interface UserProfile {
 }
 
 export default function ProfilePage() {
+	const router = useRouter();
 	const [profile, setProfile] = useState<UserProfile | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState("");
@@ -26,8 +28,12 @@ export default function ProfilePage() {
 	useEffect(() => {
 		const fetchProfile = async () => {
 			try {
-				const res = await fetch("/api/profile");
+				const res = await fetch("/api/me");
 				if (!res.ok) {
+					if (res.status === 401) {
+						router.push("/login");
+						return;
+					}
 					setError("プロフィールの取得に失敗しました");
 					return;
 				}

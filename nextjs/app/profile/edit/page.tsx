@@ -53,7 +53,7 @@ export default function ProfileEditPage() {
 		const file = e.target.files?.[0]; // 選択されたファイルを取り出す
 		if (!file) return;
 		setIsLoading(true);
-		setMessage({ text: "アップロード中...", type: "" });
+		setMessage({ text: "アップロード中...", type: "info" });
 		// 1. ファイル送信専用の「梱包箱」にファイルを詰める
 		const formData = new FormData();
 		formData.append("file", file);
@@ -159,7 +159,7 @@ export default function ProfileEditPage() {
 
 							{/* 結果メッセージの表示 */}
 							{message.text && (
-								<div className={message.type === "error" ? "wafuu-error" : "wafuu-badge wafuu-badge-success"} style={{ width: "100%", textAlign: "center", marginTop: "10px" }}>
+								<div className={message.type === "error" ? "wafuu-error" : message.type === "info" ? "wafuu-badge wafuu-badge-info" : "wafuu-badge wafuu-badge-success"} style={{ width: "100%", textAlign: "center", marginTop: "10px" }}>
 									{message.text}
 								</div>
 							)}
