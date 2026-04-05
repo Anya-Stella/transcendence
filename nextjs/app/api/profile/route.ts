@@ -3,6 +3,41 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { signupSchema } from "@/lib/validations";
 
+// ───── プロフィール取得（Query） ─────
+export async function GET() {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "ログインが必要です" }, { status: 401 });
+  }
+
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        image: true,
+        totalMatches: true,
+        wins: true,
+        losses: true,
+        createdAt: true,
+        lastSeen: true,
+      },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: "ユーザーが見つかりません" }, { status: 404 });
+    }
+
+    return NextResponse.json({ user });
+  } catch (error) {
+    console.error("Profile fetch error:", error);
+    return NextResponse.json({ error: "取得に失敗しました" }, { status: 500 });
+  }
+}
+
+// ───── プロフィール更新（Command） ─────
 export async function PUT(request: Request) {
   // 1. 誰からのリクエストか確認（認証）
   const session = await auth();

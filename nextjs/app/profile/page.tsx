@@ -4,81 +4,59 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import Header from "@/components/Header";
+import { isOnline } from "@/lib/utils";
+
+// ───── APIから返されるユーザーデータの型 ─────
+interface UserProfile {
+	id: string;
+	name: string | null;
+	email: string | null;
+	image: string | null;
+	totalMatches: number;
+	wins: number;
+	losses: number;
+	createdAt: string;
+	lastSeen: string | null;
+}
 
 export default function ProfilePage() {
-	// 1. Auth.jsからセッション情報と、セッションを再取得するための update 関数をもらう
-	const { data: session, update } = useSession();
+	const { data: session } = useSession();
+	const [profile, setProfile] = useState<UserProfile | null>(null);
+	const [loading, setLoading] = useState(true);
+	const [error, setError] = useState("");
 
-	const [name, setName] = useState("");
-	const [isLoading, setIsLoading] = useState(false);
-	const [message, setMessage] = useState({ text: "", type: "" });
-
-	// セッションが読み込まれたら、現在の名前を入力フォームの初期値にセットする
 	useEffect(() => {
-		if (session?.user?.name) {
-			setName(session.user.name);
-		}
-	}, [session]);
-
-	// 保存ボタンを押したときの処理
-	const handleSubmit = async (e: React.SyntheticEvent<HTMLFormElement>) => {
-		e.preventDefault();
-		setIsLoading(true);
-		setMessage({ text: "", type: "" });
-
-		try {
-			// 2. プロフィール更新API（PUT /api/profile）に送信する
-			const res = await fetch("/api/profile", {
-				method: "PUT",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ name }),
-			});
-
-			if (res.ok) {
-				setMessage({ text: "更新しました！", type: "success" });
-				// 3. Auth.js のセッション情報も最新に更新（これで右上の名前もすぐ置き換わります）
-				await update({ name });
-			} else {
-				const errorData = await res.json();
-				setMessage({ text: `エラー: ${errorData.error}`, type: "error" });
-			}
-		} catch (error) {
-			setMessage({ text: "通信エラーが発生しました", type: "error" });
-		} finally {
-			setIsLoading(false);
-		}
-	};
-
-	const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-		const file = e.target.files?.[0]; // 選択されたファイルを取り出す
-		if (!file) return;
-		setIsLoading(true);
-		setMessage({ text: "アップロード中...", type: "" });
-		// 1. ファイル送信専用の「梱包箱」にファイルを詰める
-		const formData = new FormData();
-		formData.append("file", file);
-		try {
-			// 2. 画像アップロード専用API（PUT /api/profile/avatar）を叩く
-			const res = await fetch("/api/profile/avatar", {
-				method: "PUT",
-				// 【超重要】 FormData を送るときは "Content-Type" を書いてはいけません！（ブラウザが自動で特別な境界線付きのヘッダーを作ってくれます）
-				body: formData,
-			});
-			if (res.ok) {
+		const fetchProfile = async () => {
+			try {
+				const res = await fetch("/api/profile");
+				if (!res.ok) {
+					setError("プロフィールの取得に失敗しました");
+					return;
+				}
 				const data = await res.json();
-				setMessage({ text: "画像を更新しました！", type: "success" });
-				// 3. 通行証（セッション）も最新の画像URLに即座に更新する
-				await update({ image: data.imageUrl });
-			} else {
-				const errorData = await res.json();
-				setMessage({ text: `エラー: ${errorData.error}`, type: "error" });
+				setProfile(data.user);
+			} catch {
+				setError("通信エラーが発生しました");
+			} finally {
+				setLoading(false);
 			}
-		} catch (error) {
-			setMessage({ text: "通信エラーが発生しました", type: "error" });
-		} finally {
-			setIsLoading(false);
-		}
+		};
+		fetchProfile();
+	}, []);
+
+	// ───── 勝率の計算 ─────
+	const winRate =
+		profile && profile.totalMatches > 0
+			? Math.round((profile.wins / profile.totalMatches) * 1000) / 10
+			: 0;
+
+	// ───── 日付フォーマット ─────
+	const formatDate = (dateStr: string) => {
+		const d = new Date(dateStr);
+		return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
 	};
+
+	const online = profile ? isOnline(profile.lastSeen) : false;
 
 	return (
 		<div className="wafuu-page">
@@ -90,94 +68,167 @@ export default function ProfilePage() {
 
 			<Header
 				title="将棋ゲーム"
-				pageName="プレイヤー設定"
+				pageName="プロフィール"
 				backHref="/home"
 				backLabel="戻る"
 			/>
 
 			{/* コンテンツ */}
-			<div className="wafuu-content" style={{ justifyContent: "flex-start", paddingTop: "80px" }}>
+			<div
+				className="wafuu-content"
+				style={{ justifyContent: "flex-start", paddingTop: "80px" }}
+			>
 				<div
 					className="wafuu-flex-col wafuu-gap-16"
 					style={{ width: "100%", maxWidth: "500px", alignItems: "center" }}
 				>
-					<h2 className="wafuu-heading">プレイヤー設定</h2>
+					{/* ローディング */}
+					{loading && (
+						<div
+							className="wafuu-text-center wafuu-pulse"
+							style={{ color: "#f5e6c8", marginTop: "2rem" }}
+						>
+							読み込み中...
+						</div>
+					)}
 
-					<div className="wafuu-card" style={{ maxWidth: "100%", textAlign: "center" }}>
-						{/* アバター表示 */}
-						<div style={{ position: "relative", marginBottom: "2rem", display: "inline-block" }}>
-							<img
-								src={session?.user?.image || "/images/default-avatar.png"}
-								alt="User Avatar"
+					{/* エラー */}
+					{error && (
+						<div className="wafuu-error" style={{ width: "100%" }}>
+							{error}
+						</div>
+					)}
+
+					{/* プロフィールコンテンツ */}
+					{profile && (
+						<>
+							{/* ---- アバター & 名前セクション ---- */}
+							<div
+								className="wafuu-fade-up wafuu-fade-up-1"
 								style={{
-									width: "120px",
-									height: "120px",
-									borderRadius: "50%",
-									objectFit: "cover",
-									border: "3px solid rgba(212, 175, 55, 0.4)",
-									boxShadow: "0 0 20px rgba(0, 0, 0, 0.5)"
+									display: "flex",
+									flexDirection: "column",
+									alignItems: "center",
+									gap: "12px",
 								}}
-							/>
-							<div style={{ marginTop: "1rem" }}>
-								<label
-									htmlFor="avatar-upload"
-									className="wafuu-header-btn"
+							>
+								<img
+									src={profile.image || "/images/default-avatar.png"}
+									alt="アバター"
+									className="wafuu-profile-avatar"
+								/>
+								<div className="wafuu-profile-name">
+									{profile.name || "名無し"}
+								</div>
+								<div
 									style={{
-										cursor: isLoading ? "wait" : "pointer",
-										display: "inline-block"
+										display: "flex",
+										alignItems: "center",
+										fontSize: "0.85rem",
+										color: online
+											? "rgba(74, 222, 128, 0.9)"
+											: "rgba(245, 230, 200, 0.4)",
 									}}
 								>
-									画像を変更 (PNGのみ)
-								</label>
-								<input
-									id="avatar-upload"
-									type="file"
-									accept="image/png"
-									onChange={handleImageUpload}
-									disabled={isLoading}
-									style={{ display: "none" }}
-								/>
-							</div>
-						</div>
-
-						{/* 入力フォーム */}
-						<form onSubmit={handleSubmit} className="wafuu-flex-col wafuu-gap-16">
-							<div style={{ textAlign: "left" }}>
-								<label htmlFor="name" className="wafuu-label">プレイヤー名</label>
-								<input
-									id="name"
-									className="wafuu-input"
-									type="text"
-									value={name}
-									onChange={(e) => setName(e.target.value)}
-									required
-									autoComplete="off"
-									style={{ textAlign: "center", fontSize: "1.1rem" }}
-								/>
-							</div>
-
-							<button
-								type="submit"
-								disabled={isLoading}
-								className="wafuu-btn-primary"
-							>
-								{isLoading ? "保存中..." : "保存する"}
-							</button>
-
-							{/* 結果メッセージの表示 */}
-							{message.text && (
-								<div className={message.type === "error" ? "wafuu-error" : "wafuu-badge wafuu-badge-success"} style={{ width: "100%", textAlign: "center", marginTop: "10px" }}>
-									{message.text}
+									<span
+										className={`wafuu-status-dot ${
+											online
+												? "wafuu-status-dot-online"
+												: "wafuu-status-dot-offline"
+										}`}
+									/>
+									{online ? "オンライン" : "オフライン"}
 								</div>
-							)}
-						</form>
-					</div>
+							</div>
 
-					<div className="wafuu-mt-16" style={{ width: "100%" }}>
-						<Link href="/home" className="wafuu-btn-outline">
-							ホームに戻る
-						</Link>
-					</div>
+							<div className="wafuu-divider" />
+
+							{/* ---- 対戦成績カード ---- */}
+							<div
+								className="wafuu-card wafuu-fade-up wafuu-fade-up-2"
+								style={{ maxWidth: "100%" }}
+							>
+								<div className="wafuu-section-title">
+									<span>📊</span> 対戦成績
+								</div>
+
+								{/* 勝数・敗数・勝率 の 3カラム統計 */}
+								<div className="wafuu-stat-grid wafuu-stat-grid-3">
+									<div className="wafuu-stat-item">
+										<span className="wafuu-stat-value" style={{ color: "#4ade80" }}>
+											{profile.wins}
+										</span>
+										<span className="wafuu-stat-label">勝利</span>
+									</div>
+									<div className="wafuu-stat-item">
+										<span className="wafuu-stat-value" style={{ color: "#f87171" }}>
+											{profile.losses}
+										</span>
+										<span className="wafuu-stat-label">敗北</span>
+									</div>
+									<div className="wafuu-stat-item">
+										<span className="wafuu-stat-value">
+											{winRate}
+											<span style={{ fontSize: "0.8rem", opacity: 0.6 }}>%</span>
+										</span>
+										<span className="wafuu-stat-label">勝率</span>
+									</div>
+								</div>
+
+
+
+								<div
+									className="wafuu-info-row"
+									style={{ marginTop: "12px" }}
+								>
+									<span className="wafuu-info-label">総対戦数</span>
+									<span className="wafuu-info-value">
+										{profile.totalMatches} 戦
+									</span>
+								</div>
+							</div>
+
+							{/* ---- アカウント情報カード ---- */}
+							<div
+								className="wafuu-card wafuu-fade-up wafuu-fade-up-3"
+								style={{ maxWidth: "100%" }}
+							>
+								<div className="wafuu-section-title">
+									<span>📋</span> アカウント情報
+								</div>
+
+								<div className="wafuu-info-row">
+									<span className="wafuu-info-label">メールアドレス</span>
+									<span className="wafuu-info-value">
+										{profile.email || "未設定"}
+									</span>
+								</div>
+								<div className="wafuu-info-row">
+									<span className="wafuu-info-label">登録日</span>
+									<span className="wafuu-info-value">
+										{formatDate(profile.createdAt)}
+									</span>
+								</div>
+							</div>
+
+							{/* ---- 編集ボタン ---- */}
+							<div
+								className="wafuu-fade-up wafuu-fade-up-4"
+								style={{ width: "100%" }}
+							>
+								<Link href="/profile/edit" className="wafuu-btn-primary" style={{ display: "block", textAlign: "center", textDecoration: "none" }}>
+									✏️ プロフィールを編集
+								</Link>
+							</div>
+
+							{/* ---- ホームに戻る ---- */}
+							<div className="wafuu-mt-16" style={{ width: "100%" }}>
+								<Link href="/home" className="wafuu-btn-outline">
+									ホームに戻る
+								</Link>
+							</div>
+						</>
+					)}
 				</div>
 			</div>
 		</div>
