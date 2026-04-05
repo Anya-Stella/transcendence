@@ -46,6 +46,7 @@ export default function ProfilePage() {
 			}
 		};
 		fetchProfile();
+	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
 	// ───── 勝率の計算 ─────

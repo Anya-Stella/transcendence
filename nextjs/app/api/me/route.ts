@@ -23,7 +23,7 @@ export async function GET() {
 			wins: true,
 			losses: true,
 			createdAt: true,
-		lastSeen: true,
+			lastSeen: true,
 		},
 	});
 
