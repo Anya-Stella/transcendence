@@ -1,14 +1,28 @@
 import Link from "next/link";
 import VictoryAnimation from "./VictoryAnimation";
 import DefeatAnimation from "./DefeatAnimation";
+import SpectatorAnimation from "./SpectatorAnimation";
 
-interface ShowResultOverlay {
+interface ShowResultOverlayProps {
     isWinner: boolean,
+    isSpectator?: boolean,
     gameResult: string,
     clickHandler: (show: boolean) => void;
 }
 
-function ShowResultOverlay({ isWinner, gameResult, clickHandler }:ShowResultOverlay) {
+function ShowResultOverlay({ isWinner, isSpectator, gameResult, clickHandler }: ShowResultOverlayProps) {
+    const statusText = isSpectator ? "終局" : (isWinner ? "勝利" : "敗北");
+    const statusColor = isSpectator ? "#f5e6c8" : (isWinner ? "#d4af37" : "#888");
+    const borderColor = isSpectator 
+        ? "rgba(245, 230, 200, 0.3)" 
+        : (isWinner ? "rgba(212, 175, 55, 0.4)" : "rgba(150, 150, 150, 0.2)");
+    const shadowColor = isSpectator 
+        ? "rgba(245, 230, 200, 0.1)" 
+        : (isWinner ? "rgba(212, 175, 55, 0.2)" : "rgba(0, 0, 0, 0.3)");
+    const buttonBg = isSpectator
+        ? "rgba(245, 230, 200, 0.8)"
+        : (isWinner ? "rgba(212, 175, 55, 0.9)" : "rgba(100, 100, 100, 0.8)");
+
     return (
         <div
             style={{
@@ -29,12 +43,8 @@ function ShowResultOverlay({ isWinner, gameResult, clickHandler }:ShowResultOver
                     background: "rgba(20, 15, 10, 0.95)",
                     padding: "60px 80px",
                     borderRadius: "32px",
-                    border: `2px solid ${isWinner
-                        ? "rgba(212, 175, 55, 0.4)"
-                        : "rgba(150, 150, 150, 0.2)"}`,
-                    boxShadow: `0 0 60px ${isWinner
-                        ? "rgba(212, 175, 55, 0.2)"
-                        : "rgba(0, 0, 0, 0.3)"}`,
+                    border: `2px solid ${borderColor}`,
+                    boxShadow: `0 0 60px ${shadowColor}`,
                     textAlign: "center",
                     minWidth: "400px",
                     animation: "resultPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)"
@@ -43,7 +53,7 @@ function ShowResultOverlay({ isWinner, gameResult, clickHandler }:ShowResultOver
             >
                 {/* 結果アイコン */}
                 <div style={{ fontSize: "5rem", marginBottom: "20px" }}>
-                    {isWinner ? <VictoryAnimation /> : <DefeatAnimation />}
+                    {isSpectator ? <SpectatorAnimation /> : (isWinner ? <VictoryAnimation /> : <DefeatAnimation />)}
                 </div>
 
                 {/* 結果テキスト */}
@@ -52,15 +62,15 @@ function ShowResultOverlay({ isWinner, gameResult, clickHandler }:ShowResultOver
                         fontSize: "4.5rem",
                         fontWeight: 900,
                         letterSpacing: "0.2em",
-                        color: isWinner ? "#d4af37" : "#888",
-                        textShadow: isWinner
+                        color: statusColor,
+                        textShadow: !isSpectator && isWinner
                             ? "0 0 40px rgba(212, 175, 55, 0.6)"
                             : "0 0 20px rgba(255, 255, 255, 0.1)",
                         margin: "0 0 24px",
                         fontFamily: "'M PLUS Rounded 1c', sans-serif"
                     }}
                 >
-                    {isWinner ? "勝利" : "敗北"}
+                    {statusText}
                 </h2>
 
                 <p
@@ -85,17 +95,13 @@ function ShowResultOverlay({ isWinner, gameResult, clickHandler }:ShowResultOver
                         href="/home"
                         style={{
                             padding: "16px 32px",
-                            background: isWinner
-                                ? "rgba(212, 175, 55, 0.9)"
-                                : "rgba(100, 100, 100, 0.8)",
+                            background: buttonBg,
                             color: "#000",
                             borderRadius: "16px",
                             fontWeight: 900,
                             fontSize: "1.1rem",
                             textDecoration: "none",
-                            boxShadow: `0 4px 15px ${isWinner
-                                ? "rgba(212, 175, 55, 0.4)"
-                                : "rgba(0, 0, 0, 0.2)"}`,
+                            boxShadow: `0 4px 15px ${shadowColor}`,
                             transition: "all 0.2s"
                         }}
                     >

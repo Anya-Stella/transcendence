@@ -225,6 +225,7 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 					{/* Result Overlay */}
 					{showResultOverlay && <ShowResultOverlay
 						isWinner={gameResult.winner === mySide}
+						isSpectator={mySide === "spectator"}
 						gameResult={gameOver as string}
 						clickHandler={setShowResultOverlay}
 					/>}
