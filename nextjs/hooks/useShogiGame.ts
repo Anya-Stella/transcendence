@@ -226,6 +226,17 @@ export function useShogiGame(
 		}
 	};
 
+	useEffect(() => {
+		const resultStatus = gameResult.winner === mySide ? "win" : "lose";
+
+		if(gameResult.winner)
+			fetch("/api/result", {
+			method: "PUT",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ result: resultStatus }), 
+			});
+	},[gameResult.winner])
+
 	return {
 		board,
 		turn,
