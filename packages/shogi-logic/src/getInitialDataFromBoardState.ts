@@ -1,4 +1,4 @@
-import { GOTE_HAND_COORDS, SENTE_HAND_COORDS } from "./constants";
+import { GOTE_HAND_COORDS, SENTE_HAND_COORDS, UNPROMOTE_MAP } from "./constants";
 import { gridToWorld } from "./grid-world";
 import { BoardState, Color, PType, PieceType } from "./types";
 
@@ -23,8 +23,9 @@ export function getInitialDataFromBoardState(
         rowArray.forEach((cell, colIndex) => {
             if (cell) {
                 const { color, pieceType } = cell;
+                const basePieceType = UNPROMOTE_MAP[pieceType] ?? pieceType;
                 const side = color === Color.BLACK ? "sente" : "gote";
-                const typeName = PType[pieceType];
+                const typeName = PType[basePieceType];
 
                 // ID生成
                 const baseId = `${side}-${typeName}`;

@@ -89,7 +89,7 @@ export default function TatamiBackground({
 	const [pieceId, setPieceId] = useState<string[]>([]);
 	const [piecePositions, setPiecePositions] = useState<Record<string, [number, number, number]>>();
 	const [pieceOwners, setPieceOwners] = useState<Record<string, Color>>();
-	const [piecePromotions, setPiecePromotions] = useState<Record<string, number>>();
+	const [piecePromotions, setPiecePromotions] = useState<Record<string, boolean>>();
 
 	useEffect(() => {
 		const { positions, owners, promotions } = getInitialDataFromBoardState(boardState, isFlipped);

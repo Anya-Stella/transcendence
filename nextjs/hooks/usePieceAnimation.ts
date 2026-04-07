@@ -9,6 +9,7 @@ interface UsePieceAnimationProps {
     targetPos: [number, number, number];           // 目標座標
     targetRotation: [number, number, number];      // 目標角度（オイラー角）
     isDragging: boolean;                           // ドラッグ中か
+    isPromoted?: boolean;                          // 【NEW】成り状況
 }
 
 export function usePieceAnimation({
@@ -16,19 +17,24 @@ export function usePieceAnimation({
     rotationGroupRef,
     targetPos,
     targetRotation,
-    isDragging
+    isDragging,
+    isPromoted
 }: UsePieceAnimationProps) {
     const isFirstFrame = useRef(true);
     
     // 落下演出用の設定
-    // 最初にランダムな高さから降ってくる（20〜35の高さ）
     const dropOffset = useRef(Math.random() * 15 + 20);
 
-    // 目標の回転（クォータニオン）をメモ化に近い形で保持
+    // 成りアニメーション用の状態管理
+    const prevPromoted = useRef<boolean | undefined>(undefined);
+    const promotionAnimTimer = useRef(0);
+    const PROMOTION_DURATION = 0.6; // 秒
+
+    // 目標の回転（クォータニオン）を保持
     const targetQuat = useRef(new THREE.Quaternion());
     const targetVec = useRef(new THREE.Vector3());
 
-    useFrame((_state, _delta) => {
+    useFrame((_state, delta) => {
         if (!positionGroupRef.current || !rotationGroupRef.current) return;
 
         // 目標値をThree.jsの型に変換
@@ -45,25 +51,43 @@ export function usePieceAnimation({
             );
             rotationGroupRef.current.quaternion.copy(targetQuat.current);
             isFirstFrame.current = false;
+            prevPromoted.current = isPromoted; // 初回の状態を記録
             return;
+        }
+
+        // --- 成り状況の変化を検知 ---
+        if (prevPromoted.current !== undefined && prevPromoted.current !== isPromoted) {
+            promotionAnimTimer.current = PROMOTION_DURATION;
+            prevPromoted.current = isPromoted;
         }
 
         // --- アニメーションロジック ---
         if (isDragging) {
-            // ドラッグ中は遊びを持たせず、少し浮かせて即座に追従
+            // ドラッグ中は少し浮かせて即座に追従
             positionGroupRef.current.position.set(
                 targetVec.current.x,
-                targetVec.current.y + 1, // 指で隠れないように少し浮かす
+                targetVec.current.y + 1,
                 targetVec.current.z
             );
             rotationGroupRef.current.quaternion.copy(targetQuat.current);
         } else {
-            // 通常時：滑らかに目標へ移動 (Lerp)
-            // 0.2 は追従速度。小さいほどゆっくり、大きいほどキビキビ動く
-            positionGroupRef.current.position.lerp(targetVec.current, 0.2);
+            // 通常時: ジャンプ効果の計算
+            let jumpBonus = 0;
+            if (promotionAnimTimer.current > 0) {
+                const progress = 1.0 - (promotionAnimTimer.current / PROMOTION_DURATION);
+                jumpBonus = Math.sin(progress * Math.PI) * 2.5;
+                promotionAnimTimer.current -= delta;
+            }
+
+            const animTargetPos = targetVec.current.clone();
+            animTargetPos.y += jumpBonus;
+
+            // 滑らかに目標へ移動 (Lerp)
+            positionGroupRef.current.position.lerp(animTargetPos, 0.2);
 
             // 回転も滑らかに補間 (Slerp)
-            rotationGroupRef.current.quaternion.slerp(targetQuat.current, 0.15);
+            const slerpSpeed = promotionAnimTimer.current > 0 ? 0.25 : 0.15;
+            rotationGroupRef.current.quaternion.slerp(targetQuat.current, slerpSpeed);
         }
     });
 }

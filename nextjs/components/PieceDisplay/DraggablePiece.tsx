@@ -57,7 +57,8 @@ function DraggablePiece(props: DraggablePieceProps) {
         rotationGroupRef,
         targetPos: pos,
         targetRotation: rotation,
-        isDragging
+        isDragging,
+        isPromoted: props.isPromoted
     });
 
     const isSelected = selectedId === pieceId;
