@@ -202,3 +202,142 @@
 .wafuu-flex-col {
 	@apply flex flex-col;
 }
+
+/* ===============================
+   プロフィール表示用スタイル
+   =============================== */
+
+
+/* --- アバター --- */
+.wafuu-profile-avatar {
+	@apply w-[120px] h-[120px] rounded-full object-cover;
+	border: 4px solid rgba(212, 175, 55, 0.8);
+	box-shadow:
+		0 0 0 2px rgba(10, 8, 5, 0.8),
+		0 0 0 6px rgba(212, 175, 55, 0.3),
+		0 0 20px rgba(212, 175, 55, 0.3);
+	transition: box-shadow 0.4s ease, transform 0.3s ease;
+}
+
+.wafuu-profile-avatar:hover {
+	box-shadow:
+		0 0 25px rgba(212, 175, 55, 0.35),
+		0 0 50px rgba(212, 175, 55, 0.15);
+	transform: scale(1.03);
+}
+
+/* --- プロフィール名 --- */
+.wafuu-profile-name {
+	@apply text-[1.6rem] font-bold tracking-widest text-center;
+	color: #f5e6c8;
+	text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+}
+
+/* --- オンラインステータスドット --- */
+.wafuu-status-dot {
+	@apply inline-block w-[8px] h-[8px] rounded-full mr-1.5;
+}
+
+.wafuu-status-dot-online {
+	background: #4ade80;
+	box-shadow: 0 0 6px rgba(74, 222, 128, 0.6);
+	animation: statusPulse 2s ease-in-out infinite;
+}
+
+.wafuu-status-dot-offline {
+	background: #888;
+}
+
+@keyframes statusPulse {
+	0%, 100% { opacity: 1; }
+	50% { opacity: 0.4; }
+}
+
+/* --- 統計グリッド（2カラム） --- */
+.wafuu-stat-grid {
+	@apply grid gap-3;
+	grid-template-columns: repeat(2, 1fr);
+}
+
+.wafuu-stat-item {
+	@apply flex flex-col items-center p-3 rounded-xl;
+	background: rgba(212, 175, 55, 0.06);
+	border: 1px solid rgba(212, 175, 55, 0.1);
+	transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+.wafuu-stat-item:hover {
+	background: rgba(212, 175, 55, 0.12);
+	border-color: rgba(212, 175, 55, 0.25);
+}
+
+/* 3カラム（総対戦数を中央に配置する場合などに使用） */
+.wafuu-stat-grid-3 {
+	grid-template-columns: repeat(3, 1fr);
+}
+
+.wafuu-stat-value {
+	@apply text-[1.4rem] font-bold;
+	color: #f5e6c8;
+}
+
+.wafuu-stat-label {
+	@apply text-[0.75rem] tracking-wider mt-0.5;
+	color: rgba(245, 230, 200, 0.45);
+}
+
+
+/* --- セクション区切り --- */
+.wafuu-divider {
+	@apply w-full my-4;
+	height: 1px;
+	background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.25), transparent);
+}
+
+/* --- 情報行（ラベル+値） --- */
+.wafuu-info-row {
+	@apply flex justify-between items-center py-2;
+	border-bottom: 1px solid rgba(212, 175, 55, 0.06);
+}
+
+.wafuu-info-row:last-child {
+	border-bottom: none;
+}
+
+.wafuu-info-label {
+	@apply text-[0.85rem];
+	color: rgba(245, 230, 200, 0.5);
+}
+
+.wafuu-info-value {
+	@apply text-[0.9rem] font-medium;
+	color: #f5e6c8;
+}
+
+/* --- セクションタイトル --- */
+.wafuu-section-title {
+	@apply flex items-center gap-2 text-[0.9rem] font-semibold tracking-wider mb-3;
+	color: rgba(245, 230, 200, 0.7);
+}
+
+/* フェードイン（プロフィールカード表示時） */
+@keyframes wafuuFadeUp {
+	from {
+		opacity: 0;
+		transform: translateY(16px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+.wafuu-fade-up {
+	animation: wafuuFadeUp 0.5s ease-out both;
+}
+
+/* 各カードにディレイを付けて順番にフェードイン */
+.wafuu-fade-up-1 { animation-delay: 0.1s; }
+.wafuu-fade-up-2 { animation-delay: 0.25s; }
+.wafuu-fade-up-3 { animation-delay: 0.4s; }
+.wafuu-fade-up-4 { animation-delay: 0.55s; }

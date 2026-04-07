@@ -71,6 +71,16 @@ export default function HomePage() {
 						</div>
 						<span className="wafuu-menu-arrow">→</span>
 					</Link>
+
+					<Link href="/profile" className="wafuu-menu-item">
+						<div className="wafuu-menu-text">
+							<div className="wafuu-menu-title">プロフィール</div>
+							<div className="wafuu-menu-desc">
+								自分の戦績やプロフィールを確認しよう
+							</div>
+						</div>
+						<span className="wafuu-menu-arrow">→</span>
+					</Link>
 				</div>
 			</div>
 		</div>
