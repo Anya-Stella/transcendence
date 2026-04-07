@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { Prisma, Match} from "@prisma/client";
+import { Prisma } from "@prisma/client";
 
 // ---- 型定義 ----
 
 type FriendshipWithUsers = Prisma.FriendshipGetPayload<{
 	include: {
-	  requester: { select: { id: true; name: true; image: true; lastSeen:true } };
-	  addressee: { select: { id: true; name: true; image: true; lastSeen:true } };
+	  requester: { select: { id: true; name: true; image: true; lastSeen:true ; wins: true ; losses: true} };
+	  addressee: { select: { id: true; name: true; image: true; lastSeen:true ; wins: true ; losses: true} };
 	};
   }>;
 type FriendUser = {
@@ -51,10 +51,10 @@ export async function GET() {
 			},
 			include: {
 				requester: {
-					select: { id: true, name: true, image: true, lastSeen: true },
+					select: { id: true, name: true, image: true, lastSeen: true, wins: true , losses: true},
 				},
 				addressee: {
-					select: { id: true, name: true, image: true, lastSeen: true },
+					select: { id: true, name: true, image: true, lastSeen: true, wins: true , losses: true},
 				},
 			},
 		});
@@ -73,8 +73,8 @@ export async function GET() {
 					friendshipId: f.id,
 					user: otherUser,
 					createdAt: f.createdAt,
-					wins: 0,
-					losses: 0,
+					wins: otherUser.wins,
+					losses: otherUser.losses,
 				});
 			} else if (f.status === "pending") {
 				if (isRequester) {
@@ -92,34 +92,6 @@ export async function GET() {
 				}
 			}
 		});
-
-		// フレンドに対する勝敗数を集計する
-		if (friends.length > 0) {
-			const friendIds = friends.map((f) => f.user.id);
-			const matches = await prisma.match.findMany({
-				where: {
-					OR: [
-						{ blackUserId: userId, whiteUserId: { in: friendIds } },
-						{ blackUserId: { in: friendIds }, whiteUserId: userId },
-					],
-					winnerUserId: { not: null },
-				},
-			});
-
-			matches.forEach((match: Match) => {
-				const isWin = match.winnerUserId === userId;
-				const opponentId = match.blackUserId === userId ? match.whiteUserId : match.blackUserId;
-
-				const friendData = friends.find((f) => f.user.id === opponentId);
-				if (friendData) {
-					if (isWin) {
-						friendData.wins += 1;
-					} else {
-						friendData.losses += 1;
-					}
-				}
-			});
-		}
 
 		return NextResponse.json({ friends, pendingRequests, sentRequests });
 	} catch (error) {
