@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { signupSchema } from "@/lib/validations";
 
+// ───── プロフィール更新（Command） ─────
 export async function PUT(request: Request) {
   // 1. 誰からのリクエストか確認（認証）
   const session = await auth();
