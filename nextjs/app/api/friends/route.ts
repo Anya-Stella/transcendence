@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { Prisma, Match} from "@prisma/client";
+import { Prisma } from "@prisma/client";
 
 // ---- 型定義 ----
 
