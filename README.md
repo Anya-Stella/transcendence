@@ -1,168 +1,147 @@
-# 🐯 将棋ゲーム（Tora-sen）— 5×5 ミニ将棋オンライン
+# 5x5 Mini Shogi Online
 
-5×5 ミニ将棋をオンラインで対戦できる Web アプリケーション。
+*This project has been created as part of the 42 curriculum by <okaname>, <mkuida>, <tishihar>, <kosakats>.*
 
-## 🏗 技術スタック
+## 📝 Description
 
-| レイヤー | 技術 |
-|----------|------|
-| フロントエンド | Next.js 14 (App Router) + TypeScript |
-| データベース | PostgreSQL 16 + Prisma ORM |
-| 認証 | Auth.js（JWT ベース / httpOnly Cookie）+ argon2 |
-| WebSocket | Socket.IO |
-| インフラ | Docker Compose (nginx / nextjs / ws-server / postgres) |
+**5x5 Mini Shogi Online** is a real-time, web-based project that brings the traditional Japanese game of Shogi into a fast-paced, modern 3D environment. The goal was to build a robust Single Page Application (SPA) that supports multiplayer competition, AI training, and a complete social ecosystem for players.
 
-## 📂 ディレクトリ構成
+### Key Features
+- **Immersive 3D Graphics**: Fully interactive board using Three.js and Blender models.
+- **Real-time Engine**: Instant move synchronization via WebSockets.
+- **Secure Authentication**: OAuth and salted hashing for user management.
+- **Spectator Experience**: Live match watching for the community.
+- **AI Practice**: Play against a computer opponent.
 
-```
-TRANSCENDENCE/
-├── docker-compose.yml
-├── .env.example
-├── nginx/
-│   ├── Dockerfile
-│   └── nginx.conf
-├── nextjs/
-│   ├── Dockerfile
-│   ├── entrypoint.sh
-│   ├── package.json
-│   ├── prisma/
-│   │   └── schema.prisma
-│   ├── lib/           # auth, prisma, validations
-│   ├── middleware.ts   # 認証リダイレクト
-│   ├── app/
-│   │   ├── layout.tsx
-│   │   ├── globals.css
-│   │   ├── login/
-│   │   ├── home/
-│   │   ├── online/
-│   │   ├── room/[roomId]/
-│   │   ├── match/ & match/[roomId]/
-│   │   ├── spectate/ & spectate/[roomId]/
-│   │   ├── result/
-│   │   └── api/
-│   │       ├── auth/signup/
-│   │       ├── auth/login/
-│   │       ├── auth/logout/
-│   │       └── me/
-│   └── components/
-│       └── MatchBoard.tsx
-└── ws-server/
-    ├── Dockerfile
-    ├── package.json
-    └── src/index.ts
-```
+---
 
-## 🚀 起動手順
+## 🚀 Instructions
 
-### 1. 環境変数の準備
+### Prerequisites
+- **Docker & Docker Compose**: Necessary for running the containerized environment.
+- **GNU Make**: To use the simplified automation commands.
+- **RAM**: Minimum 2GB allocated to Docker.
 
-```bash
-cp .env.example .env
-```
+### Local Setup & Deployment
+1. **Repository Cloning**:
+   ```bash
+   git clone <repository-url>
+   cd transcendence
+   ```
 
-### 2. Docker Compose で起動
+2. **Environment Configuration**:
+   Create a `.env` file at the root:
+   ```bash
+   cp .env.example .env
+   ```
+   *Required variables: `DATABASE_URL`, `AUTH_SECRET`, `POSTGRES_PASSWORD`.*
 
-```bash
-docker compose up --build
-```
+3. **Running the Project (Makefile)**:
+   The project includes a `Makefile` to simplify Docker operations.
 
-初回起動時に以下が自動実行されます：
-- PostgreSQL データベースの作成
-- Prisma マイグレーション（テーブル作成）
-- Prisma クライアント生成
+   - **Production Mode** (Standard 42 evaluation):
+     ```bash
+     make prod
+     ```
+   - **Development Mode** (with hot-reload):
+     ```bash
+     make test
+     ```
+   - **Stop Services**:
+     ```bash
+     make down-prod  # Stop production environment
+     make down-test  # Stop development environment
+     ```
 
-### 3. ブラウザでアクセス
+4. **Access**:
+   The application is accessible at `http://localhost:8080`.
 
-```
-http://localhost:8080
-```
+---
 
-## 🔐 環境変数
+## 🛠 Technical Stack
 
-| 変数 | 説明 | 例 |
-|------|------|----|
-| `POSTGRES_USER` | DB ユーザー名 | `torassen` |
-| `POSTGRES_PASSWORD` | DB パスワード | `torassen_secret` |
-| `POSTGRES_DB` | DB 名 | `torassen` |
-| `DATABASE_URL` | Prisma 接続文字列 | `postgresql://torassen:torassen_secret@postgres:5432/torassen` |
-| `AUTH_SECRET` | Auth.js 用の秘密鍵。十分に長いランダム文字列を指定 | `openssl rand -base64 32` の出力を使用 |
-| `AUTH_URL` | Auth.js が認識するアプリケーションの公開 URL | `http://localhost:8080` |
-| `AUTH_TRUST_HOST` | 逆プロキシ経由でのアクセスを許可するフラグ | `true` |
-| `AUTH_GITHUB_ID` | GitHub OAuth クライアント ID（例）※利用するプロバイダに応じて設定 | `xxxxxxxxxxxxxxxxxxxx` |
-| `AUTH_GITHUB_SECRET` | GitHub OAuth クライアント Secret（例）※利用するプロバイダに応じて設定 | `yyyyyyyyyyyyyyyyyyyy` |
-開発環境では、以下のようにして `AUTH_SECRET` を生成し `.env` に設定してください：
-```bash
-openssl rand -base64 32
-```
-`AUTH_URL` には、ブラウザからアクセスする URL（ローカルでは `http://localhost:8080`）を指定してください。  
-OAuth プロバイダを利用しない場合は、`AUTH_GITHUB_ID` / `AUTH_GITHUB_SECRET` などのプロバイダ固有の変数は不要です。
+### Technologies & Frameworks
+- **Frontend**: **Next.js 14 (App Router)** - Chosen for its strong SEO support, routing efficiency, and React integration.
+- **Backend**: **Node.js with Next.js API Routes** - Provides a unified development experience and fast cold starts.
+- **3D Engine**: **React Three Fiber (Three.js)** & **Blender** - Used for 3D modeling and high-performance board/piece rendering.
+- **Real-time**: **Socket.IO** - Enables bidirectional communication for gameplay actions and chat.
+- **ORM**: **Prisma** - Ensures type safety between the database and the application logic.
 
+### Technical Decision Justification
+We opted for a **T3-style stack** (Next.js + Prisma + TypeScript) because it minimizes runtime errors through strict typing across the network layer. PostgreSQL was chosen over NoSQL to maintain strict data integrity for match history and stats.
 
-## 🗄 DB 初期化
+---
 
-DB 初期化は **自動** です。`docker compose up --build` 実行時に `entrypoint.sh` が `prisma migrate deploy` を実行し、テーブルが自動作成されます。
+## 📊 Database Schema
 
-手動でリセットしたい場合：
+The schema maintains relational integrity via Prisma on **PostgreSQL**:
 
-```bash
-docker compose down -v  # ボリュームごと削除
-docker compose up --build
-```
+- **User**: `id (UUID)`, `email`, `passwordHash`, `totalMatches`, `wins`.
+- **Match**: `id (UUID)`, `blackUserId (FK)`, `whiteUserId (FK)`, `winnerUserId (FK)`.
+- **Friendship**: `requesterId (FK)`, `addresseeId (FK)`, `status` (PENDING, ACCEPTED).
+- **Session/Account**: Managed for OAuth persistence and JWT-based sessions.
 
-## ✅ 動作確認手順
+---
 
-### 1. サインアップ
-1. `http://localhost:8080` にアクセス → `/login` にリダイレクト
-2. 「新規登録」タブを選択
-3. 名前・メール・パスワードを入力して「アカウントを作成」
-4. `/home` にリダイレクトされることを確認
+## 📋 Features List & Assignees
 
-### 2. ログアウト → ログイン
-1. ヘッダーの「ログアウト」をクリック → `/login` に戻る
-2. 先ほどのメール・パスワードでログイン
-3. `/home` にリダイレクトされることを確認
+- **Core Shogi Logic**: `<okaname>` - Implementation of move validation, promotion, and captured pieces.
+- **3D Board Rendering**: `<kosakats>` - 3D model creation and animation hooks.
+- **Real-time Synchronization**: `<okaname>` - WebSocket server handling room management and move broadcasting.
+- **User Management & Auth**: `<mkuida>` - Signup/Login flow, profile editing, and friend request system.
+- **Spectator UI**: `<okaname>` / `<kosakats>` - Global state management for non-playing viewers.
+- **AI Opponent**: `<okaname>` - Move-search algorithm for offline play.
+- **HTTPS**: `<tishihar>` - Implementation of secure HTTPS communication.
+- **OAuth**: `<mkuida>` - Implementation of OAuth authentication.
+- **TOS & Privacy Policy**: `<ishihar>` - Implementation of Terms of Service and Privacy Policy.
 
-### 3. ルーム作成 → 待機
-1. 「オンライン対戦」→「ルームを作成する」
-2. ルームIDが表示され、コピーできることを確認
-3. 「相手の参加を待っています」と表示される
+---
 
-### 4. 対局画面
-1. `/match` にアクセス（またはルームからスタート）
-2. 5×5 の将棋盤が表示されることを確認
-3. 「対局を終える」をクリック
+## 🧩 Modules & Point Calculation
 
-### 5. 結果画面
-1. `/result` に遷移
-2. 勝敗表示が出ることを確認
-3. 「ホームへ」で `/home` に戻る
+Total Points: **16**
 
-## 🔌 API エンドポイント
+| Module | Type | Implementation Detail | Assignee | Points |
+|---|---|---|---|---|
+| **Full-stack Framework** | Major | Next.js handles both SSR and Backend API. | `<okaname>` / `<mkuida>` / `<kosakats>` / `<ishihar>` | 2 |
+| **Real-time Features** | Major | WebSocket for match status updates. | `<okaname>` | 2 |
+| **Interactive Socials** | Major | Profile management and Friends list. | `<mkuida>` | 2 |
+| **Public API** | Major | 5+ secured REST endpoints for user stats. | `<kosakats>` | 2 |
+| **AI Opponent** | Major | Move-search algorithm for offline play. | `<okaname>` | 2 |
+| **Remote Players** | Major | Cross-device real-time gameplay. | `<okaname>` | 2 |
+| **Advanced 3D Graphics** | Major | Three.js piece promotion animations. | `<kosakats>` | 2 |
+| **Spectator mode** | Minor | Viewers support for active rooms. | `<okaname>` / `<kosakats>` | 1 |
+| **Game Statistics** | Minor | Database tracking for user Elo rating. | `<okaname>` / `<mkuida>` | 1 |
 
-| メソッド | パス | 説明 |
-|----------|------|------|
-| POST | `/api/auth/signup` | 新規登録（email, password, name） |
-| POST | `/api/auth/login` | ログイン（email, password） |
-| POST | `/api/auth/logout` | ログアウト |
-| GET | `/api/me` | ログインユーザー情報取得 |
+---
 
-## 📡 WebSocket イベント
+## 👥 Team Information
 
-| イベント | 方向 | 説明 |
-|----------|------|------|
-| `joinRoom` | Client → Server | ルーム参加 |
-| `getRoomState` | Client → Server | ルーム状態取得 |
-| `hostStart` | Client → Server | ホストがゲーム開始 |
-| `roomState` | Server → Client | ルーム状態ブロードキャスト |
-| `gameStart` | Server → Client | ゲーム開始通知 |
-| `playerLeft` | Server → Client | プレイヤー退室通知 |
+- **Product Owner**: `<mkuida>` - Roadmapping and user needs analysis.
+- **Project Manager**: `<ishihar>` - Milestone management and Docker coordination.
+- **Technical Lead**: `<kosakats>` - 3D rendering pipeline and piece physics.
+- **Developer**: `<okaname>` - Core game rules and logic engine implementation.
 
-## 📝 今後の実装予定
+---
 
-- [ ] WebSocket によるリアルタイム対局同期
-- [ ] 将棋ルールエンジン（駒移動、成り、持ち駒）
-- [ ] AI 対戦ロジック
-- [ ] 観戦機能
-- [ ] OAuth ログイン（42 / Google）
-- [ ] フレンドシステム
-- [ ] 戦績表示
+## 👤 Individual Contributions & Challenges
+
+- **`<okaname>`**: Challenged by NextAuth configuration with custom Prisma adapters. Resolved by implementing a custom session callback for JWT.
+- **`<mkuida>`**: Faced race conditions in WebSocket room joining. Fixed using server-side locks and atomic state updates.
+- **`<ishihar>`**: Optimizing 3D textures for web performance was a hurdle. Solved by using compressed GLB models and instance rendering.
+- **`<kosakats>`**: Implementing "Naru" (Promotion) logic across the 3D-UI boundary. Solved by decoupling logic state from animation timers.
+
+---
+
+## 🤖 Resources & AI Usage
+
+### AI Usage Policy
+AI tools (specifically Cursor with the Antigravity agent) were utilized for:
+- **Refactoring**: Cleaning up redundant logic in the Shogi engine.
+- **Testing**: Generating edge-case mock data for logic validation.
+- **Conflict Resolution**: Automating the resolution of build artifacts during merges.
+
+### References
+- [Next.js Documentation](https://nextjs.org/)
+- [Prisma Reference](https://www.prisma.io/)
+- [Socket.IO Documentation](https://socket.io/)
