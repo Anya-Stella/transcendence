@@ -47,7 +47,7 @@ RUN npm run build --workspace=@torassen/shogi-logic
 RUN cd nextjs && npx prisma generate
 
 # ③ 本命の Next.js を親から遠隔ビルド
-RUN npm run build --workspace=nextjs
+RUN npm run build --workspace=torassen-nextjs
 
 # ==========================================
 # 3. Runner (本番実行環境)
