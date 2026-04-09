@@ -65,9 +65,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/nextjs/.next ./.next
 COPY --from=builder --chown=nextjs:nodejs /app/nextjs/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/nextjs/package.json ./package.json
 
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules ../node_modules
-COPY --from=builder --chown=nextjs:nodejs /app/nextjs/node_modules ./node_modules
-COPY --from=builder --chown=nextjs:nodejs /app/packages ../packages
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules /app/node_modules
+COPY --from=builder --chown=nextjs:nodejs /app/nextjs/node_modules /app/nextjs/node_modules
+COPY --from=builder --chown=nextjs:nodejs /app/packages /app/packages
 
 COPY --from=builder --chown=nextjs:nodejs /app/nextjs/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/nextjs/entrypoint.sh ./entrypoint.sh
