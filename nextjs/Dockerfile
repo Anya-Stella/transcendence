@@ -1,86 +1,94 @@
+# ==========================================
+# 0. Base: 共通設定
+# ==========================================
 FROM node:20-alpine AS base
-
-# Install dependencies for argon2 and C++ engine
 RUN apk add --no-cache python3 make g++ libc6-compat libstdc++
 
-WORKDIR /app
-
-# ---- Engine Builder ----
+# ==========================================
+# 1. Engine Builder (C++エンジンのビルド)
+# ==========================================
 FROM base AS engine-builder
 WORKDIR /engine
 COPY nextjs/55engine/ ./
 RUN make clean || true && make
 
-# ---- Shared Package Build ----
-# FROM base AS shared-builder
-# WORKDIR /shared
-# COPY packages/shogi-logic/package.json ./
-# COPY packages/shogi-logic/tsconfig.json ./
-# COPY packages/shogi-logic/src/ ./src/
-# RUN npm install
-# RUN npm run build
-FROM base AS shared-builder
-WORKDIR /app/packages/shogi-logic
-COPY packages/shogi-logic/package.json ./
-COPY packages/shogi-logic/tsconfig.json ./
-COPY packages/shogi-logic/src/ ./src/
-RUN npm install
-RUN npm run build
-
-# ---- Dependencies ----
-FROM base AS deps
+# ==========================================
+# 2. Pruner (TurboRepo）
+# ==========================================
+FROM base AS pruner
 WORKDIR /app
-COPY nextjs/package.json ./
-RUN node -e "const p=require('./package.json'); delete p.dependencies['@torassen/shogi-logic']; require('fs').writeFileSync('./package.json', JSON.stringify(p,null,2))"
-RUN npm install
 
-# ---- Builder ----
-# FROM base AS builder
-# WORKDIR /app
-# COPY --from=deps /app/node_modules ./node_modules
-# COPY --from=shared-builder /shared ./node_modules/@torassen/shogi-logic
-# COPY nextjs/ .
+COPY package.json package-lock.json ./
+RUN npm install --no-save --workspaces=false turbo@2.9.5
 
-# RUN npx prisma generate
-# RUN npm run build
+COPY . .
 
+RUN npx turbo prune torassen-nextjs --docker
+
+# ==========================================
+# 3. Installer (キャッシュ用の依存関係インストール)
+# ==========================================
+FROM base AS installer
+WORKDIR /app
+
+COPY --from=pruner /app/out/json/ .
+COPY --from=pruner /app/out/package-lock.json ./package-lock.json
+
+RUN npm ci
+
+# ==========================================
+# 4. Builder (ソースコード本体を結合してビルド)
+# ==========================================
 FROM base AS builder
 WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-RUN mkdir -p ./node_modules/@torassen/shogi-logic
-COPY --from=shared-builder /app/packages/shogi-logic/package.json ./node_modules/@torassen/shogi-logic/
-COPY --from=shared-builder /app/packages/shogi-logic/dist ./node_modules/@torassen/shogi-logic/dist
-COPY --from=shared-builder /app/packages/shogi-logic/src ./node_modules/@torassen/shogi-logic/src
-COPY nextjs/ .
-RUN npx prisma generate
-RUN npm run build
 
-# ---- Runner ----
+# Installerで作った node_modules を引き継ぐ
+COPY --from=installer /app/ .
+
+# 次に、out/full/（抽出済みの純粋なソースコード！ws-server等はない）を上書きコピー
+COPY --from=pruner /app/out/full/ .
+
+# ① 依存元の shogi-logic をビルド
+RUN npm run build --workspace=@torassen/shogi-logic
+
+# ② Prisma 生成
+RUN cd nextjs && npx prisma generate
+
+RUN npm run build --workspace=torassen-nextjs
+
+# 4.5. Prune (本番に不要なものを捨てる)
+RUN npm prune --omit=dev
+RUN cd nextjs && npm prune --omit=dev
+
+# ==========================================
+# 6. Runner (本番実行環境)
+# ==========================================
 FROM base AS runner
-WORKDIR /app
-
+WORKDIR /app/nextjs
 ENV NODE_ENV=production
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
+RUN apk add --no-cache su-exec
 
-COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
-COPY --from=builder --chown=nextjs:nodejs /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/package.json ./package.json
-COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
-COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
-COPY --from=builder --chown=nextjs:nodejs /app/entrypoint.sh ./entrypoint.sh
+COPY --from=builder --chown=nextjs:nodejs /app/nextjs/.next ./.next
+COPY --from=builder --chown=nextjs:nodejs /app/nextjs/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/nextjs/package.json ./package.json
 
-# Copy 55engine binary
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules /app/node_modules
+COPY --from=builder --chown=nextjs:nodejs /app/nextjs/node_modules /app/nextjs/node_modules
+COPY --from=builder --chown=nextjs:nodejs /app/packages /app/packages
+
+COPY --from=builder --chown=nextjs:nodejs /app/nextjs/prisma ./prisma
+COPY --from=builder --chown=nextjs:nodejs /app/nextjs/entrypoint.sh ./entrypoint.sh
+
+# 55engine
 COPY --from=engine-builder /engine/engine ./engine/55engine
 COPY --from=engine-builder /engine/legal_checker ./engine/legal_checker
 
 RUN chmod +x entrypoint.sh
 
-USER nextjs
-
 EXPOSE 3000
-
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
