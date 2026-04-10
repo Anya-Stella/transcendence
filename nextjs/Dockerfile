@@ -19,7 +19,7 @@ FROM base AS pruner
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm install turbo
+RUN npm install --no-save turbo
 
 COPY . .
 
