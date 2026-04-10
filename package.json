@@ -8,6 +8,6 @@
 		"ws-server"
 	],
 	"devDependencies": {
-		"turbo": "latest"
+		"turbo": "2.9.5"
 	}
 }

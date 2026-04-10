@@ -1,8 +1,15 @@
 #!/bin/sh
 set -e
 
-mkdir -p "/app/nextjs/public/images/icon" 2>/dev/null || true
-chown -R nextjs:nodejs "/app/nextjs/public/images/icon"
+ICON_DIR="/app/nextjs/public/images/icon"
+
+# ディレクトリが存在しない場合のみ初期化（初回起動時の一回限り）
+if [ ! -d "$ICON_DIR" ]; then
+  mkdir -p "$ICON_DIR" 2>/dev/null \
+    || { echo "Warning: could not create $ICON_DIR" >&2; }
+  chown nextjs:nodejs "$ICON_DIR" 2>/dev/null \
+    || { echo "Warning: could not chown $ICON_DIR, continuing anyway." >&2; }
+fi
 
 echo "Pushing Prisma schema to database..."
 su-exec nextjs npx prisma db push

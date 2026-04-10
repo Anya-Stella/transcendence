@@ -18,11 +18,12 @@ RUN make clean || true && make
 FROM base AS pruner
 WORKDIR /app
 
-RUN npm install -g turbo
+COPY package.json package-lock.json ./
+RUN npm install turbo
 
 COPY . .
 
-RUN turbo prune torassen-nextjs --docker
+RUN npx turbo prune torassen-nextjs --docker
 
 # ==========================================
 # 3. Installer (キャッシュ用の依存関係インストール)
