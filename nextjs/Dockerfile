@@ -19,7 +19,7 @@ FROM base AS pruner
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm install --no-save turbo
+RUN npm install --no-save --workspaces=false turbo
 
 COPY . .
 
@@ -54,11 +54,14 @@ RUN npm run build --workspace=@torassen/shogi-logic
 # ② Prisma 生成
 RUN cd nextjs && npx prisma generate
 
-# ③ Next.js をビルド
 RUN npm run build --workspace=torassen-nextjs
 
+# 4.5. Prune (本番に不要なものを捨てる)
+RUN npm prune --omit=dev
+RUN cd nextjs && npm prune --omit=dev
+
 # ==========================================
-# 5. Runner (本番実行環境)
+# 6. Runner (本番実行環境)
 # ==========================================
 FROM base AS runner
 WORKDIR /app/nextjs
