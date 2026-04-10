@@ -1,65 +1,71 @@
+# ==========================================
+# 0. Base: 共通設定
+# ==========================================
 FROM node:20-alpine AS base
-
-# Install dependencies for argon2 and C++ engine
 RUN apk add --no-cache python3 make g++ libc6-compat libstdc++
 
-WORKDIR /app
-
-# ---- Engine Builder ----
+# ==========================================
+# 1. Engine Builder (C++エンジンのビルド)
+# ==========================================
 FROM base AS engine-builder
 WORKDIR /engine
 COPY nextjs/55engine/ ./
 RUN make clean || true && make
 
 # ==========================================
-# 1. Dependencies (依存関係のインストール)
+# 2. Pruner (TurboRepo）
 # ==========================================
-FROM base AS deps
+FROM base AS pruner
 WORKDIR /app
 
-# 親の設計図と辞書をコピー
-COPY package.json package-lock.json ./
+RUN npm install -g turbo
 
-# 各子プロジェクトの設計図をコピー
-COPY nextjs/package.json ./nextjs/
-COPY packages/shogi-logic/package.json ./packages/shogi-logic/
-COPY ws-server/package.json ./ws-server/
+COPY . .
 
-# 全体の依存関係を一括クリーンインストール！
+RUN turbo prune torassen-nextjs --docker
+
+# ==========================================
+# 3. Installer (キャッシュ用の依存関係インストール)
+# ==========================================
+FROM base AS installer
+WORKDIR /app
+
+COPY --from=pruner /app/out/json/ .
+COPY --from=pruner /app/out/package-lock.json ./package-lock.json
+
 RUN npm ci
 
 # ==========================================
-# 2. Builder (コンパイル作業)
+# 4. Builder (ソースコード本体を結合してビルド)
 # ==========================================
 FROM base AS builder
 WORKDIR /app
 
-COPY --from=deps /app ./
+# Installerで作った node_modules を引き継ぐ
+COPY --from=installer /app/ .
 
-# すべてのソースコードをコピー (※.dockerignoreが効いているため node_modules は上書きされずにマージされます)
-COPY nextjs/ ./nextjs/
-COPY packages/ ./packages/
+# 次に、out/full/（抽出済みの純粋なソースコード！ws-server等はない）を上書きコピー
+COPY --from=pruner /app/out/full/ .
 
-# ① 依存元である shogi-logic を親から遠隔ビルド
+# ① 依存元の shogi-logic をビルド
 RUN npm run build --workspace=@torassen/shogi-logic
 
-# ② Prisma のクライアント生成 (nextjs フォルダ内で実行)
+# ② Prisma 生成
 RUN cd nextjs && npx prisma generate
 
-# ③ 本命の Next.js を親から遠隔ビルド
+# ③ Next.js をビルド
 RUN npm run build --workspace=torassen-nextjs
 
 # ==========================================
-# 3. Runner (本番実行環境)
+# 5. Runner (本番実行環境)
 # ==========================================
 FROM base AS runner
-# 実行時のベースディレクトリを nextjs の中にしておく
 WORKDIR /app/nextjs
-
 ENV NODE_ENV=production
 
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
+RUN apk add --no-cache su-exec
 
 COPY --from=builder --chown=nextjs:nodejs /app/nextjs/.next ./.next
 COPY --from=builder --chown=nextjs:nodejs /app/nextjs/public ./public
@@ -77,8 +83,6 @@ COPY --from=engine-builder /engine/engine ./engine/55engine
 COPY --from=engine-builder /engine/legal_checker ./engine/legal_checker
 
 RUN chmod +x entrypoint.sh
-
-USER nextjs
 
 EXPOSE 3000
 ENV PORT=3000

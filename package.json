@@ -1,9 +1,13 @@
 {
 	"name": "torassen",
 	"private": true,
+	"packageManager": "npm@10.8.2",
 	"workspaces": [
 		"packages/*",
 		"nextjs",
 		"ws-server"
-	]
+	],
+	"devDependencies": {
+		"turbo": "latest"
+	}
 }
