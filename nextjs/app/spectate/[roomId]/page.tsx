@@ -14,7 +14,10 @@ export default function SpectateRoomPage() {
     const [mySide, setMySide] = useState<"sente" | "gote" | "spectator">("spectator");
 
     useEffect(() => {
-        const s = io("http://localhost:3001", {
+        const host = typeof window !== "undefined" ? window.location.hostname : "localhost";
+        const wsUrl = `https://${host}:8080`;
+
+        const s = io(wsUrl, {
             transports: ["websocket"],
         });
 
