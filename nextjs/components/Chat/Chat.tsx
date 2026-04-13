@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Socket } from "socket.io-client";
+import { useSession } from "next-auth/react";
 import { PlayerSide } from "@/types/game";
 
 export const getSideLabel = (side: PlayerSide) =>
@@ -9,6 +10,7 @@ export const getSideLabel = (side: PlayerSide) =>
 
 interface Message {
   id: string;
+  name: string;
   text: string;
   side: PlayerSide;
   timestamp: number;
@@ -21,6 +23,9 @@ interface ChatProps {
 }
 
 export default function Chat({ socket, roomId, mySide }: ChatProps) {
+  const { data: session } = useSession();
+  const userName = session?.user?.name || "ゲスト";
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -50,6 +55,7 @@ export default function Chat({ socket, roomId, mySide }: ChatProps) {
 
     const newMessage: Message = {
       id: Math.random().toString(36).substr(2, 9),
+      name: userName,
       text: inputValue.trim(),
       side: mySide,
       timestamp: Date.now(),
@@ -66,7 +72,7 @@ export default function Chat({ socket, roomId, mySide }: ChatProps) {
       <div className="chat-messages" ref={scrollRef}>
         {messages.map((msg) => (
           <div key={msg.id} className={`chat-message chat-side-${msg.side}`}>
-            <span className="chat-sender">[{getSideLabel(msg.side)}]</span>
+            <span className="chat-sender">[{getSideLabel(msg.side)}]：{msg.name}</span>
             <span className="chat-text">{msg.text}</span>
           </div>
         ))}

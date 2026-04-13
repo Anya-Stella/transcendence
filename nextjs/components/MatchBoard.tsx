@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Socket } from "socket.io-client";
+import { useSession } from "next-auth/react";
 import { useShogiGame } from "@/hooks/useShogiGame";
 import { Color, PieceType, PType, Hand, Piece, UIBoard, BoardState, Move, HandPieces } from "@torassen/shogi-logic";
 import TatamiBackground from "@/components/TatamiBackground";
@@ -100,6 +101,7 @@ interface MatchBoardProps {
 function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente", isPreparing = false }: MatchBoardProps) {
 	const router = useRouter();
 	const user = useUser();
+	const { data: session } = useSession();
 	const [isLoaded, setIsLoaded] = useState(false);
 
 	const {
@@ -191,7 +193,7 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 								</span>
 							)
 						}
-						userName={user}
+						userName={session?.user?.name || undefined}
 						onLogout={handleLogout}
 						logoutLabel="ログアウト"
 					/>
