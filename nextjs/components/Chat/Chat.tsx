@@ -83,7 +83,7 @@ export default function Chat({ socket, roomId, mySide }: ChatProps) {
           placeholder="対局中チャット..."
         />
         <button className="chat-send-btn" onClick={handleSend}>
-          墨
+          ⇧
         </button>
       </div>
 
