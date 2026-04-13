@@ -88,7 +88,7 @@ export default function Chat({ socket, roomId, mySide }: ChatProps) {
               handleSend();
             }
           }}
-          placeholder="対局中チャット..."
+          placeholder={`${userName}として発言...`}
         />
         <button className="chat-send-btn" onClick={handleSend}>
           ⇧
