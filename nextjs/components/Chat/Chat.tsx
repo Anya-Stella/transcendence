@@ -1,0 +1,191 @@
+"use client";
+
+import { useState, useEffect, useRef } from "react";
+import { Socket } from "socket.io-client";
+
+interface Message {
+  id: string;
+  sender: string;
+  text: string;
+  side?: "sente" | "gote" | "spectator";
+  timestamp: number;
+}
+
+interface ChatProps {
+  socket: Socket | null | undefined;
+  roomId: string;
+  mySide: "sente" | "gote" | "spectator";
+}
+
+export default function Chat({ socket, roomId, mySide }: ChatProps) {
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [inputValue, setInputValue] = useState("");
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleChatMessage = (msg: Message) => {
+      setMessages((prev) => [...prev, msg]);
+    };
+
+    socket.on("chat", handleChatMessage);
+
+    return () => {
+      socket.off("chat", handleChatMessage);
+    };
+  }, [socket]);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  const handleSend = () => {
+    if (!socket || !inputValue.trim()) return;
+
+    const newMessage: Message = {
+      id: Math.random().toString(36).substr(2, 9),
+      sender: mySide === "sente" ? "先手" : mySide === "gote" ? "後手" : "観戦者",
+      text: inputValue.trim(),
+      side: mySide,
+      timestamp: Date.now(),
+    };
+
+    socket.emit("chat", { roomId, message: newMessage });
+    // ローカルにも即座に反映（サーバーがBroadcastしない場合も考慮、またはサーバーが自分以外に送る場合）
+    setMessages((prev) => [...prev, newMessage]);
+    setInputValue("");
+  };
+
+  return (
+    <div className="chat-container">
+      <div className="chat-messages" ref={scrollRef}>
+        {messages.map((msg) => (
+          <div key={msg.id} className={`chat-message chat-side-${msg.side}`}>
+            <span className="chat-sender">[{msg.sender}]</span>
+            <span className="chat-text">{msg.text}</span>
+          </div>
+        ))}
+      </div>
+      <div className="chat-input-area">
+        <input
+          type="text"
+          className="chat-input"
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.nativeEvent.isComposing) {
+              handleSend();
+            }
+          }}
+          placeholder="対局中チャット..."
+        />
+        <button className="chat-send-btn" onClick={handleSend}>
+          墨
+        </button>
+      </div>
+
+      <style jsx>{`
+        .chat-container {
+          position: fixed;
+          bottom: 80px;
+          left: 20px;
+          width: 280px;
+          height: 200px;
+          background: rgba(20, 15, 10, 0.7);
+          backdrop-filter: blur(8px);
+          border: 1px solid rgba(212, 175, 55, 0.3);
+          border-radius: 12px;
+          display: flex;
+          flex-direction: column;
+          z-index: 100;
+          pointer-events: auto;
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+          overflow: hidden;
+        }
+
+        .chat-messages {
+          flex: 1;
+          padding: 8px;
+          overflow-y: auto;
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+        }
+
+        .chat-messages::-webkit-scrollbar {
+          width: 6px;
+        }
+        .chat-messages::-webkit-scrollbar-thumb {
+          background: rgba(212, 175, 55, 0.2);
+          border-radius: 3px;
+        }
+
+        .chat-message {
+          font-size: 0.8rem;
+          line-height: 1.4;
+          word-break: break-all;
+        }
+
+        .chat-sender {
+          font-weight: bold;
+          margin-right: 6px;
+          color: rgba(245, 230, 200, 0.6);
+        }
+
+        .chat-side-sente .chat-sender {
+          color: #d4af37;
+        }
+        .chat-side-gote .chat-sender {
+          color: #6b8f63;
+        }
+
+        .chat-text {
+          color: #f5e6c8;
+        }
+
+        .chat-input-area {
+          padding: 10px;
+          background: rgba(10, 8, 5, 0.5);
+          border-top: 1px solid rgba(212, 175, 55, 0.15);
+          display: flex;
+          gap: 8px;
+        }
+
+        .chat-input {
+          flex: 1;
+          background: rgba(245, 230, 200, 0.05);
+          border: 1px solid rgba(212, 175, 55, 0.2);
+          border-radius: 6px;
+          padding: 6px 10px;
+          color: #f5e6c8;
+          font-size: 0.85rem;
+          outline: none;
+        }
+
+        .chat-input:focus {
+          border-color: rgba(212, 175, 55, 0.5);
+        }
+
+        .chat-send-btn {
+          background: linear-gradient(135deg, #b8860b, #d4af37);
+          border: none;
+          border-radius: 6px;
+          color: #1a1208;
+          font-weight: bold;
+          padding: 0 12px;
+          cursor: pointer;
+          transition: all 0.2s;
+          font-size: 0.8rem;
+        }
+
+        .chat-send-btn:hover {
+          filter: brightness(1.2);
+          transform: translateY(-1px);
+        }
+      `}</style>
+    </div>
+  );
+}

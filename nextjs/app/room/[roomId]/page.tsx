@@ -6,6 +6,8 @@ import Link from "next/link";
 import { io, Socket } from "socket.io-client";
 import { useSession } from "next-auth/react";
 import Header from "@/components/Header";
+import Chat from "@/components/Chat/Chat";
+
 
 interface Player {
 	socketId: string;
@@ -245,6 +247,15 @@ export default function RoomPage() {
 					</div>
 				</div>
 			</div>
+
+			{/* チャット画面 */}
+			{socket && roomId && (
+				<Chat
+					socket={socket}
+					roomId={roomId}
+					mySide={amIHost ? "sente" : "gote"}
+				/>
+			)}
 		</div>
 	);
 }
