@@ -7,11 +7,12 @@ const PORT = 3001;
 interface RoomState {
 	hostSocketId: string;
 	hostUserId?: string;
-	players: { socketId: string; userId?: string, side: "b" | "w" }[];
+	players: { socketId: string; userId?: string; side: "b" | "w"; connected: boolean }[];
 	spectators: string[];
 	sfen: string;
 	status: "waiting" | "playing";
 	messages: any[];
+	emptyTimeout?: NodeJS.Timeout;
 }
 
 const INITIAL_SFEN = "rbsgk/4p/5/P4/KGSBR b - 1";
@@ -43,7 +44,7 @@ io.on("connection", (socket: Socket) => {
 			room = {
 				hostSocketId: socket.id,
 				hostUserId: userId,
-				players: [{ socketId: socket.id, userId, side: "b" }],
+				players: [{ socketId: socket.id, userId, side: "b", connected: true }],
 				spectators: [],
 				sfen: INITIAL_SFEN,
 				status: "waiting",
@@ -52,14 +53,19 @@ io.on("connection", (socket: Socket) => {
 			rooms.set(roomId, room);
 		} else if (isPlayer) {
 			const existingPlayerIndex = room.players.findIndex(
-				(p) => p.userId && p.userId === userId
+				(p) => (p.userId && p.userId === userId) || p.socketId === socket.id
 			);
 			if (existingPlayerIndex !== -1) {
 				room.players[existingPlayerIndex].socketId = socket.id;
+				room.players[existingPlayerIndex].connected = true;
+				if (room.emptyTimeout) {
+					clearTimeout(room.emptyTimeout);
+					delete room.emptyTimeout;
+				}
 			} else if (room.players.length < 2) {
-				const occupiedSide = room.players[0].side;
+				const occupiedSide = room.players[0] ? room.players[0].side : "w";
 				const newSide = occupiedSide === "b" ? "w" : "b";
-				room.players.push({ socketId: socket.id, userId, side: newSide });
+				room.players.push({ socketId: socket.id, userId, side: newSide, connected: true });
 				if (room.players.length === 2) {
 					room.status = "playing";
 				}
@@ -221,16 +227,24 @@ io.on("connection", (socket: Socket) => {
 		for (const [roomId, room] of rooms.entries()) {
 			const idx = room.players.findIndex((p) => p.socketId === socket.id);
 			if (idx !== -1) {
-				room.players.splice(idx, 1);
+				room.players[idx].connected = false;
 
-				if (room.players.length === 0) {
-					rooms.delete(roomId);
-					console.log(`[WS] Room deleted: ${roomId}`);
+				const allDisconnected = room.players.every((p) => !p.connected);
+
+				if (allDisconnected) {
+					console.log(`[WS] All players disconnected from room: ${roomId}. Starting 10s cleanup timer.`);
+					room.emptyTimeout = setTimeout(() => {
+						rooms.delete(roomId);
+						console.log(`[WS] Room deleted: ${roomId}`);
+					}, 10000);
 				} else {
 					// If host left, transfer host
 					if (room.hostSocketId === socket.id && room.players.length > 0) {
-						room.hostSocketId = room.players[0].socketId;
-						room.hostUserId = room.players[0].userId;
+						const nextConnected = room.players.find(p => p.connected);
+						if (nextConnected) {
+							room.hostSocketId = nextConnected.socketId;
+							room.hostUserId = nextConnected.userId;
+						}
 					}
 
 					io.to(roomId).emit("roomState", {
@@ -241,7 +255,8 @@ io.on("connection", (socket: Socket) => {
 						players: room.players.map((p) => ({
 							socketId: p.socketId,
 							userId: p.userId,
-							side: p.side
+							side: p.side,
+							connected: p.connected
 						})),
 						messages: room.messages,
 					});
