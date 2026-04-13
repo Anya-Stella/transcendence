@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Socket } from "socket.io-client";
 import { useGameLogic } from "./useGameLogic";
+import { PlayerSide } from "@/types/game";
 import { Pos, UIBoard, sfenToUIBoard, PieceType, type Move } from "@torassen/shogi-logic";
 
 const KANJI_TO_PIECE_TYPE: Record<string, PieceType> = {
@@ -16,7 +17,7 @@ const KANJI_TO_PIECE_TYPE: Record<string, PieceType> = {
 export function useShogiGame(
 	socket: Socket | null | undefined,
 	roomId: string | undefined,
-	mySide: "sente" | "gote" | "spectator",
+	mySide: PlayerSide,
 	wsStatus: "connected" | "disconnected" | "connecting"
 ) {
 	const router = useRouter();

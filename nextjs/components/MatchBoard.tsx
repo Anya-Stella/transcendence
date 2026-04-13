@@ -8,6 +8,7 @@ import { useShogiGame } from "@/hooks/useShogiGame";
 import { Color, PieceType, PType, Hand, Piece, UIBoard, BoardState, Move, HandPieces } from "@torassen/shogi-logic";
 import TatamiBackground from "@/components/TatamiBackground";
 import { useUser } from "@/hooks/useUser";
+import { PlayerSide } from "@/types/game";
 import GameStatusBanner from "./GamaStatusBanner/GamaStatusBanner";
 import EnemyInfo from "./Info/EnemyInfo";
 import MyInfo from "./Info/MyInfo";
@@ -92,7 +93,7 @@ interface MatchBoardProps {
 	roomId?: string;
 	socket?: Socket | null;
 	wsStatus?: "connected" | "disconnected" | "connecting";
-	mySide?: "sente" | "gote" | "spectator";
+	mySide?: PlayerSide;
 	isPreparing?: boolean;
 }
 

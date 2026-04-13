@@ -2,19 +2,22 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Socket } from "socket.io-client";
+import { PlayerSide } from "@/types/game";
+
+export const getSideLabel = (side: PlayerSide) =>
+  side === "sente" ? "先手" : side === "gote" ? "後手" : "観戦者";
 
 interface Message {
   id: string;
-  sender: string;
   text: string;
-  side?: "sente" | "gote" | "spectator";
+  side: PlayerSide;
   timestamp: number;
 }
 
 interface ChatProps {
   socket: Socket | null | undefined;
   roomId: string;
-  mySide: "sente" | "gote" | "spectator";
+  mySide: PlayerSide;
 }
 
 export default function Chat({ socket, roomId, mySide }: ChatProps) {
@@ -47,7 +50,6 @@ export default function Chat({ socket, roomId, mySide }: ChatProps) {
 
     const newMessage: Message = {
       id: Math.random().toString(36).substr(2, 9),
-      sender: mySide === "sente" ? "先手" : mySide === "gote" ? "後手" : "観戦者",
       text: inputValue.trim(),
       side: mySide,
       timestamp: Date.now(),
@@ -64,7 +66,7 @@ export default function Chat({ socket, roomId, mySide }: ChatProps) {
       <div className="chat-messages" ref={scrollRef}>
         {messages.map((msg) => (
           <div key={msg.id} className={`chat-message chat-side-${msg.side}`}>
-            <span className="chat-sender">[{msg.sender}]</span>
+            <span className="chat-sender">[{getSideLabel(msg.side)}]</span>
             <span className="chat-text">{msg.text}</span>
           </div>
         ))}

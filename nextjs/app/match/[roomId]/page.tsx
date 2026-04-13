@@ -5,13 +5,14 @@ import { useState, useEffect } from "react";
 import { io, Socket } from "socket.io-client";
 import MatchBoard from "@/components/MatchBoard";
 import { useUser } from "@/hooks/useUser";
+import { PlayerSide } from "@/types/game";
 
 export default function OnlineMatchPage() {
 	const params = useParams();
 	const roomId = params.roomId as string;
 	const [socket, setSocket] = useState<Socket | null>(null);
 	const [wsStatus, setWsStatus] = useState<"connected" | "disconnected" | "connecting">("connecting");
-	const [mySide, setMySide] = useState<"sente" | "gote" | "spectator">("spectator");
+	const [mySide, setMySide] = useState<PlayerSide>("spectator");
 	const userId = useUser();
 
 	useEffect(() => {
