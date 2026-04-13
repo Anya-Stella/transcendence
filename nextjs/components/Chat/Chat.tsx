@@ -32,7 +32,7 @@ export default function Chat({ socket, roomId, mySide, initialMessages }: ChatPr
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (initialMessages && messages.length === 0) {
+    if (initialMessages) {
       setMessages(initialMessages);
     }
   }, [initialMessages]);

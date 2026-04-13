@@ -82,6 +82,10 @@ export default function RoomPage() {
 	const playerCount = roomState?.players?.length ?? (isHost ? 1 : 0);
 	const amIHost = mySocketId ? roomState?.hostSocketId === mySocketId : isHost;
 
+	// Chat 側の表示用（ルーム待機画面では仮の Sente/Gote 判定を行う）
+	const me = roomState?.players.find(p => (userId && p.userId === userId) || p.socketId === mySocketId);
+	const mySideInRoom = me ? (me.side === "b" ? "sente" : "gote") : "spectator";
+
 	const handleCopy = async () => {
 		try {
 			await navigator.clipboard.writeText(roomId);
@@ -267,7 +271,7 @@ export default function RoomPage() {
 				<Chat
 					socket={socket}
 					roomId={roomId}
-					mySide={amIHost ? "sente" : "gote"}
+					mySide={mySideInRoom}
 					initialMessages={roomState?.messages}
 				/>
 			)}
