@@ -96,9 +96,10 @@ interface MatchBoardProps {
 	wsStatus?: "connected" | "disconnected" | "connecting";
 	mySide?: PlayerSide;
 	isPreparing?: boolean;
+	initialMessages?: any[];
 }
 
-function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente", isPreparing = false }: MatchBoardProps) {
+function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente", isPreparing = false, initialMessages }: MatchBoardProps) {
 	const router = useRouter();
 	const user = useUser();
 	const { data: session } = useSession();
@@ -226,6 +227,7 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 								socket={socket}
 								roomId={roomId}
 								mySide={mySide}
+								initialMessages={initialMessages}
 							/>
 						)}
 

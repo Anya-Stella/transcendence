@@ -20,15 +20,22 @@ interface ChatProps {
   socket: Socket | null | undefined;
   roomId: string;
   mySide: PlayerSide;
+  initialMessages?: Message[];
 }
 
-export default function Chat({ socket, roomId, mySide }: ChatProps) {
+export default function Chat({ socket, roomId, mySide, initialMessages }: ChatProps) {
   const { data: session } = useSession();
   const userName = session?.user?.name || "ゲスト";
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (initialMessages && messages.length === 0) {
+      setMessages(initialMessages);
+    }
+  }, [initialMessages]);
 
   useEffect(() => {
     if (!socket) return;

@@ -21,6 +21,7 @@ interface RoomState {
 	hostUserId?: string;
 	players: Player[];
 	sfen?: string;
+	messages?: any[];
 }
 
 export default function RoomPage() {
@@ -254,6 +255,7 @@ export default function RoomPage() {
 					socket={socket}
 					roomId={roomId}
 					mySide={amIHost ? "sente" : "gote"}
+					initialMessages={roomState?.messages}
 				/>
 			)}
 		</div>

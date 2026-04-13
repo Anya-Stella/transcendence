@@ -13,6 +13,7 @@ export default function OnlineMatchPage() {
 	const [socket, setSocket] = useState<Socket | null>(null);
 	const [wsStatus, setWsStatus] = useState<"connected" | "disconnected" | "connecting">("connecting");
 	const [mySide, setMySide] = useState<PlayerSide>("spectator");
+	const [initialMessages, setInitialMessages] = useState<any[]>([]);
 	const userId = useUser();
 
 	useEffect(() => {
@@ -37,8 +38,11 @@ export default function OnlineMatchPage() {
 			setWsStatus("disconnected");
 		});
 
-		s.on("roomState", (state: { players: { socketId: string, userId?: string, side: "b" | "w" }[] }) => {
+		s.on("roomState", (state: { players: { socketId: string, userId?: string, side: "b" | "w" }[], messages?: any[] }) => {
 			// console.log("[WS] Room state update:", state);
+			if (state.messages) {
+				setInitialMessages(state.messages);
+			}
 			const me = state.players.find((p) =>
 				(userId && p.userId === userId) || p.socketId === s.id
 			);
@@ -63,6 +67,7 @@ export default function OnlineMatchPage() {
 			wsStatus={wsStatus}
 			mySide={mySide}
 			isPreparing={wsStatus === "connecting"}
+			initialMessages={initialMessages}
 		/>
 	);
 }

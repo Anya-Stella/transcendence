@@ -11,6 +11,7 @@ interface RoomState {
 	spectators: string[];
 	sfen: string;
 	status: "waiting" | "playing";
+	messages: any[];
 }
 
 const INITIAL_SFEN = "rbsgk/4p/5/P4/KGSBR b - 1";
@@ -46,6 +47,7 @@ io.on("connection", (socket: Socket) => {
 				spectators: [],
 				sfen: INITIAL_SFEN,
 				status: "waiting",
+				messages: [],
 			};
 			rooms.set(roomId, room);
 		} else if (isPlayer) {
@@ -84,6 +86,7 @@ io.on("connection", (socket: Socket) => {
 				userId: p.userId,
 				side: p.side,
 			})),
+			messages: room.messages,
 		});
 	});
 
@@ -100,6 +103,7 @@ io.on("connection", (socket: Socket) => {
 					userId: p.userId,
 					side: p.side,
 				})),
+				messages: room.messages,
 			});
 		} else {
 			socket.emit("roomState", {
@@ -180,6 +184,10 @@ io.on("connection", (socket: Socket) => {
 
 	socket.on("chat", (data: { roomId: string; message: any }) => {
 		console.log(`[WS] Chat in room ${data.roomId} from ${socket.id}`);
+		const room = rooms.get(data.roomId);
+		if (room) {
+			room.messages.push(data.message);
+		}
 		socket.to(data.roomId).emit("chat", data.message);
 	});
 
@@ -235,6 +243,7 @@ io.on("connection", (socket: Socket) => {
 							userId: p.userId,
 							side: p.side
 						})),
+						messages: room.messages,
 					});
 
 					io.to(roomId).emit("playerLeft", { socketId: socket.id });
