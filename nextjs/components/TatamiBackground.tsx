@@ -97,7 +97,7 @@ export default function TatamiBackground({
 		setPieceOwners(owners);
 		setPiecePromotions(promotions);
 		setPieceId(Object.keys(positions));
-	}, [initialGrid]);
+	}, [initialGrid, isFlipped, boardState]);
 
 	// 盤面の向き：自分が後手(White)の場合は論理的な座標を反転させる
 

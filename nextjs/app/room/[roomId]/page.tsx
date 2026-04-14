@@ -3,9 +3,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { io, Socket } from "socket.io-client";
+import { Socket } from "socket.io-client";
+import { getSocket } from "@/lib/socket";
 import { useSession } from "next-auth/react";
 import Header from "@/components/Header";
+import Chat from "@/components/Chat/Chat";
+
 
 interface Player {
 	socketId: string;
@@ -19,6 +22,7 @@ interface RoomState {
 	hostUserId?: string;
 	players: Player[];
 	sfen?: string;
+	messages?: any[];
 }
 
 export default function RoomPage() {
@@ -36,35 +40,51 @@ export default function RoomPage() {
 
 	// WebSocket接続
 	useEffect(() => {
-		const s = io("http://localhost:3001", {
-			transports: ["websocket"],
-		});
+		const s = getSocket();
+		setSocket(s);
 
-		s.on("connect", () => {
+		const onConnect = () => {
 			setMySocketId(s.id ?? null);
 			s.emit("joinRoom", { roomId, userId, isPlayer: true });
-		});
+		};
 
-		s.on("roomState", (state: RoomState) => {
+		if (s.connected) {
+			onConnect();
+		} else {
+			s.on("connect", onConnect);
+		}
+
+		const onRoomState = (state: RoomState) => {
 			setRoomState(state);
-		});
+		};
 
-		s.on("gameStart", (data: { roomId: string }) => {
+		const onGameStart = (data: { roomId: string }) => {
 			router.push(`/match/${data.roomId}`);
-		});
+		};
 
-		s.on("playerLeft", () => { });
+		const onPlayerLeft = () => { };
+
+		s.on("roomState", onRoomState);
+		s.on("gameStart", onGameStart);
+		s.on("playerLeft", onPlayerLeft);
 
 		setSocket(s);
 
 		return () => {
-			s.disconnect();
+			s.off("connect", onConnect);
+			s.off("roomState", onRoomState);
+			s.off("gameStart", onGameStart);
+			s.off("playerLeft", onPlayerLeft);
 		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [roomId, userId]);
 
 	const playerCount = roomState?.players?.length ?? (isHost ? 1 : 0);
 	const amIHost = mySocketId ? roomState?.hostSocketId === mySocketId : isHost;
+
+	// Chat 側の表示用（ルーム待機画面では仮の Sente/Gote 判定を行う）
+	const me = roomState?.players.find(p => (userId && p.userId === userId) || p.socketId === mySocketId);
+	const mySideInRoom = me ? (me.side === "b" ? "sente" : "gote") : "spectator";
 
 	const handleCopy = async () => {
 		try {
@@ -245,6 +265,16 @@ export default function RoomPage() {
 					</div>
 				</div>
 			</div>
+
+			{/* チャット画面 */}
+			{socket && roomId && (
+				<Chat
+					socket={socket}
+					roomId={roomId}
+					mySide={mySideInRoom}
+					initialMessages={roomState?.messages}
+				/>
+			)}
 		</div>
 	);
 }

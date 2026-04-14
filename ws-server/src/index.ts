@@ -1,16 +1,18 @@
 import { Server, Socket } from "socket.io";
 import http from "http";
-import {apply} from "@torassen/shogi-logic"
+import { apply } from "@torassen/shogi-logic"
 
 const PORT = 3001;
 
 interface RoomState {
 	hostSocketId: string;
 	hostUserId?: string;
-	players: { socketId: string; userId?: string,side: "b" | "w" }[];
+	players: { socketId: string; userId?: string; side: "b" | "w"; connected: boolean }[];
 	spectators: string[];
 	sfen: string;
 	status: "waiting" | "playing";
+	messages: any[];
+	emptyTimeout?: NodeJS.Timeout;
 }
 
 const INITIAL_SFEN = "rbsgk/4p/5/P4/KGSBR b - 1";
@@ -32,8 +34,8 @@ const io = new Server(httpServer, {
 io.on("connection", (socket: Socket) => {
 	console.log(`[WS] Client connected: ${socket.id}`);
 
-	socket.on("joinRoom", (data: { roomId: string;isPlayer:boolean, userId?: string }) => {
-		const { roomId,isPlayer, userId } = data;
+	socket.on("joinRoom", (data: { roomId: string; isPlayer: boolean, userId?: string }) => {
+		const { roomId, isPlayer, userId } = data;
 		console.log(`[WS] joinRoom: ${roomId} by ${socket.id} (user: ${userId})`);
 
 		let room = rooms.get(roomId);
@@ -42,35 +44,41 @@ io.on("connection", (socket: Socket) => {
 			room = {
 				hostSocketId: socket.id,
 				hostUserId: userId,
-				players: [{ socketId: socket.id, userId,side: "b" }],
+				players: [{ socketId: socket.id, userId, side: "b", connected: true }],
 				spectators: [],
 				sfen: INITIAL_SFEN,
 				status: "waiting",
+				messages: [],
 			};
 			rooms.set(roomId, room);
-		} else if(isPlayer){
-            const existingPlayerIndex = room.players.findIndex(
-                (p) => p.userId && p.userId === userId
+		} else if (isPlayer) {
+			const existingPlayerIndex = room.players.findIndex(
+				(p) => (p.userId && p.userId === userId) || p.socketId === socket.id
 			);
-            if (existingPlayerIndex !== -1) {
-                room.players[existingPlayerIndex].socketId = socket.id;
-            } else if (room.players.length < 2) {
-                const occupiedSide = room.players[0].side;
-                const newSide = occupiedSide === "b" ? "w" : "b";
-                room.players.push({ socketId: socket.id, userId, side: newSide });
+			if (existingPlayerIndex !== -1) {
+				room.players[existingPlayerIndex].socketId = socket.id;
+				room.players[existingPlayerIndex].connected = true;
+				if (room.emptyTimeout) {
+					clearTimeout(room.emptyTimeout);
+					delete room.emptyTimeout;
+				}
+			} else if (room.players.length < 2) {
+				const occupiedSide = room.players[0] ? room.players[0].side : "w";
+				const newSide = occupiedSide === "b" ? "w" : "b";
+				room.players.push({ socketId: socket.id, userId, side: newSide, connected: true });
 				if (room.players.length === 2) {
-                room.status = "playing";
-           		}
+					room.status = "playing";
+				}
 			} else {
-                if (!room.spectators.includes(socket.id))
-                    room.spectators.push(socket.id);
-            }
-        }else {
-            console.log(`[WS] Spectator joined: ${socket.id}`);
-            if (!room.spectators.includes(socket.id)) {
-                room.spectators.push(socket.id);
-            }
-        }
+				if (!room.spectators.includes(socket.id))
+					room.spectators.push(socket.id);
+			}
+		} else {
+			console.log(`[WS] Spectator joined: ${socket.id}`);
+			if (!room.spectators.includes(socket.id)) {
+				room.spectators.push(socket.id);
+			}
+		}
 
 		socket.join(roomId);
 
@@ -84,6 +92,7 @@ io.on("connection", (socket: Socket) => {
 				userId: p.userId,
 				side: p.side,
 			})),
+			messages: room.messages,
 		});
 	});
 
@@ -100,6 +109,7 @@ io.on("connection", (socket: Socket) => {
 					userId: p.userId,
 					side: p.side,
 				})),
+				messages: room.messages,
 			});
 		} else {
 			socket.emit("roomState", {
@@ -167,7 +177,7 @@ io.on("connection", (socket: Socket) => {
 				);
 			}
 
-			room.sfen = apply(room.sfen,data);
+			room.sfen = apply(room.sfen, data);
 
 			socket.to(data.roomId).emit("moveMade", {
 				from: data.from,
@@ -178,6 +188,15 @@ io.on("connection", (socket: Socket) => {
 		}
 	);
 
+	socket.on("chat", (data: { roomId: string; message: any }) => {
+		console.log(`[WS] Chat in room ${data.roomId} from ${socket.id}`);
+		const room = rooms.get(data.roomId);
+		if (room) {
+			room.messages.push(data.message);
+		}
+		socket.to(data.roomId).emit("chat", data.message);
+	});
+
 	socket.on("resign_match", (data: { roomId: string }) => {
 		console.log(`[WS] resign_match received for room: ${data.roomId} from ${socket.id}`);
 		const room = rooms.get(data.roomId);
@@ -187,18 +206,18 @@ io.on("connection", (socket: Socket) => {
 		}
 
 		const loserIdx = room.players.findIndex((p) => p.socketId === socket.id);
-	if (loserIdx === -1) return;
+		if (loserIdx === -1) return;
 
-	const loserSide = room.players[loserIdx].side; 
-	const winnerSide = loserSide === "b" ? "gote" : "sente";
+		const loserSide = room.players[loserIdx].side;
+		const winnerSide = loserSide === "b" ? "gote" : "sente";
 
-	const winnerName = winnerSide === "gote" ? "後手" : "先手";
-	const loserName = loserSide === "w" ? "後手" : "先手";
+		const winnerName = winnerSide === "gote" ? "後手" : "先手";
+		const loserName = loserSide === "w" ? "後手" : "先手";
 
-	io.to(data.roomId).emit("match_ended", {
-		winner: winnerSide,
-		message: `${loserName}が投了しました。${winnerName}の勝ちです。`,
-	});
+		io.to(data.roomId).emit("match_ended", {
+			winner: winnerSide,
+			message: `${loserName}が投了しました。${winnerName}の勝ちです。`,
+		});
 	});
 
 	socket.on("disconnect", () => {
@@ -208,16 +227,24 @@ io.on("connection", (socket: Socket) => {
 		for (const [roomId, room] of rooms.entries()) {
 			const idx = room.players.findIndex((p) => p.socketId === socket.id);
 			if (idx !== -1) {
-				room.players.splice(idx, 1);
+				room.players[idx].connected = false;
 
-				if (room.players.length === 0) {
-					rooms.delete(roomId);
-					console.log(`[WS] Room deleted: ${roomId}`);
+				const allDisconnected = room.players.every((p) => !p.connected);
+
+				if (allDisconnected) {
+					console.log(`[WS] All players disconnected from room: ${roomId}. Starting 10s cleanup timer.`);
+					room.emptyTimeout = setTimeout(() => {
+						rooms.delete(roomId);
+						console.log(`[WS] Room deleted: ${roomId}`);
+					}, 10000);
 				} else {
 					// If host left, transfer host
 					if (room.hostSocketId === socket.id && room.players.length > 0) {
-						room.hostSocketId = room.players[0].socketId;
-						room.hostUserId = room.players[0].userId;
+						const nextConnected = room.players.find(p => p.connected);
+						if (nextConnected) {
+							room.hostSocketId = nextConnected.socketId;
+							room.hostUserId = nextConnected.userId;
+						}
 					}
 
 					io.to(roomId).emit("roomState", {
@@ -228,8 +255,10 @@ io.on("connection", (socket: Socket) => {
 						players: room.players.map((p) => ({
 							socketId: p.socketId,
 							userId: p.userId,
-							side: p.side
+							side: p.side,
+							connected: p.connected
 						})),
+						messages: room.messages,
 					});
 
 					io.to(roomId).emit("playerLeft", { socketId: socket.id });
