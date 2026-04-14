@@ -1,6 +1,6 @@
-# 5x5 Mini Shogi Online
-
 *This project has been created as part of the 42 curriculum by okaname, mkuida, tishihar, kosakats.*
+
+# 5x5 Mini Shogi Online
 
 <img width="1907" height="931" alt="image" src="https://github.com/user-attachments/assets/304077c1-b08c-4eba-88c0-8b9b4a6c5e05" />
 
@@ -120,13 +120,20 @@ The schema maintains relational integrity via Prisma on **PostgreSQL**:
 | **Implement spectator mode for games** | Minor | `<okaname>` / `<kosakats>` | 1 |
 
 
-### Module Descriptions(Partially)
+### Module Descriptions
 
-- **Use an ORM for the database (Minor)**: Integrated Prisma ORM to efficiently and securely map our PostgreSQL database to application state, providing robust typing and preventing SQL injection attacks.
+- **Use a framework for both the frontend and backend (Major)**: Next.js was chosen as our full-stack framework, utilizing its App Router for robust frontend rendering and built-in API routes for backend endpoints.
+- **Implement real-time features using WebSockets (Major)**: Integrated Socket.IO to enable bidirectional communication for instant match status updates, chat payloads, and player presence.
 - **Allow users to interact with other users (Major)**: Implemented a comprehensive social ecosystem where users can manage their profiles, send friend requests, and communicate via a built-in real-time chat system.
+- **Use an ORM for the database (Minor)**: Integrated Prisma ORM to efficiently map our PostgreSQL database to application state, providing robust typing and preventing SQL injection attacks.
+- **Support for additional browsers (Minor)**: Extensively tested UI components and WebSocket functionality to ensure full compatibility with Mozilla Firefox and Safari, not just Chromium browsers.
+- **Standard user management and authentication (Major)**: Maintained secure user signup/login flows utilizing salted password hashing, allowing users to safely manage their own profiles.
+- **Implement remote authentication with OAuth 2.0 (Major)**: Provided a seamless login experience using OAuth, allowing users to securely authenticate via third-party providers.
+- **AI Opponent (Major)**: Developed a move-search logic algorithm for single-player mode, allowing users to practice against an automated opponent offline.
+- **Implement a complete web-based game (Major)**: Engineered a complete 5x5 Mini Shogi game engine implementing move validation, piece promotion ("Naru"), and captured pieces system.
+- **Remote players (Major)**: Realized through our WebSockets integration, ensuring low-latency, real-time board state synchronization between players on different networks.
+- **Advanced 3D Graphics (Major)**: Leveraged React Three Fiber (Three.js) and Blender-designed models to build an immersive 3D view of the Shogi board, with custom pieces and animations.
 - **Implement spectator mode for games (Minor)**: Allows non-playing viewers to join active match rooms to watch games in real-time, receiving the same live board updates and having access to real-time chat.
-- **Remote players — two players on separate computers (Major)**: Realized through our WebSockets integration, ensuring low-latency, real-time board state synchronization between players on different networks.
-- **Game statistics and match history (Minor)**: Saves complete match data to the database, allowing users to view their past 1v1 game results, win/loss records, and current standings.
 
 ---
 
@@ -134,10 +141,10 @@ The schema maintains relational integrity via Prisma on **PostgreSQL**:
 
 The following modules should be specifically verified by reviewers to ensure they meet the requirements during evaluation:
 
-- **26. Game customization options (Minor)**: Players have options to customize their game experience. Please verify these settings function correctly.
+- **Game customization options (Minor)**: Players have options to customize their game experience. Please verify these settings function correctly.
 - **Real-time collaborative features (Minor)**: Advanced live synchronization beyond simple gameplay, making the interface dynamically update based on concurrent user interactions.
 - **Server-Side Rendering (SSR) (Minor)**: Pre-renders key application pages on the server utilizing Next.js, significantly boosting load performance and SEO capabilities. Check page sources to verify server-rendered HTML.
-- **Game statistics and match history**: Saves complete match data to the database, allowing users to view their past 1v1 game results, win/loss records, and current standings.
+- **Game statistics and match history (Minor)**: Saves complete match data to the database, allowing users to view their past 1v1 game results, win/loss records, and current standings.
 
 ---
 
