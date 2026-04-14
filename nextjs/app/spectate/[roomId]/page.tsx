@@ -3,7 +3,8 @@
 import MatchBoard from "@/components/MatchBoard";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { io, Socket } from "socket.io-client";
+import { Socket } from "socket.io-client";
+import { getSocket } from "@/lib/socket";
 import { PlayerSide } from "@/types/game";
 
 export default function SpectateRoomPage() {
@@ -16,25 +17,35 @@ export default function SpectateRoomPage() {
     const [initialMessages, setInitialMessages] = useState<any[]>([]);
 
     useEffect(() => {
-        const s = io("http://localhost:3001", {
-            transports: ["websocket"],
-        });
+        const s = getSocket();
 
-        s.on("connect", () => {
+        const onConnect = () => {
             setWsStatus("connected");
             s.emit("joinRoom", {roomId: roomId,isPlayer:false});
-        });
+        };
 
-        s.on("roomState", (state: { messages?: any[] }) => {
+        if (s.connected) {
+            onConnect();
+        } else {
+            s.on("connect", onConnect);
+        }
+
+        const onRoomState = (state: { messages?: any[] }) => {
             if (state.messages) {
                 setInitialMessages(state.messages);
             }
-        });
+        };
+        s.on("roomState", onRoomState);
 
-        s.on("disconnect", () => setWsStatus("disconnected"));
+        const onDisconnect = () => setWsStatus("disconnected");
+        s.on("disconnect", onDisconnect);
 
         setSocket(s);
-        return () => { s.disconnect(); };
+        return () => {
+            s.off("connect", onConnect);
+            s.off("roomState", onRoomState);
+            s.off("disconnect", onDisconnect);
+        };
     }, [roomId]);
 
     return (
