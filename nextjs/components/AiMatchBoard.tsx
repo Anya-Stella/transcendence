@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { useAiGame } from "@/hooks/useAiGame";
 import { PieceData, Color, PieceType, Move } from "@torassen/shogi-logic";
 import TatamiBackground from "@/components/TatamiBackground";
@@ -36,6 +37,7 @@ interface AiMatchBoardProps {
 function AiMatchBoard({ mySide = "sente", aiDepth = 4, isPreparing = false }: AiMatchBoardProps) {
 	const router = useRouter();
 	const user = useUser();
+	const { data: session } = useSession();
 	const [isLoaded, setIsLoaded] = useState(false);
 
 	const {
@@ -105,7 +107,7 @@ function AiMatchBoard({ mySide = "sente", aiDepth = 4, isPreparing = false }: Ai
 					<Header
 						title="将棋ゲーム"
 						pageName="AI対戦"
-						userName={user}
+						userName={session?.user?.name || undefined}
 						onLogout={handleLogout}
 						logoutLabel="退出"
 					/>

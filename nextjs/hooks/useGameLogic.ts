@@ -1,6 +1,7 @@
 import { useCallback, useReducer, useEffect, useMemo } from "react";
 import { useLegalMoves } from "./useLegalMoves";
 import { gameReducer, GameAction } from "./reducers/gameReducer";
+import { PlayerSide } from "@/types/game";
 import {
 	PieceData,
 	GameState,
@@ -15,7 +16,7 @@ import {
 	type PieceInfo
 } from "@torassen/shogi-logic";
 
-export function useGameLogic(mySide: "sente" | "gote" | "spectator") {
+export function useGameLogic(mySide: PlayerSide) {
 	function deepCopyBoard(board: PieceData[][]): PieceData[][] {
 		return board.map((row) => row.map((cell) => (cell ? { ...cell } : null)));
 	}

@@ -4,10 +4,12 @@ import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Socket } from "socket.io-client";
+import { useSession } from "next-auth/react";
 import { useShogiGame } from "@/hooks/useShogiGame";
 import { Color, PieceType, PType, Hand, Piece, UIBoard, BoardState, Move, HandPieces } from "@torassen/shogi-logic";
 import TatamiBackground from "@/components/TatamiBackground";
 import { useUser } from "@/hooks/useUser";
+import { PlayerSide } from "@/types/game";
 import GameStatusBanner from "./GamaStatusBanner/GamaStatusBanner";
 import EnemyInfo from "./Info/EnemyInfo";
 import MyInfo from "./Info/MyInfo";
@@ -16,6 +18,8 @@ import GameResultButton from "./Button/GameResult";
 import ShowResultOverlay from "./Overlay/ShowResultOverlay";
 import OteOverlay from "@/components/Overlay/OteOverlay";
 import Header from "@/components/Header";
+import Chat from "./Chat/Chat";
+
 
 export const PIECE_TYPE_TO_KANJI: Record<number, string> = {
 	[PieceType.PAWN]: "歩",
@@ -41,62 +45,64 @@ export const KANJI_TO_PTYPE: Record<string, PType> = {
 };
 
 const convertHandPiecesToHand = (handPieces: HandPieces): Hand => {
-  const hand: Hand = {};
+	const hand: Hand = {};
 
-  Object.entries(handPieces).forEach(([kanji, count]) => {
-    let type = KANJI_TO_PTYPE[kanji];
+	Object.entries(handPieces).forEach(([kanji, count]) => {
+		let type = KANJI_TO_PTYPE[kanji];
 
-    if (type >= PType.PRO_PAWN) {
-      type = (type - 6) as PType;
-    }
+		if (type >= PType.PRO_PAWN) {
+			type = (type - 6) as PType;
+		}
 
-    hand[type] = (hand[type] || 0) + count;
-  });
+		hand[type] = (hand[type] || 0) + count;
+	});
 
-  return hand;
+	return hand;
 };
 
 export function uiBoardToBoardState(uiBoard: UIBoard, moveCount: number = 0): BoardState {
-  // 1. 盤面（board）の変換
-  const board: (Piece | null)[][] = uiBoard.board.map((row) =>
-    row.map((cell) => {
-      if (!cell) return null;
+	// 1. 盤面（board）の変換
+	const board: (Piece | null)[][] = uiBoard.board.map((row) =>
+		row.map((cell) => {
+			if (!cell) return null;
 
-      const pieceType = KANJI_TO_PTYPE[cell.kanji];
-      if (pieceType === undefined) return null;
+			const pieceType = KANJI_TO_PTYPE[cell.kanji];
+			if (pieceType === undefined) return null;
 
-      return {
-        color: cell.side === "sente" ? Color.BLACK : Color.WHITE,
-        pieceType: pieceType,
-      };
-    })
-  );
+			return {
+				color: cell.side === "sente" ? Color.BLACK : Color.WHITE,
+				pieceType: pieceType,
+			};
+		})
+	);
 
-  const hands: [Hand, Hand] = [
-    { ...convertHandPiecesToHand(uiBoard.senteHand)},
-    { ...convertHandPiecesToHand(uiBoard.goteHand) },
-  ];
-  const sideToMove = uiBoard.turn === "sente" ? Color.BLACK : Color.WHITE;
+	const hands: [Hand, Hand] = [
+		{ ...convertHandPiecesToHand(uiBoard.senteHand) },
+		{ ...convertHandPiecesToHand(uiBoard.goteHand) },
+	];
+	const sideToMove = uiBoard.turn === "sente" ? Color.BLACK : Color.WHITE;
 
-  return {
-    board,
-    hands,
-    sideToMove,
-    moveCount,
-  };
+	return {
+		board,
+		hands,
+		sideToMove,
+		moveCount,
+	};
 }
 
 interface MatchBoardProps {
 	roomId?: string;
 	socket?: Socket | null;
 	wsStatus?: "connected" | "disconnected" | "connecting";
-	mySide?: "sente" | "gote" | "spectator";
+	mySide?: PlayerSide;
 	isPreparing?: boolean;
+	initialMessages?: any[];
 }
 
-function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente", isPreparing = false }: MatchBoardProps) {
+function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente", isPreparing = false, initialMessages }: MatchBoardProps) {
 	const router = useRouter();
 	const user = useUser();
+	const { data: session } = useSession();
 	const [isLoaded, setIsLoaded] = useState(false);
 
 	const {
@@ -188,7 +194,7 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 								</span>
 							)
 						}
-						userName={user}
+						userName={session?.user?.name || undefined}
 						onLogout={handleLogout}
 						logoutLabel="ログアウト"
 					/>
@@ -212,11 +218,22 @@ function MatchBoard({ roomId, socket, wsStatus = "disconnected", mySide = "sente
 						{/* 対局終了通知 */}
 						{gameOver && <GameResultButton clickHandler={setShowResultOverlay} />}
 
-						{/* 右上 (対戦相手の情報) */}
+						{/* 右下 (対戦相手の情報) */}
 						<EnemyInfo mySide={mySide} />
+
+						{/* チャット画面 (右下) */}
+						{roomId && (
+							<Chat
+								socket={socket}
+								roomId={roomId}
+								mySide={mySide}
+								initialMessages={initialMessages}
+							/>
+						)}
 
 						{/* 左下 (あなたの情報) */}
 						<MyInfo mySide={mySide} />
+
 
 						{/* 下部のボタン (右下) */}
 						<SarenderButton isGameOver={gameOver !== null} mySide={mySide} clickHandler={handleEndMatch} />
