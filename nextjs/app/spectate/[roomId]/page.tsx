@@ -17,9 +17,7 @@ export default function SpectateRoomPage() {
         const host = typeof window !== "undefined" ? window.location.hostname : "localhost";
         const wsUrl = `https://${host}:8080`;
 
-        const s = io(wsUrl, {
-            transports: ["websocket"],
-        });
+        const s = io(wsUrl);
 
         s.on("connect", () => {
             setWsStatus("connected");
