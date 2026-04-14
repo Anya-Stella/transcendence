@@ -170,7 +170,7 @@ export default function Chat({ socket, roomId, mySide, initialMessages }: ChatPr
           position: fixed;
           bottom: 80px;
           left: 20px;
-          width: 280px;
+          width: 400px;
           height: 200px;
           background: rgba(20, 15, 10, 0.7);
           backdrop-filter: blur(8px);
@@ -285,7 +285,7 @@ export default function Chat({ socket, roomId, mySide, initialMessages }: ChatPr
           position: absolute;
           bottom: 52px;
           left: -10px;
-          width: 300px;
+          width: 400px;
           background: rgba(20, 15, 10, 0.95);
           border: 1px solid rgba(212, 175, 55, 0.5);
           border-radius: 8px;
