@@ -2,6 +2,9 @@
 
 *This project has been created as part of the 42 curriculum by okaname, mkuida, tishihar, kosakats.*
 
+<img width="1907" height="931" alt="image" src="https://github.com/user-attachments/assets/304077c1-b08c-4eba-88c0-8b9b4a6c5e05" />
+
+
 ## 📝 Description
 
 **5x5 Mini Shogi Online** is a real-time, web-based project that brings the traditional Japanese game of Shogi into a fast-paced, modern 3D environment. The goal was to build a robust Single Page Application (SPA) that supports multiplayer competition, AI training, and a complete social ecosystem for players.
