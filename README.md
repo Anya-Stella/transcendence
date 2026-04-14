@@ -1,6 +1,6 @@
 # 5x5 Mini Shogi Online
 
-*This project has been created as part of the 42 curriculum by <okaname>, <mkuida>, <tishihar>, <kosakats>.*
+*This project has been created as part of the 42 curriculum by okaname, mkuida, tishihar, kosakats.*
 
 ## 📝 Description
 
@@ -87,40 +87,69 @@ The schema maintains relational integrity via Prisma on **PostgreSQL**:
 
 - **Core Shogi Logic**: `<okaname>` - Implementation of move validation, promotion, and captured pieces.
 - **3D Board Rendering**: `<kosakats>` - 3D model creation and animation hooks.
-- **Real-time Synchronization**: `<okaname>` - WebSocket server handling room management and move broadcasting.
+- **Real-time Synchronization**: `<okaname>` / `<tishihar>` - WebSocket server handling room management and move broadcasting.
 - **User Management & Auth**: `<mkuida>` - Signup/Login flow, profile editing, and friend request system.
 - **Spectator UI**: `<okaname>` / `<kosakats>` - Global state management for non-playing viewers.
 - **AI Opponent**: `<okaname>` - Move-search algorithm for offline play.
 - **HTTPS**: `<tishihar>` - Implementation of secure HTTPS communication.
 - **OAuth**: `<mkuida>` - Implementation of OAuth authentication.
 - **TOS & Privacy Policy**: `<ishihar>` - Implementation of Terms of Service and Privacy Policy.
+- **Chat**: `<kosakats>` / `<tishihar>` - Implementation of chat system.
+- **remote players**: `<mkuida>` - Implementation of remote players.
 
 ---
 
-## 🧩 Modules & Point Calculation
+## 🧩 Modules & Point Calculation(all 20 points)
 
-Total Points: **16**
+| Module | Type | Assignee | Points |
+|---|---|---|---|
+| **Use a framework for both the frontend and backend** | Major | All | 2 |
+| **Implement real-time features using WebSockets or similar technology** | Major | `<okaname>` / `<mkuida>` | 2 |
+| **Allow users to interact with other users** | Major | `<mkuida>` / `<tishihar>` | 2 |
+| **Use an ORM for the database** | Minor | `<mkuida>` | 1 |
+| **Support for additional browsers** | Minor | All | 1 |
+| **Standard user management and authentication** | Major | `<mkuida>` | 2 |
+| **Implement remote authentication with OAuth 2.0** | Major | `<mkuida>` | 1 |
+| **AI Opponent** | Major | `<okaname>` | 2 |
+| **Implement a complete web-based game where users can play against each other** | Major | All | 2 |
+| **Remote players** | Major | `<mkuida>` | 2 |
+| **Advanced 3D Graphics** | Major | `<kosakats>` | 2 |
+| **Implement spectator mode for games** | Minor | `<okaname>` / `<kosakats>` | 1 |
 
-| Module | Type | Implementation Detail | Assignee | Points |
-|---|---|---|---|---|
-| **Full-stack Framework** | Major | Next.js handles both SSR and Backend API. | `<okaname>` / `<mkuida>` / `<kosakats>` / `<ishihar>` | 2 |
-| **Real-time Features** | Major | WebSocket for match status updates. | `<okaname>` | 2 |
-| **Interactive Socials** | Major | Profile management and Friends list. | `<mkuida>` | 2 |
-| **Public API** | Major | 5+ secured REST endpoints for user stats. | `<kosakats>` | 2 |
-| **AI Opponent** | Major | Move-search algorithm for offline play. | `<okaname>` | 2 |
-| **Remote Players** | Major | Cross-device real-time gameplay. | `<okaname>` | 2 |
-| **Advanced 3D Graphics** | Major | Three.js piece promotion animations. | `<kosakats>` | 2 |
-| **Spectator mode** | Minor | Viewers support for active rooms. | `<okaname>` / `<kosakats>` | 1 |
-| **Game Statistics** | Minor | Database tracking for user Elo rating. | `<okaname>` / `<mkuida>` | 1 |
+
+### Module Descriptions(Partially)
+
+- **Use an ORM for the database (Minor)**: Integrated Prisma ORM to efficiently and securely map our PostgreSQL database to application state, providing robust typing and preventing SQL injection attacks.
+- **Allow users to interact with other users (Major)**: Implemented a comprehensive social ecosystem where users can manage their profiles, send friend requests, and communicate via a built-in real-time chat system.
+- **Implement spectator mode for games (Minor)**: Allows non-playing viewers to join active match rooms to watch games in real-time, receiving the same live board updates and having access to real-time chat.
+- **Remote players — two players on separate computers (Major)**: Realized through our WebSockets integration, ensuring low-latency, real-time board state synchronization between players on different networks.
+- **Game statistics and match history (Minor)**: Saves complete match data to the database, allowing users to view their past 1v1 game results, win/loss records, and current standings.
+
+---
+
+## 🔍 Reviewer Verification Checklist (Extra Modules)(all 4 points)
+
+The following modules should be specifically verified by reviewers to ensure they meet the requirements during evaluation:
+
+- **26. Game customization options (Minor)**: Players have options to customize their game experience. Please verify these settings function correctly.
+- **Real-time collaborative features (Minor)**: Advanced live synchronization beyond simple gameplay, making the interface dynamically update based on concurrent user interactions.
+- **Server-Side Rendering (SSR) (Minor)**: Pre-renders key application pages on the server utilizing Next.js, significantly boosting load performance and SEO capabilities. Check page sources to verify server-rendered HTML.
+- **Game statistics and match history**: Saves complete match data to the database, allowing users to view their past 1v1 game results, win/loss records, and current standings.
 
 ---
 
 ## 👥 Team Information
 
-- **Product Owner**: `<mkuida>` - Roadmapping and user needs analysis.
-- **Project Manager**: `<ishihar>` - Milestone management and Docker coordination.
-- **Technical Lead**: `<kosakats>` - 3D rendering pipeline and piece physics.
-- **Developer**: `<okaname>` - Core game rules and logic engine implementation.
+- **Product Owner (PO)**: `<mkuida>` - Roadmapping, user needs analysis, and overseeing the social/auth module logic to ensure product viability.
+- **Project Manager (PM)**: `<ishihar>` - Task tracking, milestone management, Docker coordination, and enforcing code reviews.
+- **Technical Lead**: `<kosakats>` - Setting architectural guidelines, establishing the Next.js foundation, and directing the 3D rendering pipeline and piece physics.
+- **Developer**: `<okaname>` - Core game rules, matchmaking, WebSocket connections, and logic engine implementation.
+
+### Project Management Practices
+
+- **Work Organization**: The team utilized a modular feature-branch workflow. Tasks were divided logically between frontend (3D/Next.js UI) and backend (WebSockets/Auth) groups, ensuring minimal merge conflicts and concurrent progress. Bi-weekly syncs were held to review milestones.
+- **Tools Used**: We maintained our backlog, assigned issues, reviewed code pull-requests, and tracked sprint goals using **GitHub Issues** and an integrated Kanban board on GitHub Projects.
+- **Communication Channel**: We utilized **Discord** as our primary communication channel for daily syncs, real-time pair programming, and prompt resolution of blocking issues.
 
 ---
 
@@ -137,6 +166,7 @@ Total Points: **16**
 
 ### AI Usage Policy
 AI tools (specifically Cursor with the Antigravity agent) were utilized for:
+- **initialize**: make initial app.
 - **Refactoring**: Cleaning up redundant logic in the Shogi engine.
 - **Testing**: Generating edge-case mock data for logic validation.
 - **Conflict Resolution**: Automating the resolution of build artifacts during merges.
