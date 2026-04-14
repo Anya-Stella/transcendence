@@ -28,6 +28,8 @@ const STAMPS = [
   { id: "soko", text: "えっ、そこ！？", icon: "😲" },
   { id: "miemie", text: "見え見えです", icon: "👓" },
   { id: "fufufu", text: "フフフ…", icon: "😎" },
+  { id: "netero", text: "そりゃ悪手だろ蟻んコ…", icon: "🐜" },
+  { id: "itte", text: "おそろしく速い一手　オレでなきゃ見逃しちゃうね", icon: "⚡" },
 ];
 
 interface ChatProps {
@@ -126,7 +128,7 @@ export default function Chat({ socket, roomId, mySide, initialMessages }: ChatPr
           );
         })}
       </div>
-      
+
       {isStampPickerOpen && (
         <div className="stamp-picker">
           {STAMPS.map((stamp) => (
