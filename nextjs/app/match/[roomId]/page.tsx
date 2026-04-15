@@ -2,7 +2,7 @@
 
 import { useParams } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Socket } from "socket.io-client";
+import { io, Socket } from "socket.io-client";
 import { getSocket } from "@/lib/socket";
 import MatchBoard from "@/components/MatchBoard";
 import { useUser } from "@/hooks/useUser";
@@ -18,10 +18,14 @@ export default function OnlineMatchPage() {
 	const userId = useUser();
 
 	useEffect(() => {
-		const s = getSocket();
-		setSocket(s);
+		const host = typeof window !== "undefined" ? window.location.hostname : "localhost";
+		const wsUrl = `http://${host}:3001`;
 
-		const onConnect = () => {
+		const s = io(wsUrl, {
+			transports: ["websocket"],
+		});
+
+		s.on("connect", () => {
 			// console.log("[WS] Connected. ID:", s.id);
 			setWsStatus("connected");
 			s.emit("joinRoom", {
@@ -29,23 +33,14 @@ export default function OnlineMatchPage() {
 				isPlayer: true,
 				userId: userId
 			});
-		};
+		});
 
-		if (s.connected) {
-			onConnect();
-		} else {
-			s.on("connect", onConnect);
-		}
-
-		const onDisconnect = () => {
+		s.on("disconnect", () => {
 			setWsStatus("disconnected");
-		};
+		});
 
-		const onRoomState = (state: { players: { socketId: string, userId?: string, side: "b" | "w" }[], messages?: any[] }) => {
+		s.on("roomState", (state: { players: { socketId: string, userId?: string, side: "b" | "w" }[], messages?: any[] }) => {
 			// console.log("[WS] Room state update:", state);
-			if (state.messages) {
-				setInitialMessages(state.messages);
-			}
 			const me = state.players.find((p) =>
 				(userId && p.userId === userId) || p.socketId === s.id
 			);
@@ -54,16 +49,15 @@ export default function OnlineMatchPage() {
 			} else {
 				setMySide("spectator");
 			}
-		};
+			if (state.messages) {
+				setInitialMessages(state.messages);
+			}
+		});
 
-		s.on("disconnect", onDisconnect);
-		s.on("roomState", onRoomState);
+		setSocket(s);
 
 		return () => {
-			// s.disconnect(); を削除
-			s.off("connect", onConnect);
-			s.off("disconnect", onDisconnect);
-			s.off("roomState", onRoomState);
+			s.disconnect();
 		};
 	}, [roomId, userId]);
 

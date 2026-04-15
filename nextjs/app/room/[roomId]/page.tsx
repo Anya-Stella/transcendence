@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { Socket } from "socket.io-client";
+import { io, Socket } from "socket.io-client";
 import { getSocket } from "@/lib/socket";
 import { useSession } from "next-auth/react";
 import Header from "@/components/Header";
@@ -40,43 +40,31 @@ export default function RoomPage() {
 
 	// WebSocket接続
 	useEffect(() => {
-		const s = getSocket();
-		setSocket(s);
+		const s = io("http://localhost:3001", {
+			transports: ["websocket"],
+			autoConnect: true,
+		});
 
-		const onConnect = () => {
+		s.on("connect", () => {
 			setMySocketId(s.id ?? null);
 			s.emit("joinRoom", { roomId, userId, isPlayer: true });
-		};
+		});
 
-		if (s.connected) {
-			onConnect();
-		} else {
-			s.on("connect", onConnect);
-		}
-
-		const onRoomState = (state: RoomState) => {
+		s.on("roomState", (state: RoomState) => {
 			setRoomState(state);
-		};
+		});
 
-		const onGameStart = (data: { roomId: string }) => {
+		s.on("gameStart", (data: { roomId: string }) => {
 			router.push(`/match/${data.roomId}`);
-		};
+		});
 
-		const onPlayerLeft = () => { };
-
-		s.on("roomState", onRoomState);
-		s.on("gameStart", onGameStart);
-		s.on("playerLeft", onPlayerLeft);
+		s.on("playerLeft", () => { });
 
 		setSocket(s);
 
 		return () => {
-			s.off("connect", onConnect);
-			s.off("roomState", onRoomState);
-			s.off("gameStart", onGameStart);
-			s.off("playerLeft", onPlayerLeft);
+			s.disconnect();
 		};
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [roomId, userId]);
 
 	const playerCount = roomState?.players?.length ?? (isHost ? 1 : 0);
