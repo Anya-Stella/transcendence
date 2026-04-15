@@ -96,40 +96,52 @@ The schema maintains relational integrity via Prisma on **PostgreSQL**:
 - **AI Opponent**: `<okaname>` - Move-search algorithm for offline play.
 - **HTTPS**: `<tishihar>` - Implementation of secure HTTPS communication.
 - **OAuth**: `<mkuida>` - Implementation of OAuth authentication.
-- **TOS & Privacy Policy**: `<ishihar>` - Implementation of Terms of Service and Privacy Policy.
+- **TOS & Privacy Policy**: `<tishihar>` - Implementation of Terms of Service and Privacy Policy.
 - **Chat**: `<kosakats>` / `<tishihar>` - Implementation of chat system.
-- **remote players**: `<mkuida>` - Implementation of remote players.
+- **remote players**: `<okaname>` - Implementation of remote players.
 
 ---
 
-## 🧩 Modules & Point Calculation(all 20 points)
+## 🧩 Modules & Point Calculation (all 21 points)
 
-| Module | Type | Assignee | Points |
-|---|---|---|---|
-| **Use a framework for both the frontend and backend** | Major | All | 2 |
-| **Implement real-time features using WebSockets or similar technology** | Major | `<okaname>` / `<mkuida>` | 2 |
-| **Allow users to interact with other users** | Major | `<mkuida>` / `<tishihar>` | 2 |
-| **Use an ORM for the database** | Minor | `<mkuida>` | 1 |
-| **Support for additional browsers** | Minor | All | 1 |
-| **Standard user management and authentication** | Major | `<mkuida>` | 2 |
-| **Implement remote authentication with OAuth 2.0** | Major | `<mkuida>` | 1 |
-| **AI Opponent** | Major | `<okaname>` | 2 |
-| **Implement a complete web-based game where users can play against each other** | Major | All | 2 |
-| **Remote players** | Major | `<mkuida>` | 2 |
-| **Advanced 3D Graphics** | Major | `<kosakats>` | 2 |
-| **Implement spectator mode for games** | Minor | `<okaname>` / `<kosakats>` | 1 |
+| Points | Section | Type | Module | Assignee |
+|---|---|---|---|---|
+| 🟢 | 1.Web | Major | **Use a framework for both the frontend and backend** | All |
+| 🟢 | 1.Web | Major | **Implement real-time features using WebSockets or similar technology** | `<okaname>` / `<mkuida>` |
+| 🟢 | 1.Web | Major | **Allow users to interact with other users** | `<mkuida>` / `<tishihar>` |
+| 🟡 | 1.Web | Minor | **Use an ORM for the database** | `<mkuida>` |
+| 🟡 | 1.Web | Minor | **Server-Side Rendering (SSR) for improved performance and SEO** | All |
+| 🟡 | 2.Accessibility and Internationalization | Minor | **Support for additional browsers** | All |
+| 🟢 | 3.User Management | Major | **Standard user management and authentication** | `<mkuida>` |
+| 🟡 | 3.User Management | Major | **Implement remote authentication with OAuth 2.0** | `<mkuida>` |
+| 🟢 | 4.Artificial Intelligence | Major | **Introduce an AI Opponent for games** | `<okaname>` |
+| 🟢 | 6.Gaming and user experience | Major | **Implement a complete web-based game where users can play against each other** | All |
+| 🟢 | 6.Gaming and user experience | Major | **Remote players** | `<okaname>` |
+| 🟢 | 6.Gaming and user experience | Major | **Implement advanced 3D graphics** | `<kosakats>` |
+| 🟡 | 6.Gaming and user experience | Minor | **Implement spectator mode for games** | `<okaname>` / `<kosakats>` |
 
+> 🟢 = 2 points &nbsp;&nbsp; 🟡 = 1 point
 
 ### Module Descriptions
 
+#### 1.Web
 - **Use a framework for both the frontend and backend (Major)**: Next.js was chosen as our full-stack framework, utilizing its App Router for robust frontend rendering and built-in API routes for backend endpoints.
 - **Implement real-time features using WebSockets (Major)**: Integrated Socket.IO to enable bidirectional communication for instant match status updates, chat payloads, and player presence.
 - **Allow users to interact with other users (Major)**: Implemented a comprehensive social ecosystem where users can manage their profiles, send friend requests, and communicate via a built-in real-time chat system.
 - **Use an ORM for the database (Minor)**: Integrated Prisma ORM to efficiently map our PostgreSQL database to application state, providing robust typing and preventing SQL injection attacks.
-- **Support for additional browsers (Minor)**: Extensively tested UI components and WebSocket functionality to ensure full compatibility with Mozilla Firefox and Safari, not just Chromium browsers.
+- **Server-Side Rendering (SSR) for improved performance and SEO**: use next.js
+
+#### 2.Accessibility and Internationalization
+- **Support for additional browsers (Minor)**: Extensively tested UI components and WebSocket functionality to ensure full compatibility with Mozilla Firefox, not just Chromium browsers.
+
+#### 3.User Management
 - **Standard user management and authentication (Major)**: Maintained secure user signup/login flows utilizing salted password hashing, allowing users to safely manage their own profiles.
 - **Implement remote authentication with OAuth 2.0 (Major)**: Provided a seamless login experience using OAuth, allowing users to securely authenticate via third-party providers.
+
+#### 4.Artificial Intelligence
 - **AI Opponent (Major)**: Developed a move-search logic algorithm for single-player mode, allowing users to practice against an automated opponent offline.
+
+#### 6.Gaming and user experience
 - **Implement a complete web-based game (Major)**: Engineered a complete 5x5 Mini Shogi game engine implementing move validation, piece promotion ("Naru"), and captured pieces system.
 - **Remote players (Major)**: Realized through our WebSockets integration, ensuring low-latency, real-time board state synchronization between players on different networks.
 - **Advanced 3D Graphics (Major)**: Leveraged React Three Fiber (Three.js) and Blender-designed models to build an immersive 3D view of the Shogi board, with custom pieces and animations.
@@ -137,21 +149,10 @@ The schema maintains relational integrity via Prisma on **PostgreSQL**:
 
 ---
 
-## 🔍 Reviewer Verification Checklist (Extra Modules)(all 4 points)
-
-The following modules should be specifically verified by reviewers to ensure they meet the requirements during evaluation:
-
-- **Game customization options (Minor)**: Players have options to customize their game experience. Please verify these settings function correctly.
-- **Real-time collaborative features (Minor)**: Advanced live synchronization beyond simple gameplay, making the interface dynamically update based on concurrent user interactions.
-- **Server-Side Rendering (SSR) (Minor)**: Pre-renders key application pages on the server utilizing Next.js, significantly boosting load performance and SEO capabilities. Check page sources to verify server-rendered HTML.
-- **Game statistics and match history (Minor)**: Saves complete match data to the database, allowing users to view their past 1v1 game results, win/loss records, and current standings.
-
----
-
 ## 👥 Team Information
 
 - **Product Owner (PO)**: `<mkuida>` - Roadmapping, user needs analysis, and overseeing the social/auth module logic to ensure product viability.
-- **Project Manager (PM)**: `<ishihar>` - Task tracking, milestone management, Docker coordination, and enforcing code reviews.
+- **Project Manager (PM)**: `<tishihar>` - Task tracking, milestone management, Docker coordination, and enforcing code reviews.
 - **Technical Lead**: `<kosakats>` - Setting architectural guidelines, establishing the Next.js foundation, and directing the 3D rendering pipeline and piece physics.
 - **Developer**: `<okaname>` - Core game rules, matchmaking, WebSocket connections, and logic engine implementation.
 
@@ -167,7 +168,7 @@ The following modules should be specifically verified by reviewers to ensure the
 
 - **`<okaname>`**: Challenged by NextAuth configuration with custom Prisma adapters. Resolved by implementing a custom session callback for JWT.
 - **`<mkuida>`**: Faced race conditions in WebSocket room joining. Fixed using server-side locks and atomic state updates.
-- **`<ishihar>`**: Optimizing 3D textures for web performance was a hurdle. Solved by using compressed GLB models and instance rendering.
+- **`<tishihar>`**: Optimizing 3D textures for web performance was a hurdle. Solved by using compressed GLB models and instance rendering.
 - **`<kosakats>`**: Implementing "Naru" (Promotion) logic across the 3D-UI boundary. Solved by decoupling logic state from animation timers.
 
 ---
