@@ -10,6 +10,7 @@ interface UsePieceAnimationProps {
     targetRotation: [number, number, number];      // 目標角度（オイラー角）
     isDragging: boolean;                           // ドラッグ中か
     isPromoted?: boolean;                          // 【NEW】成り状況
+    isGameOver?: boolean;                          // 【NEW】終局アニメーション用
 }
 
 export function usePieceAnimation({
@@ -18,12 +19,17 @@ export function usePieceAnimation({
     targetPos,
     targetRotation,
     isDragging,
-    isPromoted
+    isPromoted,
+    isGameOver
 }: UsePieceAnimationProps) {
     const isFirstFrame = useRef(true);
-    
+
     // 落下演出用の設定
     const dropOffset = useRef(Math.random() * 15 + 20);
+
+    // 爆発演出用の設定
+    const explosionVel = useRef<THREE.Vector3 | null>(null);
+    const explosionRotVel = useRef<THREE.Vector3 | null>(null);
 
     // 成りアニメーション用の状態管理
     const prevPromoted = useRef<boolean | undefined>(undefined);
@@ -36,6 +42,38 @@ export function usePieceAnimation({
 
     useFrame((_state, delta) => {
         if (!positionGroupRef.current || !rotationGroupRef.current) return;
+
+        // --- 終局（爆発）アニメーション ---
+        if (isGameOver) {
+            if (!explosionVel.current) {
+                // 初回に爆発の方向をランダムに決定
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 15 + Math.random() * 20;
+                explosionVel.current = new THREE.Vector3(
+                    Math.cos(angle) * speed,
+                    20 + Math.random() * 20, // 上方向に強めに飛ばす
+                    Math.sin(angle) * speed
+                );
+                explosionRotVel.current = new THREE.Vector3(
+                    (Math.random() - 0.5) * 10,
+                    (Math.random() - 0.5) * 10,
+                    (Math.random() - 0.5) * 10
+                );
+            }
+
+            // 位置の更新（重力付き）
+            positionGroupRef.current.position.addScaledVector(explosionVel.current, delta);
+            explosionVel.current.y -= 40 * delta; // 重力
+
+            // 回転の更新
+            if (explosionRotVel.current) {
+                rotationGroupRef.current.rotation.x += explosionRotVel.current.x * delta;
+                rotationGroupRef.current.rotation.y += explosionRotVel.current.y * delta;
+                rotationGroupRef.current.rotation.z += explosionRotVel.current.z * delta;
+            }
+
+            return; // 爆発中は他のアニメーションをスキップ
+        }
 
         // 目標値をThree.jsの型に変換
         targetVec.current.set(...targetPos);

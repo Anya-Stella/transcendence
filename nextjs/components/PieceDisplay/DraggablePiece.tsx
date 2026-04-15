@@ -20,15 +20,16 @@ interface DraggablePieceProps {
     onDragEnd: (id: string, newPos: [number, number, number]) => void;
     parentGroupRef: React.RefObject<THREE.Group>;
     draggable?: boolean;
+    isGameOver?: boolean;
 }
 
 function DraggablePiece(props: DraggablePieceProps) {
-    const { 
-        modelPath, initialPosition, rotation, pieceId, 
-        selectedId, onSelect, scale = [0.9, 0.9, 0.9], 
-        count = 1, draggable = true 
+    const {
+        modelPath, initialPosition, rotation, pieceId,
+        selectedId, onSelect, scale = [0.9, 0.9, 0.9],
+        count = 1, draggable = true, isGameOver = false
     } = props;
-    
+
     const { gl } = useThree();
     const { scene } = useGLTF(modelPath);
 
@@ -58,7 +59,8 @@ function DraggablePiece(props: DraggablePieceProps) {
         targetPos: pos,
         targetRotation: rotation,
         isDragging,
-        isPromoted: props.isPromoted
+        isPromoted: props.isPromoted,
+        isGameOver
     });
 
     const isSelected = selectedId === pieceId;
@@ -67,7 +69,7 @@ function DraggablePiece(props: DraggablePieceProps) {
         <group
             ref={positionGroupRef}
             onPointerDown={handlePointerDown}
-            onPointerOver={() => { if(draggable) gl.domElement.style.cursor = "grab"; }}
+            onPointerOver={() => { if (draggable) gl.domElement.style.cursor = "grab"; }}
             onPointerOut={() => { gl.domElement.style.cursor = "auto"; }}
         >
             {isSelected && (
@@ -129,11 +131,11 @@ function DraggablePiece(props: DraggablePieceProps) {
 
 function setupPieceModel(scene: THREE.Group, isGhost: boolean) {
     const cloned = scene.clone();
-    
+
     cloned.traverse((child) => {
         if (child.isMesh) {
             const mesh = child as THREE.Mesh;
-            
+
             if (mesh.name.toLowerCase().includes("shadow") || mesh.name.toLowerCase().includes("plane")) {
                 mesh.visible = false;
                 return;
@@ -147,7 +149,7 @@ function setupPieceModel(scene: THREE.Group, isGhost: boolean) {
             if (isGhost) {
                 mesh.castShadow = false;
                 mesh.receiveShadow = false;
-                
+
                 if (mesh.material instanceof THREE.MeshStandardMaterial) {
                     mesh.material.transparent = true;
                     mesh.material.opacity = 0.3; // 半透明
@@ -158,7 +160,7 @@ function setupPieceModel(scene: THREE.Group, isGhost: boolean) {
             }
         }
     });
-    
+
     return cloned;
 }
 

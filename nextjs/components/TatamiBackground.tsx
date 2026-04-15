@@ -463,6 +463,7 @@ export default function TatamiBackground({
 										onDragEnd={handleDragEnd}
 										parentGroupRef={boardGroupRef}
 										draggable={isPieceDraggable(id)}
+										isGameOver={isGameOver}
 									/>
 								))}
 							</group>
