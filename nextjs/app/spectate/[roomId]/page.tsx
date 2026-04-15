@@ -16,11 +16,10 @@ export default function SpectateRoomPage() {
     const [mySide, setMySide] = useState<PlayerSide>("spectator");
     const [initialMessages, setInitialMessages] = useState<any[]>([]);
 
+
+    const host = typeof window !== "undefined" ? window.location.hostname : "localhost";
     useEffect(() => {
-        const s = io("http://localhost:3001", {
-			transports: ["websocket"],
-			autoConnect: true,
-		});
+        const s = io(`https://${host}:8080`);
 
         const onConnect = () => {
             setWsStatus("connected");

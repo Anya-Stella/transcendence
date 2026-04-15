@@ -38,12 +38,12 @@ export default function RoomPage() {
 	const [mySocketId, setMySocketId] = useState<string | null>(null);
 	const userId = (session?.user as { id?: string } | undefined)?.id ?? null;
 
+
+	const host = typeof window !== "undefined" ? window.location.hostname : "localhost";
+	const wsUrl = `https://${host}:8080`;
 	// WebSocket接続
 	useEffect(() => {
-		const s = io("http://localhost:3001", {
-			transports: ["websocket"],
-			autoConnect: true,
-		});
+		const s = io(wsUrl);
 
 		s.on("connect", () => {
 			setMySocketId(s.id ?? null);

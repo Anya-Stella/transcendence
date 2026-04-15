@@ -19,11 +19,9 @@ export default function OnlineMatchPage() {
 
 	useEffect(() => {
 		const host = typeof window !== "undefined" ? window.location.hostname : "localhost";
-		const wsUrl = `http://${host}:3001`;
+		const wsUrl = `https://${host}:8080`;
 
-		const s = io(wsUrl, {
-			transports: ["websocket"],
-		});
+		const s = io(wsUrl);
 
 		s.on("connect", () => {
 			// console.log("[WS] Connected. ID:", s.id);
