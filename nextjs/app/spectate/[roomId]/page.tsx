@@ -3,7 +3,7 @@
 import MatchBoard from "@/components/MatchBoard";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Socket } from "socket.io-client";
+import { io, Socket } from "socket.io-client";
 import { getSocket } from "@/lib/socket";
 import { PlayerSide } from "@/types/game";
 
@@ -16,8 +16,10 @@ export default function SpectateRoomPage() {
     const [mySide, setMySide] = useState<PlayerSide>("spectator");
     const [initialMessages, setInitialMessages] = useState<any[]>([]);
 
+
+    const host = typeof window !== "undefined" ? window.location.hostname : "localhost";
     useEffect(() => {
-        const s = getSocket();
+        const s = io(`https://${host}:8080`);
 
         const onConnect = () => {
             setWsStatus("connected");
@@ -42,6 +44,7 @@ export default function SpectateRoomPage() {
 
         setSocket(s);
         return () => {
+            s.disconnect();
             s.off("connect", onConnect);
             s.off("roomState", onRoomState);
             s.off("disconnect", onDisconnect);

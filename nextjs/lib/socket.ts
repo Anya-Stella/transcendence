@@ -7,10 +7,7 @@ let socket: Socket | null = null;
 export const getSocket = (): Socket => {
   if (!socket) {
     const host = typeof window !== "undefined" ? window.location.hostname : "localhost";
-    socket = io(`http://${host}:3001`, {
-      transports: ["websocket"],
-      autoConnect: true,
-    });
+    socket = io(`https://${host}:8080`);
   }
   return socket;
 };

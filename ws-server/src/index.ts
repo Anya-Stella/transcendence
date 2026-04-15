@@ -227,24 +227,16 @@ io.on("connection", (socket: Socket) => {
 		for (const [roomId, room] of rooms.entries()) {
 			const idx = room.players.findIndex((p) => p.socketId === socket.id);
 			if (idx !== -1) {
-				room.players[idx].connected = false;
+				room.players.splice(idx, 1);
 
-				const allDisconnected = room.players.every((p) => !p.connected);
-
-				if (allDisconnected) {
-					console.log(`[WS] All players disconnected from room: ${roomId}. Starting 10s cleanup timer.`);
-					room.emptyTimeout = setTimeout(() => {
-						rooms.delete(roomId);
-						console.log(`[WS] Room deleted: ${roomId}`);
-					}, 10000);
+				if (room.players.length === 0) {
+					rooms.delete(roomId);
+					console.log(`[WS] Room deleted: ${roomId}`);
 				} else {
 					// If host left, transfer host
 					if (room.hostSocketId === socket.id && room.players.length > 0) {
-						const nextConnected = room.players.find(p => p.connected);
-						if (nextConnected) {
-							room.hostSocketId = nextConnected.socketId;
-							room.hostUserId = nextConnected.userId;
-						}
+						room.hostSocketId = room.players[0].socketId;
+						room.hostUserId = room.players[0].userId;
 					}
 
 					io.to(roomId).emit("roomState", {
@@ -255,8 +247,7 @@ io.on("connection", (socket: Socket) => {
 						players: room.players.map((p) => ({
 							socketId: p.socketId,
 							userId: p.userId,
-							side: p.side,
-							connected: p.connected
+							side: p.side
 						})),
 						messages: room.messages,
 					});
