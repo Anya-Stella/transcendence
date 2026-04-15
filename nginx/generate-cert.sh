@@ -13,9 +13,16 @@ mkdir -p /etc/nginx/ssl
 
 echo "[generate-cert] Generating certificate for IP: ${CERT_IP}"
 
+if [ "$CERT_IP" = "localhost" ]; then
+  SAN="DNS:localhost"
+else
+  SAN="DNS:localhost, IP:${CERT_IP}"
+fi
+
 openssl req -x509 -nodes -days 365 \
   -newkey rsa:2048 \
   -keyout /etc/nginx/ssl/server.key \
   -out /etc/nginx/ssl/server.crt \
   -subj "/C=JP/ST=Tokyo/L=Tokyo/O=42Tokyo/CN=${CERT_IP}" \
-  -addext "subjectAltName = DNS:localhost, IP:${CERT_IP}"
+  -addext "subjectAltName = ${SAN}"
+
